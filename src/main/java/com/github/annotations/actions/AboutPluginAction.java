@@ -6,7 +6,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
-public class BuyMeACoffeeAction extends AnAction {
+public class AboutPluginAction extends AnAction {
     
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
@@ -32,23 +32,24 @@ public class BuyMeACoffeeAction extends AnAction {
                 if (service != null) {
                     String currentLanguage = service.getLanguage();
                     if ("en".equals(currentLanguage)) {
-                        e.getPresentation().setText("Buy me a coffee ☕");
-                        e.getPresentation().setDescription("Support developer, buy a coffee");
+                        e.getPresentation().setText("About");
+                        e.getPresentation().setDescription("Support developer, About plugin");
                     } else {
-                        e.getPresentation().setText("Buy me a coffee ☕");
-                        e.getPresentation().setDescription("支持开发者，买杯咖啡");
+                        e.getPresentation().setText("关于");
+                        e.getPresentation().setDescription("支持开发者，关于插件");
                     }
                 } else {
-                    e.getPresentation().setText("Buy me a coffee ☕");
-                    e.getPresentation().setDescription("支持开发者，买杯咖啡");
+                    e.getPresentation().setText("About");
+                    e.getPresentation().setDescription("Support developer, About plugin");
                 }
             } catch (Exception ex) {
-                e.getPresentation().setText("Buy me a coffee ☕");
-                e.getPresentation().setDescription("支持开发者，买杯咖啡");
+                e.getPresentation().setText("About");
+                e.getPresentation().setDescription("Support developer, About plugin");
             }
         } else {
-            e.getPresentation().setText("Buy me a coffee ☕");
-            e.getPresentation().setDescription("支持开发者，买杯咖啡");
+            e.getPresentation().setText("About");
+            e.getPresentation().setDescription("Support developer, About plugin");
         }
     }
 }
+

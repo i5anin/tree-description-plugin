@@ -54,7 +54,7 @@ public class SearchAnnotationsDialog extends DialogWrapper {
         this.mappingLibraryService = MappingLibraryService.getInstance();
         
         setTitle(I18nUtils.getText(project, "搜索项目树备注", "Search Project Tree Annotations"));
-        setSize(1000, 700);
+        setSize(850, 600);  // ← 这里设置窗口大小：宽度 1000px, 高度 700px
         init();
     }
     
@@ -138,7 +138,7 @@ public class SearchAnnotationsDialog extends DialogWrapper {
         });
         
         JBScrollPane scrollPane = new JBScrollPane(resultsList);
-        scrollPane.setPreferredSize(new Dimension(800, 400));
+        scrollPane.setPreferredSize(new Dimension(800, 400));  // ← 这里设置滚动区域首选大小
         
         panel.add(resultsLabel, BorderLayout.NORTH);
         panel.add(scrollPane, BorderLayout.CENTER);

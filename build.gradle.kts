@@ -5,7 +5,7 @@ plugins {
 }
 
 group = "com.github.chinese-annotations"
-version = "2.6.1"
+version = "2.7.0"
 
 repositories {
     mavenCentral()

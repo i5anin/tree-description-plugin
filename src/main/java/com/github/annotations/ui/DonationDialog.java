@@ -19,9 +19,7 @@ import javax.swing.text.SimpleAttributeSet;
 import javax.swing.text.StyleConstants;
 import javax.swing.text.StyledDocument;
 
-/**
- * 捐赠对话框 - 支持更大的尺寸和更好的布局
- */
+
 public class DonationDialog extends DialogWrapper {
     
     private final Project project;
@@ -30,7 +28,7 @@ public class DonationDialog extends DialogWrapper {
         super(project);
         this.project = project;
         
-        setTitle(I18nUtils.getText(project, "请我喝咖啡 ☕", "Buy me a coffee ☕"));
+        setTitle(I18nUtils.getText(project, "关于", "About"));
         setSize(650, 450);
         setResizable(false);
         init();
@@ -119,20 +117,15 @@ public class DonationDialog extends DialogWrapper {
         buttonPanel.setBorder(JBUI.Borders.emptyTop(20));
         
         // 访问GitHub主页按钮
-        JButton githubButton = new JButton(I18nUtils.getText(project, "🌐 访问GitHub主页", "🌐 Visit GitHub Homepage"));
+        JButton githubButton = new JButton(I18nUtils.getText(project, "🌐 访问GitHub主页", "🌐 GitHub Homepage"));
         githubButton.addActionListener(e -> openGitHubPage());
         
         // 给个Star按钮
         JButton starButton = new JButton(I18nUtils.getText(project, "⭐ 给个Star", "⭐ Give a Star"));
         starButton.addActionListener(e -> openGitHubPage());
         
-        // 支持开发者按钮
-        JButton donationButton = new JButton(I18nUtils.getText(project, "☕ 支持开发者", "☕ Support Developer"));
-        donationButton.addActionListener(e -> openDonationPage());
-        
         buttonPanel.add(githubButton);
         buttonPanel.add(starButton);
-        buttonPanel.add(donationButton);
         
         // 组装面板
         contentPanel.add(titleLabel);

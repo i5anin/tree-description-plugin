@@ -42,9 +42,8 @@ public class ExtractCommentAnnotationAction extends AnAction {
         Pattern.DOTALL | Pattern.MULTILINE
     );
     
-    // 通知组
-    private static final NotificationGroup NOTIFICATION_GROUP = 
-        NotificationGroupManager.getInstance().getNotificationGroup("Extract.Comment.Notification");
+    // 通知组ID - 延迟获取NotificationGroup实例
+    private static final String NOTIFICATION_GROUP_ID = "Extract.Comment.Notification";
     
     public ExtractCommentAnnotationAction() {
         super();
@@ -243,7 +242,11 @@ public class ExtractCommentAnnotationAction extends AnAction {
             type = NotificationType.INFORMATION;
         }
         
-        Notification notification = NOTIFICATION_GROUP.createNotification(
+        // 按需获取NotificationGroup实例，避免在类初始化时依赖服务
+        NotificationGroup notificationGroup = NotificationGroupManager.getInstance()
+            .getNotificationGroup(NOTIFICATION_GROUP_ID);
+        
+        Notification notification = notificationGroup.createNotification(
             I18nUtils.getText(project, "提取注释为备注", "Extract Comment as Remark"),
             message,
             type

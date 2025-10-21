@@ -61,7 +61,7 @@ public class AnnotationService {
     
     private boolean builtinMappingsEnabled = true; // 内置映射库开关状态
     private boolean projectTreeAnnotationsEnabled = true; // 项目树备注显示开关状态
-    private String language = "en"; // 语言设置，默认为英文
+    private String language = "zh"; // 语言设置，默认为中文
     private MessageBusConnection messageBusConnection;
     
     // 新增：存储所有映射文件的内容

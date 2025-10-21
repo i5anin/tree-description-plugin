@@ -2,6 +2,7 @@ package com.github.annotations.actions;
 
 import com.github.annotations.services.AnnotationService;
 import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Separator;
@@ -39,20 +40,18 @@ public class ToolsMenuAction extends ActionGroup {
     @NotNull
     @Override
     public AnAction[] getChildren(@Nullable AnActionEvent e) {
-        // 直接返回Action数组，避免使用Override-only API
+        // 使用 ActionManager 获取已注册的 Action，保留快捷键显示
+        ActionManager actionManager = ActionManager.getInstance();
+        
         return new AnAction[]{
             new LanguageSubMenuAction(),
             Separator.getInstance(),  // 分隔符
             new ToggleProjectTreeAnnotationsAction(),
-            /*
-            // 临时注释掉极速搜索，后期修改
-            com.intellij.openapi.actionSystem.ActionManager.getInstance()
-                .getAction("ChineseAnnotations.SearchAnnotations"),
-            */
+            actionManager.getAction("ChineseAnnotations.SearchAnnotations"),
             Separator.getInstance(),  // 分隔符
             new ViewMappingsAction(),
             Separator.getInstance(),  // 分隔符
-            new BuyMeACoffeeAction()
+            new AboutPluginAction()
         };
     }
 }

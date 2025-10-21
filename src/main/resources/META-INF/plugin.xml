@@ -7,35 +7,11 @@
     <name>Tree Description</name>
     
     <!-- 供应商信息 -->
-    <vendor email="jaysonx.coder@gmail.com" url="https://github.com/JaysonX-Tech">Zhixin Cao</vendor>
+    <vendor email="jaysonx.tech@gmail.com" url="https://github.com/JaysonX-Tech">Jayson X</vendor>
 
     <!-- 插件描述 -->
-<!-- 插件描述 -->
     <description><![CDATA[
     Tree Description - A lightweight tool for adding notes to your project tree in IntelliJ IDEA.
-
-
-    <h4>Key Features</h4>
-    <ul>
-        <li>Support for Chinese/English interface switching</li>
-        <li>Add notes on classes / methods / files</li>
-        <li>Color-coded notes</li>
-        <li>Shareable and open-source mapping library</li>
-        <li>Support extracting class file comments</li>
-    </ul>
-
-    <h4>Use Cases</h4>
-    <ul>
-        <li><b>Reading projects</b>: Better understanding of complex structures in projects</li>
-        <li><b>Team knowledge transfer</b>: Faster onboarding and understanding of legacy projects</li>
-        <li><b>Code review</b>: Clearer structure explanations, faster code navigation</li>
-    </ul>
-
-    <p>Make your development more efficient. 🚀</p>
-    
-    <br/>
-    <hr/>
-
 
     <h3>项目树备注工具</h3>
     <p><b>项目树备注工具</b> 是一个轻量级插件，帮助开发者在 IntelliJ IDEA 中快速记录和管理目录或文件备注。</p>
@@ -57,12 +33,39 @@
     </ul>
 
     <p>让你的开发过程更高效 🚀</p>
+
+    <br/>
+    <hr/>
+
+    <h4>Key Features</h4>
+    <ul>
+        <li>Support for Chinese/English interface switching</li>
+        <li>Add notes on classes / methods / files</li>
+        <li>Color-coded notes</li>
+        <li>Shareable and open-source mapping library</li>
+        <li>Support extracting class file comments</li>
+    </ul>
+
+    <h4>Use Cases</h4>
+    <ul>
+        <li><b>Reading projects</b>: Better understanding of complex structures in projects</li>
+        <li><b>Team knowledge transfer</b>: Faster onboarding and understanding of legacy projects</li>
+        <li><b>Code review</b>: Clearer structure explanations, faster code navigation</li>
+    </ul>
+
+    <p>Make your development more efficient. 🚀</p>
     
     ]]></description>
     
     <!-- 变更日志 -->
     <change-notes><![CDATA[
+        <h3>Version 2.7.0</h3>
+        <ul>
+            <li>新增搜索快捷键: Shift + Alt + F (New search shortcut: Shift + Alt + F)</li>
+            <li>搜索结果按相关性智能排序 (Search results intelligently sorted by relevance)</li>
+        </ul>
 
+        <h3>Version 2.6.x</h3>
         <ul>
             <li>支持通配符包匹配模式 (Support wildcard package matching patterns)</li>
             <li>支持 GitHub 共享映射库 (Support GitHub shared mapping library)</li>
@@ -136,14 +139,12 @@
         </action>
         
         <!-- 搜索备注Action - 支持全局快捷键 -->
-        <!-- 临时注释掉搜索功能，后期需要改
         <action id="ChineseAnnotations.SearchAnnotations" 
                 class="com.github.annotations.actions.SearchAnnotationsAction"
                 text="搜索项目树备注" 
                 description="搜索项目中的所有备注内容">
             <keyboard-shortcut keymap="$default" first-keystroke="alt shift F"/>
         </action>
-        -->
         
         <!-- 提取注释为备注Action - 支持全局快捷键 -->
         <action id="ChineseAnnotations.ExtractComment" 
