@@ -77,7 +77,7 @@
     ]]></change-notes>
     
     <!-- 最低和最高支持版本 -->
-    <idea-version since-build="231" until-build="252.*"/>
+    <idea-version since-build="231" until-build="*"/>
     
     <!-- 插件依赖 -->
     <depends>com.intellij.modules.platform</depends>

@@ -5,7 +5,7 @@ plugins {
 }
 
 group = "com.github.chinese-annotations"
-version = "2.7.0"
+version = "2.7.1"
 
 repositories {
     mavenCentral()
@@ -60,7 +60,7 @@ tasks {
 
     patchPluginXml {
         sinceBuild.set("231")
-        untilBuild.set("252.*")  // 支持到2025.2版本
+        untilBuild.set("*")  // 支持所有未来版本
     }
 
     signPlugin {
