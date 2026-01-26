@@ -60,7 +60,7 @@ tasks {
 
     patchPluginXml {
         sinceBuild.set("231")
-        untilBuild.set("*")  // 支持所有未来版本
+        untilBuild.set("253.*")  // 支持到2025.3版本
     }
 
     signPlugin {

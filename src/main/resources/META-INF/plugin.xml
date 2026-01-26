@@ -59,6 +59,12 @@
     
     <!-- 变更日志 -->
     <change-notes><![CDATA[
+        <h3>Version 2.7.1</h3>
+        <ul>
+            <li>支持 IntelliJ IDEA 2025.3.2 (Build 253) (Support IntelliJ IDEA 2025.3.2 Build 253)</li>
+            <li>默认语言设置为中文 (Default language set to Chinese)</li>
+        </ul>
+
         <h3>Version 2.7.0</h3>
         <ul>
             <li>新增搜索快捷键: Shift + Alt + F (New search shortcut: Shift + Alt + F)</li>
@@ -77,7 +83,7 @@
     ]]></change-notes>
     
     <!-- 最低和最高支持版本 -->
-    <idea-version since-build="231" until-build="*"/>
+    <idea-version since-build="231" until-build="253.*"/>
     
     <!-- 插件依赖 -->
     <depends>com.intellij.modules.platform</depends>
