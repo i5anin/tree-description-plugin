@@ -62,6 +62,7 @@
             <li>Китайский интерфейс заменён русским (Chinese interface replaced with Russian)</li>
             <li>Рабочие JSON хранятся в .idea/tree-description, старая папка .td-maps переносится сама (Working JSON moved to .idea/tree-description)</li>
             <li>Поддержка IDE 2026.x (Support for IDE 2026.x)</li>
+            <li>Удалены встроенная библиотека сопоставлений и её переключатель: файлы библиотеки никогда не поставлялись (Removed the built-in mapping library: it never shipped)</li>
         </ul>
 
         <h3>Version 2.7.1</h3>
@@ -96,9 +97,6 @@
     <extensions defaultExtensionNs="com.intellij">
         <!-- Сервис проекта -->
         <projectService serviceImplementation="com.github.annotations.services.AnnotationService"/>
-
-        <!-- Сервис приложения -->
-        <applicationService serviceImplementation="com.github.annotations.services.MappingLibraryService"/>
 
         <!-- Оформление узлов дерева проекта -->
         <projectViewNodeDecorator implementation="com.github.annotations.decorators.AnnotationDecorator"/>

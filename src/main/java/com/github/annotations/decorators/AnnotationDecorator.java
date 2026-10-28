@@ -1,7 +1,6 @@
 package com.github.annotations.decorators;
 
 import com.github.annotations.services.AnnotationService;
-import com.github.annotations.services.MappingLibraryService;
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.projectView.ProjectViewNode;
 import com.intellij.ide.projectView.ProjectViewNodeDecorator;
@@ -142,40 +141,6 @@ public class AnnotationDecorator implements ProjectViewNodeDecorator {
             }
         }
         
-        // 5. Встроенная библиотека сопоставлений (если включена)
-        MappingLibraryService mappingService = getMappingService();
-        if (mappingService.isBuiltinMappingsEnabled()) {
-            // 5.1 Встроенные сопоставления файлов
-            String builtinFileMapping = mappingService.searchFileMapping(name);
-            if (builtinFileMapping != null) {
-                return builtinFileMapping;
-            }
-            
-            // 5.2 Встроенные сопоставления пакетов
-            String builtinPackageMapping = mappingService.searchPackageMapping(name);
-            if (builtinPackageMapping != null) {
-                return builtinPackageMapping;
-            }
-            
-            // 5.3 Встроенные шаблоны файлов (только для файлов)
-            if (!file.isDirectory()) {
-                String builtinFileMatchMapping = mappingService.searchFileMatchMapping(name);
-                if (builtinFileMatchMapping != null) {
-                    return builtinFileMatchMapping;
-                }
-            }
-            
-            // 5.4 Встроенные шаблоны пакетов (только для папок и пакетов)
-            if (file.isDirectory()) {
-                // Полный относительный путь для сопоставления пакетов
-                String relativePath = getRelativePathForMatching(project, file);
-                String builtinPackageMatchMapping = mappingService.searchPatternMapping(relativePath != null ? relativePath : name);
-                if (builtinPackageMatchMapping != null) {
-                    return builtinPackageMatchMapping;
-                }
-            }
-        }
-        
         return null;
     }
     
@@ -258,14 +223,6 @@ public class AnnotationDecorator implements ProjectViewNodeDecorator {
         return null;
     }
     
-    /**
-     * Возвращает сервис библиотеки сопоставлений
-     * Экземпляр берётся заново при каждом вызове, чтобы переключатель срабатывал сразу
-     */
-    private static MappingLibraryService getMappingService() {
-        // Каждый раз берём свежий экземпляр, чтобы переключатель срабатывал сразу
-        return MappingLibraryService.getInstance();
-    }
     
     /**
      * Путь файла относительно корня проекта, для сопоставления с шаблонами

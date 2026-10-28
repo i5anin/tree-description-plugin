@@ -1,7 +1,6 @@
 package com.github.annotations.ui;
 
 import com.github.annotations.services.AnnotationService;
-import com.github.annotations.services.MappingLibraryService;
 import com.github.annotations.utils.I18nUtils;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
@@ -33,7 +32,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.LinkedHashSet;
 import java.util.Set;
 
 /**
@@ -44,7 +42,6 @@ public class SearchAnnotationsDialog extends DialogWrapper {
     
     private final Project project;
     private final AnnotationService annotationService;
-    private final MappingLibraryService mappingLibraryService;
     
     private JBTextField searchField;
     private JBList<SearchResult> resultsList;
@@ -55,7 +52,6 @@ public class SearchAnnotationsDialog extends DialogWrapper {
         super(project);
         this.project = project;
         this.annotationService = AnnotationService.getInstance(project);
-        this.mappingLibraryService = MappingLibraryService.getInstance();
         
         setTitle(I18nUtils.getText(project, "Поиск по заметкам дерева проекта", "Search Project Tree Annotations"));
         setSize(850, 600);  // ← размер окна: ширина и высота в пикселях
@@ -266,100 +262,10 @@ public class SearchAnnotationsDialog extends DialogWrapper {
             }
         }
         
-        // 5. files и packages встроенной библиотеки (только реальные файлы и пакеты, без шаблонов)
-        // Ищем, только если встроенная библиотека включена
-        if (mappingLibraryService.isBuiltinMappingsEnabled()) {
-            Map<String, String> builtinMappings = mappingLibraryService.getAllMappings();
-            for (Map.Entry<String, String> entry : builtinMappings.entrySet()) {
-                String keyName = entry.getKey();
-                String annotation = entry.getValue();
-                
-                // Есть ли слово в тексте заметки (без учёта регистра)
-                if (annotation.toLowerCase().contains(keyword.toLowerCase())) {
-                    // Имя файла или имя пакета
-                    if (isFileName(keyName)) {
-                        // Для имени файла ищем все подходящие полные пути в проекте
-                        List<String> allPaths = findAllFilesInProject(keyName);
-                        if (!allPaths.isEmpty()) {
-                            for (String fullPath : allPaths) {
-                                // Встроенный результат добавляем, только если у пути нет пользовательской заметки
-                                if (!userAnnotatedPaths.contains(fullPath)) {
-                                    // Ещё раз проверяем, что файл существует
-                                    if (fileExistsInProject(fullPath)) {
-                                        SearchResult result = new SearchResult(fullPath, annotation, keyword, "Встроенный файл");
-                                        results.add(result);
-                                    }
-                                }
-                            }
-                        } else {
-                            // Файлов не нашлось, но сопоставление есть — добавляем общий результат
-                            if (fileExistsInProject(keyName)) {
-                                if (!userAnnotatedPaths.contains(keyName)) {
-                                    SearchResult result = new SearchResult(keyName, annotation, keyword, "Встроенный файл");
-                                    results.add(result);
-                                }
-                            }
-                        }
-                    } else {
-                        // Для имени пакета проверяем, что такой путь есть в проекте
-                        if (!userAnnotatedPaths.contains(keyName) && packageExistsInProject(keyName)) {
-                            SearchResult result = new SearchResult(keyName, annotation, keyword, "Встроенный пакет");
-                            results.add(result);
-                            userAnnotatedPaths.add(keyName);
-                        }
-                    }
-                }
-            }
-        }
-        
-        // 6. Файлы под шаблонами fileMatch встроенной библиотеки
-        // Ищем, только если встроенная библиотека включена
-        if (mappingLibraryService.isBuiltinMappingsEnabled()) {
-            Map<String, String> builtinFileMatchPatterns = mappingLibraryService.getAllFileMatchPatterns();
-            for (Map.Entry<String, String> entry : builtinFileMatchPatterns.entrySet()) {
-                String pattern = entry.getKey();
-                String annotation = entry.getValue();
-                
-                if (annotation.toLowerCase().contains(keyword.toLowerCase())) {
-                    // Все файлы, подходящие под шаблон
-                    List<String> matchedFiles = findFilesMatchingPattern(pattern);
-                    for (String filePath : matchedFiles) {
-                        if (!userAnnotatedPaths.contains(filePath)) {
-                            SearchResult result = new SearchResult(filePath, annotation, keyword, "Встроенный шаблон файла");
-                            results.add(result);
-                            userAnnotatedPaths.add(filePath);
-                        }
-                    }
-                }
-            }
-        }
-        
-        // 7. Пакеты под шаблонами packageMatch встроенной библиотеки
-        // Ищем, только если встроенная библиотека включена
-        if (mappingLibraryService.isBuiltinMappingsEnabled()) {
-            Map<String, String> builtinPackageMatchPatterns = mappingLibraryService.getAllPackageMatchPatterns();
-            for (Map.Entry<String, String> entry : builtinPackageMatchPatterns.entrySet()) {
-                String pattern = entry.getKey();
-                String annotation = entry.getValue();
-                
-                if (annotation.toLowerCase().contains(keyword.toLowerCase())) {
-                    // Все пакеты, подходящие под шаблон
-                    List<String> matchedPackages = findPackagesMatchingPattern(pattern);
-                    for (String packagePath : matchedPackages) {
-                        if (!userAnnotatedPaths.contains(packagePath)) {
-                            SearchResult result = new SearchResult(packagePath, annotation, keyword, "Встроенный шаблон пакета");
-                            results.add(result);
-                            userAnnotatedPaths.add(packagePath);
-                        }
-                    }
-                }
-            }
-        }
-        
         // Сортировка по типу и пути — пользовательские сопоставления первыми
         results.sort((a, b) -> {
-            // Порядок типов: пользовательский файл > пользовательский пакет > пользовательский шаблон файла > пользовательский шаблон пакета > встроенный файл > встроенный пакет > встроенный шаблон файла > встроенный шаблон пакета
-            String[] priorityOrder = {"Пользовательский файл", "Пользовательский пакет", "Пользовательский шаблон файла", "Пользовательский шаблон пакета", "Встроенный файл", "Встроенный пакет", "Встроенный шаблон файла", "Встроенный шаблон пакета"};
+            // Порядок типов: файл > пакет > шаблон файла > шаблон пакета
+            String[] priorityOrder = {"Пользовательский файл", "Пользовательский пакет", "Пользовательский шаблон файла", "Пользовательский шаблон пакета"};
             int aPriority = getPriority(a.source, priorityOrder);
             int bPriority = getPriority(b.source, priorityOrder);
             
@@ -500,186 +406,13 @@ public class SearchAnnotationsDialog extends DialogWrapper {
         return null;
     }
     
-    /**
-     * Имя файла это или имя пакета
-     */
-    private boolean isFileName(String name) {
-        // Есть расширение — точно файл
-        if (name.contains(".") && (name.endsWith(".xml") || name.endsWith(".yml") || name.endsWith(".yaml") || 
-            name.endsWith(".properties") || name.endsWith(".json") || name.endsWith(".gradle") || 
-            name.endsWith(".md") || name.endsWith(".txt") || name.endsWith(".gitignore") || 
-            name.endsWith(".java") || name.endsWith(".kt") || name.endsWith(".js") || name.endsWith(".ts"))) {
-            return true;
-        }
-        
-        // Особые имена файлов без расширения
-        if (name.equals(".gitignore") || name.equals("Dockerfile") || name.equals("Jenkinsfile") || 
-            name.equals("Makefile") || name.equals("README")) {
-            return true;
-        }
-        
-        // Несколько точек — обычно имя пакета (например, org.springframework.boot)
-        if (name.contains(".") && name.split("\\.").length > 2) {
-            return false;
-        }
-        
-
-        return false;
-    }
     
-    /**
-     * Есть ли файл в текущем проекте
-     */
-    private boolean fileExistsInProject(String relativePath) {
-        try {
-            String fullPath = project.getBasePath() + "/" + relativePath;
-            VirtualFile file = VirtualFileManager.getInstance().findFileByUrl("file://" + fullPath);
-            return file != null && file.exists();
-        } catch (Exception ex) {
-            return false;
-        }
-    }
     
-    /**
-     * Есть ли путь пакета в проекте
-     * Имя пакета превращается в путь папки, например: org.springframework.boot -> org/springframework/boot
-     * Производительность: меньше обращений к файловой системе
-     */
-    private boolean packageExistsInProject(String packageName) {
-        if (packageName == null || packageName.isEmpty()) {
-            return false;
-        }
-        
-        try {
-            // Имя пакета в виде пути
-            String packagePath = packageName.replace(".", "/");
-            String projectBasePath = project.getBasePath();
-            if (projectBasePath == null) {
-                return false;
-            }
-            
-            // Проверяем обычные папки исходников (в порядке вероятности)
-            String[] basePaths = {
-                "src/main/java/" + packagePath,  // самый частый случай
-                "src/" + packagePath,            // упрощённая структура
-                "src/test/java/" + packagePath,
-                packagePath                      // корень проекта
-            };
-            
-            VirtualFileManager vfm = VirtualFileManager.getInstance();
-            for (String basePath : basePaths) {
-                VirtualFile file = vfm.findFileByUrl("file://" + projectBasePath + "/" + basePath);
-                if (file != null && file.exists() && file.isDirectory()) {
-                    return true;
-                }
-            }
-            
-            return false;
-        } catch (Exception ex) {
-            return false;
-        }
-    }
     
-    /**
-     * Рекурсивно ищет файл в проекте
-     */
-    private boolean searchFileInProject(VirtualFile directory, String fileName) {
-        if (directory == null || !directory.isDirectory()) {
-            return false;
-        }
-        
-        for (VirtualFile child : directory.getChildren()) {
-            ProgressManager.checkCanceled(); // поиск отменён новым вводом — прервать обход
-            if (child.getName().equals(fileName)) {
-                return true;
-            }
-            if (child.isDirectory() && searchFileInProject(child, fileName)) {
-                return true;
-            }
-        }
-        
-        return false;
-    }
     
-    /**
-     * Ищет файл в проекте и возвращает полный относительный путь
-     */
-    private String findFileInProject(String fileName) {
-        // Сначала проверяем корень
-        String rootPath = fileName;
-        if (fileExistsInProject(rootPath)) {
-            return rootPath;
-        }
-        
-        // Обходим весь проект, возвращаем первый подходящий относительный путь
-        String projectPath = project.getBasePath();
-        if (projectPath == null) return null;
-        VirtualFile projectRoot = VirtualFileManager.getInstance().findFileByUrl("file://" + projectPath);
-        if (projectRoot == null) return null;
-        return searchFilePathInProject(projectRoot, fileName, "");
-    }
     
-    /**
-     * Ищет все подходящие файлы в проекте и возвращает список относительных путей
-     */
-    private List<String> findAllFilesInProject(String fileName) {
-        Set<String> allPaths = new LinkedHashSet<>();
-        String projectPath = project.getBasePath();
-        if (projectPath == null) return new ArrayList<>();
-        VirtualFile projectRoot = VirtualFileManager.getInstance().findFileByUrl("file://" + projectPath);
-        if (projectRoot == null) return new ArrayList<>();
-        searchAllFilePathsInProject(projectRoot, fileName, "", allPaths);
-        return new ArrayList<>(allPaths);
-    }
     
-    /**
-     * Рекурсивно ищет файл и возвращает относительный путь
-     */
-    private String searchFilePathInProject(VirtualFile directory, String fileName, String currentPath) {
-        if (directory == null || !directory.isDirectory()) {
-            return null;
-        }
-        
-        for (VirtualFile child : directory.getChildren()) {
-            ProgressManager.checkCanceled(); // поиск отменён новым вводом — прервать обход
-            String childPath = currentPath.isEmpty() ? child.getName() : currentPath + "/" + child.getName();
-            
-            if (child.getName().equals(fileName)) {
-                return childPath;
-            }
-            
-            if (child.isDirectory()) {
-                String result = searchFilePathInProject(child, fileName, childPath);
-                if (result != null) {
-                    return result;
-                }
-            }
-        }
-        
-        return null;
-    }
     
-    /**
-     * Рекурсивно ищет все подходящие файлы и собирает пути
-     */
-    private void searchAllFilePathsInProject(VirtualFile directory, String fileName, String currentPath, Set<String> results) {
-        if (directory == null || !directory.isDirectory()) {
-            return;
-        }
-        
-        for (VirtualFile child : directory.getChildren()) {
-            ProgressManager.checkCanceled(); // поиск отменён новым вводом — прервать обход
-            String childPath = currentPath.isEmpty() ? child.getName() : currentPath + "/" + child.getName();
-            
-            if (child.getName().equals(fileName)) {
-                results.add(childPath);
-            }
-            
-            if (child.isDirectory()) {
-                searchAllFilePathsInProject(child, fileName, childPath, results);
-            }
-        }
-    }
     
     private void navigateToSelectedFile() {
         SearchResult selected = resultsList.getSelectedValue();

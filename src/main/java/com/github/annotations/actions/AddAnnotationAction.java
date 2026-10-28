@@ -2,7 +2,6 @@ package com.github.annotations.actions;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.github.annotations.services.AnnotationService;
-import com.github.annotations.services.MappingLibraryService;
 import com.github.annotations.ui.AddAnnotationDialog;
 import com.github.annotations.utils.I18nUtils;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -81,9 +80,7 @@ public class AddAnnotationAction extends AnAction {
             existingAnnotation = annotationService.getAnnotation(firstFile);
         }
         
-        String suggestedAnnotation = getSuggestedAnnotation(firstFile, existingAnnotation);
-        String initialValue = existingAnnotation != null ? existingAnnotation : 
-                             (suggestedAnnotation != null ? suggestedAnnotation : "");
+        String initialValue = existingAnnotation != null ? existingAnnotation : "";
         
         // Цвет берём у первого файла
         String existingColor = null;
@@ -142,9 +139,7 @@ public class AddAnnotationAction extends AnAction {
             existingAnnotation = annotationService.getAnnotation(file);
         }
         
-        String suggestedAnnotation = getSuggestedAnnotation(file, existingAnnotation);
-        String initialValue = existingAnnotation != null ? existingAnnotation : 
-                             (suggestedAnnotation != null ? suggestedAnnotation : "");
+        String initialValue = existingAnnotation != null ? existingAnnotation : "";
         
         // Текущий цвет
         String existingColor = null;
@@ -264,15 +259,6 @@ public class AddAnnotationAction extends AnAction {
         return null;
     }
 
-    @Nullable
-    private String getSuggestedAnnotation(@NotNull VirtualFile file, @Nullable String existingAnnotation) {
-        if (existingAnnotation != null) {
-            return null; // если заметка уже есть, подсказку не предлагаем
-        }
-        
-        MappingLibraryService mappingService = MappingLibraryService.getInstance();
-        return mappingService.smartSearch(file.getName());
-    }
     
     /**
      * Получает файл из редактора

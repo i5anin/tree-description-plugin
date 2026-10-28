@@ -19,12 +19,7 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.diagnostic.Logger;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.openapi.vfs.newvfs.BulkFileListener;
-import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
-import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent;
 import com.intellij.ide.projectView.ProjectView;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
@@ -36,12 +31,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
-import java.text.SimpleDateFormat;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.List;
 import java.util.stream.Stream;
 
 /**
@@ -68,7 +60,6 @@ public class AnnotationService implements Disposable {
     private Map<String, String> packagesTextColor = new LinkedHashMap<>(); // цвета заметок пакетов
     private Map<String, String> filesTextColor = new LinkedHashMap<>(); // цвета заметок файлов
     
-    private boolean builtinMappingsEnabled = true; // включена ли встроенная библиотека сопоставлений
     private boolean projectTreeAnnotationsEnabled = true; // показывать ли заметки в дереве проекта
     private String language = "ru"; // язык интерфейса, по умолчанию русский
     private MessageBusConnection messageBusConnection;
@@ -335,7 +326,6 @@ public class AnnotationService implements Disposable {
         localMapping.setVersion("1.0.0");
         localMapping.setDescription("Current project path and file mapping configuration");
         localMapping.setAuthor("Local");
-        localMapping.setBuiltinMappingsEnabled(builtinMappingsEnabled);
         localMapping.setLanguage(language);
         
         // Содержимое сопоставлений — в нужном порядке
@@ -614,22 +604,7 @@ public class AnnotationService implements Disposable {
         return new HashMap<>(filesTextColor);
     }
     
-    /**
-     * Включена ли встроенная библиотека сопоставлений
-     */
-    public boolean isBuiltinMappingsEnabled() {
-        return builtinMappingsEnabled;
-    }
     
-    /**
-     * Включает или выключает встроенную библиотеку сопоставлений
-     */
-    public void setBuiltinMappingsEnabled(boolean enabled) {
-        if (this.builtinMappingsEnabled != enabled) {
-            this.builtinMappingsEnabled = enabled;
-            saveToFile(); // сразу сохраняем в файл
-        }
-    }
     
     /**
      * Задаёт заметки файлов целиком
@@ -792,11 +767,6 @@ public class AnnotationService implements Disposable {
                     hasImported = true;
                 }
                 
-                // Переключатель встроенной библиотеки сопоставлений
-                if (mappingFile.getBuiltinMappingsEnabled() != null) {
-                    this.builtinMappingsEnabled = mappingFile.getBuiltinMappingsEnabled();
-                    hasImported = true;
-                }
                 
                 if (hasImported) {
                     saveToFile(); // сразу сохраняем в файл
@@ -903,9 +873,6 @@ public class AnnotationService implements Disposable {
             mergeSingleMappingFile(localDescription);
             
             // Общие настройки берём из основного файла
-            if (localDescription.getBuiltinMappingsEnabled() != null) {
-                this.builtinMappingsEnabled = localDescription.getBuiltinMappingsEnabled();
-            }
         }
         
         // Затем остальные файлы
@@ -1004,8 +971,6 @@ public class AnnotationService implements Disposable {
             parseXmlSectionForMigration(xmlContent, "fileMatch", fileMatchAnnotations);
             parseXmlSectionForMigration(xmlContent, "packageMatch", packageMatchAnnotations);
             
-            // Переключатель встроенной библиотеки сопоставлений
-            parseBuiltinMappingsEnabledFromXml(xmlContent);
             
         } catch (Exception e) {
             LOG.error("Не удалось перенести содержимое XML: " + e.getMessage(), e);
@@ -1055,27 +1020,6 @@ public class AnnotationService implements Disposable {
         }
     }
     
-    /**
-     * Читает из XML переключатель встроенной библиотеки сопоставлений (для переноса)
-     */
-    private void parseBuiltinMappingsEnabledFromXml(String xmlContent) {
-        try {
-            String searchPattern = "<entry key=\"builtinMappingsEnabled\" value=\"";
-            int startIndex = xmlContent.indexOf(searchPattern);
-            if (startIndex != -1) {
-                int valueStart = startIndex + searchPattern.length();
-                int valueEnd = xmlContent.indexOf("\"", valueStart);
-                if (valueEnd > valueStart) {
-                    String value = xmlContent.substring(valueStart, valueEnd);
-                    this.builtinMappingsEnabled = Boolean.parseBoolean(value);
-                }
-            }
-        } catch (Exception e) {
-            LOG.error("Не удалось прочитать переключатель встроенной библиотеки сопоставлений: " + e.getMessage(), e);
-            // Оставляем значение по умолчанию true
-            this.builtinMappingsEnabled = true;
-        }
-    }
     
     
     

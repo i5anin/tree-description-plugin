@@ -18,7 +18,7 @@
 | Поиск по заметкам | `Alt + Shift + F` / `Option + Shift + F` |
 
 - Заметки видны в дереве проекта сразу после правки.
-- Встроенные библиотеки сопоставлений для популярных фреймворков.
+- Общие библиотеки сопоставлений: скачиваются с GitHub в `.idea/tree-description/`.
 - Шаблоны по имени файла и пакета.
 - Цвет заметки.
 - Интерфейс на русском и английском.
@@ -127,7 +127,7 @@ developers quickly understand project structure and code meaning.
 - **Real-time Display**: Display annotation descriptions in real-time in project tree
 - **Extract Comments**: Support extracting class comments into file comments
   (`Alt + Shift + E` / `Option + Shift + E`)
-- **Mapping Library**: Pre-built common framework mapping libraries
+- **Mapping Library**: Shared mapping libraries downloaded from GitHub
 - **Auto Matching**: Support filename and package name pattern matching
 - **Internationalization**: Russian and English interface switching
 - **Color Marking**: Support custom annotation colors

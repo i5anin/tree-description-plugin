@@ -19,7 +19,6 @@ public class AnnotationConfigurable implements Configurable {
     private final Project project;
     private JComboBox<LanguageManager.Language> languageComboBox;
     private JCheckBox projectTreeAnnotationsCheckBox;
-    private JCheckBox builtinMappingsCheckBox;
     
     public AnnotationConfigurable(Project project) {
         this.project = project;
@@ -50,14 +49,11 @@ public class AnnotationConfigurable implements Configurable {
         // Переключатель заметок в дереве проекта
         projectTreeAnnotationsCheckBox = new JCheckBox("Показывать заметки в дереве проекта");
         
-        // Переключатель встроенной библиотеки сопоставлений
-        builtinMappingsCheckBox = new JCheckBox("Включить встроенную библиотеку сопоставлений");
         
         // Разметка через FormBuilder
         JPanel panel = FormBuilder.createFormBuilder()
             .addLabeledComponent("Язык:", languageComboBox)
             .addComponent(projectTreeAnnotationsCheckBox)
-            .addComponent(builtinMappingsCheckBox)
             .addComponentFillVertically(new JPanel(), 0)
             .getPanel();
         
@@ -86,8 +82,6 @@ public class AnnotationConfigurable implements Configurable {
         // Переключатель заметок в дереве проекта
         projectTreeAnnotationsCheckBox.setSelected(service.isProjectTreeAnnotationsEnabled());
         
-        // Переключатель встроенной библиотеки сопоставлений
-        builtinMappingsCheckBox.setSelected(service.isBuiltinMappingsEnabled());
     }
     
     @Override
@@ -106,10 +100,6 @@ public class AnnotationConfigurable implements Configurable {
             return true;
         }
         
-        // Изменился ли переключатель встроенной библиотеки
-        if (builtinMappingsCheckBox.isSelected() != service.isBuiltinMappingsEnabled()) {
-            return true;
-        }
         
         return false;
     }
@@ -128,8 +118,6 @@ public class AnnotationConfigurable implements Configurable {
         // Применяем переключатель заметок в дереве
         service.setProjectTreeAnnotationsEnabled(projectTreeAnnotationsCheckBox.isSelected());
         
-        // Применяем переключатель встроенной библиотеки
-        service.setBuiltinMappingsEnabled(builtinMappingsCheckBox.isSelected());
     }
 }
 

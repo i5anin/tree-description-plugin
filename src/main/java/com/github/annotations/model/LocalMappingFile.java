@@ -10,7 +10,7 @@ import java.util.Map;
 
 /**
  * Структура локального файла сопоставлений
- * Формат полностью совпадает со встроенной библиотекой сопоставлений
+ * Тот же формат у библиотек сопоставлений, скачанных с GitHub
  */
 public class LocalMappingFile {
     
@@ -28,8 +28,6 @@ public class LocalMappingFile {
     
 
     
-    @SerializedName("builtinMappingsEnabled")
-    private Boolean builtinMappingsEnabled;
     
     @SerializedName("language")
     private String language;
@@ -80,14 +78,7 @@ public class LocalMappingFile {
     
 
     
-    @Nullable
-    public Boolean getBuiltinMappingsEnabled() {
-        return builtinMappingsEnabled;
-    }
     
-    public void setBuiltinMappingsEnabled(@Nullable Boolean builtinMappingsEnabled) {
-        this.builtinMappingsEnabled = builtinMappingsEnabled;
-    }
     
     @Nullable
     public String getLanguage() {
@@ -111,7 +102,7 @@ public class LocalMappingFile {
     }
     
     /**
-     * Содержимое сопоставлений, как во встроенной библиотеке
+     * Содержимое сопоставлений
      */
     public static class Mappings {
         @SerializedName("files")
