@@ -3,6 +3,8 @@ package com.github.annotations.ui;
 import com.github.annotations.services.AnnotationService;
 import com.github.annotations.services.MappingLibraryService;
 import com.github.annotations.utils.I18nUtils;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -12,6 +14,7 @@ import com.intellij.ide.projectView.ProjectView;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.JBTextField;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -146,15 +149,54 @@ public class SearchAnnotationsDialog extends DialogWrapper {
         return panel;
     }
     
+    /**
+     * Запускает поиск по введённому слову; вызывается на каждое изменение поля поиска.
+     *
+     * Поиск обходит файлы проекта, поэтому выполняется в фоне (ReadAction.nonBlocking),
+     * а в поток интерфейса возвращается только готовый список (showResults).
+     * coalesceBy(this) отменяет предыдущий поиск, если пользователь продолжает печатать;
+     * expireWith — если окно закрыто раньше, чем поиск закончился.
+     */
     private void performSearch() {
         String keyword = searchField.getText().trim();
-        listModel.clear();
-        
         if (keyword.isEmpty()) {
-            statusLabel.setText("Введите слово для поиска");
+            listModel.clear();
+            statusLabel.setText(I18nUtils.getText(project, "Введите слово для поиска", "Please enter search keywords"));
             return;
         }
-        
+
+        ReadAction.nonBlocking(() -> findResults(keyword))
+            .coalesceBy(this)
+            .expireWith(getDisposable())
+            .finishOnUiThread(ModalityState.stateForComponent(searchField), results -> showResults(keyword, results))
+            .submit(AppExecutorUtil.getAppExecutorService());
+    }
+
+    /**
+     * Показывает найденное и итог в строке состояния; только поток интерфейса.
+     */
+    private void showResults(@NotNull String keyword, @NotNull List<SearchResult> results) {
+        listModel.clear();
+        for (SearchResult result : results) {
+            listModel.addElement(result);
+        }
+        if (results.isEmpty()) {
+            statusLabel.setText(I18nUtils.getText(project,
+                "Заметок со словом \"" + keyword + "\" не найдено",
+                "No annotations found containing \"" + keyword + "\""));
+        } else {
+            statusLabel.setText(I18nUtils.getText(project,
+                "Найдено заметок: " + results.size(),
+                "Found " + results.size() + " matching annotations"));
+        }
+    }
+
+    /**
+     * Собирает и сортирует результаты поиска; выполняется в фоне внутри чтения модели,
+     * поэтому не трогает компоненты окна.
+     */
+    @NotNull
+    private List<SearchResult> findResults(@NotNull String keyword) {
         List<SearchResult> results = new ArrayList<>();
         Set<String> userAnnotatedPaths = new HashSet<>(); // пути файлов, у которых уже есть пользовательская заметка
         
@@ -327,23 +369,7 @@ public class SearchAnnotationsDialog extends DialogWrapper {
             // Внутри одного типа — по пути файла
             return a.filePath.compareToIgnoreCase(b.filePath);
         });
-        
-        // Добавляем в список
-        for (SearchResult result : results) {
-            listModel.addElement(result);
-        }
-        
-        // Обновляем строку состояния
-        if (results.isEmpty()) {
-            statusLabel.setText(I18nUtils.getText(project, 
-                "Заметок со словом \"" + keyword + "\" не найдено",
-                "No annotations found containing \"" + keyword + "\""));
-        } else {
-            long userCount = results.stream().filter(r -> r.source.startsWith("Пользовательский")).count();
-            statusLabel.setText(I18nUtils.getText(project,
-                "Найдено заметок: " + results.size(),
-                "Found " + results.size() + " matching annotations"));
-        }
+        return results;
     }
     
     /**
