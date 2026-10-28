@@ -6,26 +6,22 @@ import com.intellij.openapi.startup.StartupActivity;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Инициализация после открытия проекта
- * Заменяет внутренний API StartupManager.runAfterOpened
+ * Создаёт AnnotationService при открытии проекта.
+ *
+ * Сервис при создании читает заметки из .idea/tree-description и переносит
+ * старую папку .td-maps; без этой активности он создавался бы лениво — при
+ * первой отрисовке дерева, прямо в потоке интерфейса.
  */
 public class ProjectInitActivity implements StartupActivity {
-    
+
     private static final Logger LOG = Logger.getInstance(ProjectInitActivity.class);
-    
+
     @Override
     public void runActivity(@NotNull Project project) {
-        // Логика после открытия проекта
-        // Здесь можно вызвать инициализацию языка из AnnotationService
         try {
-            // Получаем AnnotationService и запускаем инициализацию
-            AnnotationService annotationService = project.getService(AnnotationService.class);
-            if (annotationService != null) {
-                annotationService.initializeLanguageSettings();
-            }
-        } catch (Exception e) {
-            // Записываем ошибку в журнал
-            LOG.warn("Failed to initialize project settings", e);
+            project.getService(AnnotationService.class);
+        } catch (RuntimeException e) {
+            LOG.warn("Не удалось создать сервис заметок при открытии проекта", e);
         }
     }
 }

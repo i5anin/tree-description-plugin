@@ -1342,25 +1342,7 @@ public class AnnotationService implements Disposable {
      */
     public void setLanguage(String language) {
         this.language = language;
-        // Передаём в LanguageManager
-        com.github.annotations.utils.LanguageManager.setCurrentLanguage(
-            com.github.annotations.utils.LanguageManager.Language.fromCode(language)
-        );
         saveToFile(); // сохраняем в файл
-    }
-    
-    /**
-     * Инициализирует язык (вызывается из PostStartupActivity)
-     */
-    public void initializeLanguageSettings() {
-        try {
-            // Язык настраиваем после открытия проекта
-            com.github.annotations.utils.LanguageManager.setCurrentLanguage(
-                com.github.annotations.utils.LanguageManager.Language.fromCode(this.getLanguage())
-            );
-        } catch (Exception e) {
-            LOG.warn("Не удалось инициализировать язык: " + e.getMessage());
-        }
     }
     
     /**
