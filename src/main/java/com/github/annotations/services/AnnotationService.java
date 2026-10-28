@@ -9,6 +9,13 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.FieldNamingPolicy;
 import com.google.gson.JsonSyntaxException;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.diagnostic.Logger;
 
 import com.intellij.openapi.project.Project;
@@ -258,30 +265,54 @@ public class AnnotationService implements Disposable {
     }
     
     /**
-     * Сохраняет заметки в .idea/tree-description/local-description.json
+     * Сохраняет заметки в .idea/tree-description/local-description.json.
+     *
+     * Файл пишет только IDE: если он открыт в редакторе, меняется Document
+     * и сразу сохраняется; иначе запись идёт через VFS. Раньше запись шла
+     * мимо IDE (Files.writeString), и открытый файл расходился с диском:
+     * диалог «файл изменён на диске» или затирание новой заметки
+     * автосохранением устаревшего текста (MappingsAutoSaver).
+     *
+     * Запись возможна только в потоке интерфейса; вызов из фона
+     * (например, при переносе старых данных во время загрузки) откладывается туда.
      */
     private void saveToFile() {
+        String json = gson.toJson(createLocalMappingFile());
+        Application application = ApplicationManager.getApplication();
+        if (application.isDispatchThread()) {
+            writeLocalDescription(json);
+        } else {
+            application.invokeLater(() -> writeLocalDescription(json), project.getDisposed());
+        }
+    }
+
+    /** Записывает текст в local-description.json через Document или VFS; только поток интерфейса. */
+    private void writeLocalDescription(@NotNull String json) {
+        Path mappingsDir = MappingsPaths.getMappingsDir(project);
+        if (mappingsDir == null || project.isDisposed()) {
+            return;
+        }
         try {
-            Path mappingsDir = MappingsPaths.getMappingsDir(project);
-            if (mappingsDir != null) {
-                // Создаём папку рабочих JSON, если её нет
-                Files.createDirectories(mappingsDir);
-                
-                // Путь основного файла сопоставлений
-                Path localDescriptionPath = mappingsDir.resolve(MappingsPaths.LOCAL_DESCRIPTION_FILE);
-                
-                // Создаём или обновляем основной файл
-                LocalMappingFile localMapping = createLocalMappingFile();
-                
-                // Переводим в JSON
-                String jsonContent = gson.toJson(localMapping);
-                
-                // Записываем файл
-                Files.writeString(localDescriptionPath, jsonContent);
-                LOG.info("Заметки сохранены в: " + localDescriptionPath);
+            Files.createDirectories(mappingsDir);
+            VirtualFile dir = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(mappingsDir);
+            if (dir == null) {
+                throw new IOException("папка не найдена в VFS: " + mappingsDir);
             }
+            WriteCommandAction.writeCommandAction(project).run(() -> {
+                VirtualFile file = dir.findChild(MappingsPaths.LOCAL_DESCRIPTION_FILE);
+                if (file == null) {
+                    file = dir.createChildData(this, MappingsPaths.LOCAL_DESCRIPTION_FILE);
+                }
+                Document document = FileDocumentManager.getInstance().getCachedDocument(file);
+                if (document != null) {
+                    document.setText(json);
+                    FileDocumentManager.getInstance().saveDocument(document);
+                } else {
+                    VfsUtil.saveText(file, json);
+                }
+            });
         } catch (IOException e) {
-            LOG.error("Не удалось сохранить файл заметок: " + e.getMessage(), e);
+            LOG.warn("Не удалось сохранить файл заметок: " + e.getMessage());
         }
     }
     
