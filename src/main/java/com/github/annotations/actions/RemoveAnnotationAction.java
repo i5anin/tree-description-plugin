@@ -2,7 +2,6 @@ package com.github.annotations.actions;
 
 import com.github.annotations.services.AnnotationService;
 import com.github.annotations.utils.I18nUtils;
-import com.intellij.ide.projectView.ProjectView;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -116,14 +115,7 @@ public class RemoveAnnotationAction extends AnAction {
             }
             
             // Обновляем через AnnotationService, чтобы JSON-файл и интерфейс совпадали
-            try {
-                java.lang.reflect.Method refreshMethod = annotationService.getClass().getDeclaredMethod("refreshAfterSave");
-                refreshMethod.setAccessible(true);
-                refreshMethod.invoke(annotationService);
-            } catch (Exception ex) {
-                // Если вызов через рефлексию не удался — простое обновление дерева проекта
-                ProjectView.getInstance(project).refresh();
-            }
+            annotationService.refreshAfterSave();
         }
     }
 
@@ -176,14 +168,7 @@ public class RemoveAnnotationAction extends AnAction {
             }
             
             // Обновляем через AnnotationService, чтобы JSON-файл и интерфейс совпадали
-            try {
-                java.lang.reflect.Method refreshMethod = annotationService.getClass().getDeclaredMethod("refreshAfterSave");
-                refreshMethod.setAccessible(true);
-                refreshMethod.invoke(annotationService);
-            } catch (Exception ex) {
-                // Если вызов через рефлексию не удался — простое обновление дерева проекта
-                ProjectView.getInstance(project).refresh();
-            }
+            annotationService.refreshAfterSave();
         }
     }
     

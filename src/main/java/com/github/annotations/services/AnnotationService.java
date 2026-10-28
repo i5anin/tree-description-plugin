@@ -1286,7 +1286,7 @@ public class AnnotationService implements Disposable {
     /**
      * Сразу после сохранения обновляет VFS и дерево проекта
      */
-    private void refreshAfterSave() {
+    public void refreshAfterSave() {
         try {
             // Обновляем асинхронно, чтобы не блокировать интерфейс
             com.intellij.openapi.application.ApplicationManager.getApplication().invokeLater(() -> {

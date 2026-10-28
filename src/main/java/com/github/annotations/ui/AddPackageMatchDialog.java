@@ -149,14 +149,7 @@ public class AddPackageMatchDialog extends DialogWrapper {
         annotationService.setPackageMatchAnnotation(savePattern, description);
         
         // Обновляем, чтобы JSON-файл и интерфейс совпадали
-        try {
-            java.lang.reflect.Method refreshMethod = annotationService.getClass().getDeclaredMethod("refreshAfterSave");
-            refreshMethod.setAccessible(true);
-            refreshMethod.invoke(annotationService);
-        } catch (Exception ex) {
-            // Если вызов через рефлексию не удался — простое обновление дерева проекта
-            com.intellij.ide.projectView.ProjectView.getInstance(project).refresh();
-        }
+        annotationService.refreshAfterSave();
         
         super.doOKAction();
     }

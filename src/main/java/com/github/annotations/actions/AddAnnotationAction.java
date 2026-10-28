@@ -4,7 +4,6 @@ import com.github.annotations.services.AnnotationService;
 import com.github.annotations.services.MappingLibraryService;
 import com.github.annotations.ui.AddAnnotationDialog;
 import com.github.annotations.utils.I18nUtils;
-import com.intellij.ide.projectView.ProjectView;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -118,14 +117,7 @@ public class AddAnnotationAction extends AnAction {
             }
             
             // Сразу после сохранения обновляем VFS и дерево проекта (иначе при выборе нескольких файлов дерево не обновлялось)
-            try {
-                java.lang.reflect.Method refreshMethod = annotationService.getClass().getDeclaredMethod("refreshAfterSave");
-                refreshMethod.setAccessible(true);
-                refreshMethod.invoke(annotationService);
-            } catch (Exception ex) {
-                // Если вызов через рефлексию не удался — запасной способ обновления
-                ProjectView.getInstance(project).refresh();
-            }
+            annotationService.refreshAfterSave();
         }
     }
     
