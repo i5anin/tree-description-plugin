@@ -5,7 +5,7 @@ plugins {
 }
 
 group = "com.github.chinese-annotations"
-version = "2.7.1"
+version = providers.gradleProperty("pluginVersion").get()
 
 repositories {
     mavenCentral()
@@ -60,7 +60,7 @@ tasks {
 
     patchPluginXml {
         sinceBuild.set("231")
-        untilBuild.set("253.*")  // поддержка до версии 2025.3
+        untilBuild.set("999.*")  // без верхней границы: как в опубликованной 2.7.0, ставится в IDE 2026.x
     }
 
     signPlugin {

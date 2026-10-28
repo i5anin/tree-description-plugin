@@ -35,10 +35,10 @@ import java.util.List;
 import java.util.stream.Stream;
 
 /**
- * 项目级别的备注管理服务
- * 负责存储和管理当前项目的所有中文备注
+ * Сервис заметок уровня проекта
+ * Хранит все заметки текущего проекта и управляет ими
  * Данные лежат в JSON-файлах папки .idea/tree-description (см. MappingsPaths)
- * 支持多个映射文件，主文件为 local-description.json
+ * Поддерживает несколько файлов сопоставлений, основной — local-description.json
  */
 public class AnnotationService {
     
@@ -49,30 +49,30 @@ public class AnnotationService {
         .create();
     
     private final Project project;
-    private Map<String, String> annotations = new LinkedHashMap<>(); // 文件备注
-    private Map<String, String> packageAnnotations = new LinkedHashMap<>(); // 包备注
-    private Map<String, String> fileMatchAnnotations = new LinkedHashMap<>(); // 文件匹配模式备注
-    private Map<String, String> packageMatchAnnotations = new LinkedHashMap<>(); // 包匹配模式备注
+    private Map<String, String> annotations = new LinkedHashMap<>(); // заметки файлов
+    private Map<String, String> packageAnnotations = new LinkedHashMap<>(); // заметки пакетов
+    private Map<String, String> fileMatchAnnotations = new LinkedHashMap<>(); // заметки по шаблонам файлов
+    private Map<String, String> packageMatchAnnotations = new LinkedHashMap<>(); // заметки по шаблонам пакетов
     
-    // 新增：备注字体颜色配置
-    private Map<String, String> packagesTextColor = new LinkedHashMap<>(); // 包备注字体颜色
-    private Map<String, String> filesTextColor = new LinkedHashMap<>(); // 文件备注字体颜色
+    // Цвета текста заметок
+    private Map<String, String> packagesTextColor = new LinkedHashMap<>(); // цвета заметок пакетов
+    private Map<String, String> filesTextColor = new LinkedHashMap<>(); // цвета заметок файлов
     
-    private boolean builtinMappingsEnabled = true; // 内置映射库开关状态
-    private boolean projectTreeAnnotationsEnabled = true; // 项目树备注显示开关状态
-    private String language = "zh"; // 语言设置，默认为中文
+    private boolean builtinMappingsEnabled = true; // включена ли встроенная библиотека сопоставлений
+    private boolean projectTreeAnnotationsEnabled = true; // показывать ли заметки в дереве проекта
+    private String language = "ru"; // язык интерфейса, по умолчанию русский
     private MessageBusConnection messageBusConnection;
     
-    // 新增：存储所有映射文件的内容
+    // Содержимое всех файлов сопоставлений
     private Map<String, LocalMappingFile> allMappingFiles = new HashMap<>();
     
-    // 新增：JSON文件监听器
+    // Слушатель JSON-файлов
     private JsonFileWatcher jsonFileWatcher;
     
-    // 新增：实时备注服务（基于DocumentListener）
+    // Сервис живого обновления заметок (на основе DocumentListener)
     private RealTimeAnnotationService realTimeAnnotationService;
     
-    // 新增：文件编辑器监听器
+    // Слушатель редактора файлов
     private FileEditorListener fileEditorListener;
     
     public AnnotationService(Project project) {
@@ -80,18 +80,18 @@ public class AnnotationService {
         setupFileWatcher();
         // При запуске загружаем все файлы сопоставлений из папки рабочих JSON
         loadFromMappingsDirectory();
-        // 延迟初始化JSON文件监听器，避免循环依赖
-        // setupJsonFileWatcher(); // 移除立即初始化
+        // Слушатель JSON-файлов создаётся позже, чтобы не было циклической зависимости
+        // setupJsonFileWatcher(); // сразу не инициализируем
         
-        // 初始化实时备注服务，启用双向监听
+        // Сервис живого обновления: следит за изменениями в обе стороны
         setupRealTimeAnnotationService();
         
-        // 注册项目启动监听器（新API方式）
+        // Слушатель запуска проекта (новый API)
         registerProjectListener();
     }
     
     /**
-     * 清理资源
+     * Освобождает ресурсы
      */
     public void dispose() {
         if (jsonFileWatcher != null) {
@@ -106,52 +106,52 @@ public class AnnotationService {
     }
     
     /**
-     * 初始化JSON文件监听器（延迟初始化）
+     * Создаёт слушатель JSON-файлов (отложенная инициализация)
      */
     private void setupJsonFileWatcher() {
         try {
             if (jsonFileWatcher == null) {
-                jsonFileWatcher = new JsonFileWatcher(project, this); // 传入this引用
-                LOG.info("JSON文件监听器初始化成功");
+                jsonFileWatcher = new JsonFileWatcher(project, this); // передаём ссылку на себя
+                LOG.info("Слушатель JSON-файлов инициализирован");
             }
         } catch (Exception e) {
-            LOG.warn("初始化JSON文件监听器失败: " + e.getMessage());
+            LOG.warn("Не удалось инициализировать слушатель JSON-файлов: " + e.getMessage());
         }
     }
     
     /**
-     * 初始化实时备注服务
+     * Создаёт сервис живого обновления заметок
      */
     private void setupRealTimeAnnotationService() {
         try {
             if (realTimeAnnotationService == null) {
                 realTimeAnnotationService = new RealTimeAnnotationService(project);
-                LOG.info("实时备注服务初始化成功");
+                LOG.info("Сервис живого обновления заметок инициализирован");
                 
-                // 初始化文件编辑器监听器
+                // Слушатель редактора файлов
                 setupFileEditorListener();
             }
         } catch (Exception e) {
-            LOG.warn("初始化实时备注服务失败: " + e.getMessage());
+            LOG.warn("Не удалось инициализировать сервис живого обновления заметок: " + e.getMessage());
         }
     }
     
     /**
-     * 初始化文件编辑器监听器
+     * Создаёт слушатель редактора файлов
      */
     private void setupFileEditorListener() {
         try {
             if (fileEditorListener == null) {
                 fileEditorListener = new FileEditorListener(project, realTimeAnnotationService);
-                LOG.info("文件编辑器监听器初始化成功");
+                LOG.info("Слушатель редактора файлов инициализирован");
             }
         } catch (Exception e) {
-            LOG.warn("初始化文件编辑器监听器失败: " + e.getMessage());
+            LOG.warn("Не удалось инициализировать слушатель редактора файлов: " + e.getMessage());
         }
     }
     
     /**
-     * 确保JSON文件监听器已初始化
+     * Гарантирует, что слушатель JSON-файлов создан
      */
     private void ensureJsonFileWatcher() {
         if (jsonFileWatcher == null) {
@@ -160,7 +160,7 @@ public class AnnotationService {
     }
     
     /**
-     * 确保实时备注服务已设置
+     * Гарантирует, что сервис живого обновления создан
      */
     private void ensureRealTimeAnnotationService() {
         if (realTimeAnnotationService == null) {
@@ -169,88 +169,88 @@ public class AnnotationService {
     }
     
     /**
-     * 获取项目的AnnotationService实例
+     * Возвращает AnnotationService проекта
      */
     public static AnnotationService getInstance(Project project) {
-        // 使用项目级别的服务管理
+        // Сервис уровня проекта
         return project.getService(AnnotationService.class);
     }
     
     /**
-     * 项目启动时初始化服务
+     * Инициализирует сервис при запуске проекта
      */
     public static AnnotationService initializeService(Project project) {
-        // 确保服务被创建和初始化
+        // Гарантируем, что сервис создан и инициализирован
         return project.getService(AnnotationService.class);
     }
     
     /**
-     * 添加或更新文件备注
+     * Добавляет или обновляет заметку файла
      */
     public void setAnnotation(@NotNull String filePath, @NotNull String annotation) {
         annotations.put(filePath, annotation);
-        saveToFile(); // 立即保存到文件
+        saveToFile(); // сразу сохраняем в файл
     }
     
     /**
-     * 添加或更新文件备注（带颜色）
+     * Добавляет или обновляет заметку файла с цветом
      */
     public void setAnnotation(@NotNull String filePath, @NotNull String annotation, @Nullable String textColor) {
         annotations.put(filePath, annotation);
         
-        // 设置颜色（只有非默认颜色才保存）
+        // Цвет сохраняем, только если он не по умолчанию
         if (textColor != null && !textColor.equals("#BBBBBB") && !textColor.trim().isEmpty()) {
             filesTextColor.put(filePath, textColor);
         } else {
-            // 如果是默认颜色或空值，移除颜色配置
+            // Цвет по умолчанию или пустой — удаляем настройку цвета
             filesTextColor.remove(filePath);
         }
         
-        saveToFile(); // 立即保存到文件
+        saveToFile(); // сразу сохраняем в файл
     }
     
     /**
-     * 添加或更新文件备注（带颜色）并立即刷新
+     * Добавляет или обновляет заметку файла с цветом и сразу обновляет дерево
      */
     public void setAnnotationAndRefresh(@NotNull String filePath, @NotNull String annotation, @Nullable String textColor) {
         setAnnotation(filePath, annotation, textColor);
         
-        // 立即刷新VFS和项目视图
+        // Сразу обновляем VFS и дерево проекта
         refreshAfterSave();
     }
     
     /**
-     * 添加或更新包/目录备注
+     * Добавляет или обновляет заметку пакета или папки
      */
     public void setPackageAnnotation(@NotNull String packagePath, @NotNull String annotation) {
         packageAnnotations.put(packagePath, annotation);
-        saveToFile(); // 立即保存到文件
+        saveToFile(); // сразу сохраняем в файл
     }
     
     /**
-     * 添加或更新包/目录备注（带颜色）
+     * Добавляет или обновляет заметку пакета или папки с цветом
      */
     public void setPackageAnnotation(@NotNull String packagePath, @NotNull String annotation, @Nullable String textColor) {
         packageAnnotations.put(packagePath, annotation);
         
-        // 设置颜色（只有非默认颜色才保存）
+        // Цвет сохраняем, только если он не по умолчанию
         if (textColor != null && !textColor.equals("#BBBBBB") && !textColor.trim().isEmpty()) {
             packagesTextColor.put(packagePath, textColor);
         } else {
-            // 如果是默认颜色或空值，移除颜色配置
+            // Цвет по умолчанию или пустой — удаляем настройку цвета
             packagesTextColor.remove(packagePath);
         }
         
-        saveToFile(); // 立即保存到文件
+        saveToFile(); // сразу сохраняем в файл
     }
     
     /**
-     * 添加或更新包/目录备注（带颜色）并立即刷新
+     * Добавляет или обновляет заметку пакета или папки с цветом и сразу обновляет дерево
      */
     public void setPackageAnnotationAndRefresh(@NotNull String packagePath, @NotNull String annotation, @Nullable String textColor) {
         setPackageAnnotation(packagePath, annotation, textColor);
         
-        // 立即刷新VFS和项目视图
+        // Сразу обновляем VFS и дерево проекта
         refreshAfterSave();
     }
     
@@ -264,26 +264,26 @@ public class AnnotationService {
                 // Создаём папку рабочих JSON, если её нет
                 Files.createDirectories(mappingsDir);
                 
-                // 主映射文件路径
+                // Путь основного файла сопоставлений
                 Path localDescriptionPath = mappingsDir.resolve(MappingsPaths.LOCAL_DESCRIPTION_FILE);
                 
-                // 创建或更新主映射文件
+                // Создаём или обновляем основной файл
                 LocalMappingFile localMapping = createLocalMappingFile();
                 
-                // 序列化为 JSON
+                // Переводим в JSON
                 String jsonContent = gson.toJson(localMapping);
                 
-                // 写入文件
+                // Записываем файл
                 Files.writeString(localDescriptionPath, jsonContent);
-                LOG.info("备注已保存到: " + localDescriptionPath);
+                LOG.info("Заметки сохранены в: " + localDescriptionPath);
             }
         } catch (IOException e) {
-            LOG.error("保存备注文件失败: " + e.getMessage(), e);
+            LOG.error("Не удалось сохранить файл заметок: " + e.getMessage(), e);
         }
     }
     
     /**
-     * 获取JSON格式的备注内容（用于导出）
+     * Возвращает заметки в виде JSON (для экспорта)
      */
     public String getJsonContentForExport() {
         LocalMappingFile localMapping = createLocalMappingFile();
@@ -291,12 +291,12 @@ public class AnnotationService {
     }
     
     /**
-     * 创建本地映射文件对象
+     * Собирает объект локального файла сопоставлений
      */
     private LocalMappingFile createLocalMappingFile() {
         LocalMappingFile localMapping = new LocalMappingFile();
         
-        // 设置元数据
+        // Метаданные
         localMapping.setName("project local mappings");
         localMapping.setVersion("1.0.0");
         localMapping.setDescription("Current project path and file mapping configuration");
@@ -304,7 +304,7 @@ public class AnnotationService {
         localMapping.setBuiltinMappingsEnabled(builtinMappingsEnabled);
         localMapping.setLanguage(language);
         
-        // 设置映射内容 - 按照期望的顺序
+        // Содержимое сопоставлений — в нужном порядке
         LocalMappingFile.Mappings mappings = localMapping.getMappings();
         mappings.setFiles(new LinkedHashMap<>(annotations));
         mappings.setPackages(new LinkedHashMap<>(packageAnnotations));
@@ -319,7 +319,7 @@ public class AnnotationService {
 
     
     /**
-     * 获取备注
+     * Возвращает заметку
      */
     @Nullable
     public String getAnnotation(@NotNull String filePath) {
@@ -327,7 +327,7 @@ public class AnnotationService {
     }
     
     /**
-     * 获取文件备注（VirtualFile版本）
+     * Возвращает заметку файла (по VirtualFile)
      */
     @Nullable
     public String getAnnotation(@NotNull VirtualFile file) {
@@ -336,33 +336,33 @@ public class AnnotationService {
     }
     
     /**
-     * 获取包备注（VirtualFile版本）
+     * Возвращает заметку пакета (по VirtualFile)
      */
     @Nullable
     public String getPackageAnnotation(@NotNull VirtualFile file) {
         String relativePath = getRelativePath(file);
         if (relativePath != null) {
-            // packages 映射使用原始文件系统路径（包含/），不进行标准化
+            // В packages путь хранится как в файловой системе (с /), не нормализуем
             return getPackageAnnotation(relativePath);
         }
         return null;
     }
     
     /**
-     * 获取包备注（字符串路径版本）
+     * Возвращает заметку пакета (по строковому пути)
      */
     @Nullable
     public String getPackageAnnotation(@NotNull String packagePath) {
-        // 直接查找，不进行路径标准化
+        // Ищем как есть, без нормализации пути
         return packageAnnotations.get(packagePath);
     }
     
     /**
-     * 根据文件名模式匹配文件匹配模式备注
-     * 支持精确的匹配策略：
-     * 1. 正则表达式匹配（如 ".*Controller\\.java$"）
-     * 2. 完整单词匹配（如 "service" 只匹配独立的单词，不匹配 "consumer.service"）
-     * 3. 完全匹配（完全相同的文件名）
+     * Ищет заметку по шаблону файла для имени файла
+     * Порядок проверки:
+     * 1. Регулярное выражение (например ".*Controller\\.java$")
+     * 2. Целое слово (например "service" совпадает только с отдельным словом, не с "consumer.service")
+     * 3. Полное совпадение имени файла
      */
     @Nullable
     public String getFileMatchAnnotation(@NotNull String fileName) {
@@ -370,10 +370,10 @@ public class AnnotationService {
     }
     
     /**
-     * 根据文件名和路径模式匹配文件匹配模式备注（支持混合匹配）
-     * @param fileName 文件名
-     * @param relativePath 文件的相对路径（可为null）
-     * @return 匹配的备注
+     * Ищет заметку по шаблону файла для имени и пути (поддерживает смешанные шаблоны)
+     * @param fileName имя файла
+     * @param relativePath относительный путь файла (может быть null)
+     * @return найденная заметка
      */
     @Nullable
     public String getFileMatchAnnotation(@NotNull String fileName, @Nullable String relativePath) {
@@ -381,24 +381,24 @@ public class AnnotationService {
             return null;
         }
         
-        // 优先进行完全匹配
+        // Сначала полное совпадение
         String exactMatch = fileMatchAnnotations.get(fileName);
         if (exactMatch != null) {
             return exactMatch;
         }
         
-        // 按优先级进行模式匹配
+        // Затем шаблоны по очереди
         return fileMatchAnnotations.entrySet().stream()
             .filter(entry -> {
                 String pattern = entry.getKey();
                 String value = entry.getValue();
                 
-                // 跳过空值
+                // Пустые значения пропускаем
                 if (value == null || value.trim().isEmpty()) {
                     return false;
                 }
                 
-                // 使用精确匹配逻辑
+                // Точное сопоставление
                 return matchesFilePattern(fileName, pattern, relativePath);
             })
             .map(Map.Entry::getValue)
@@ -407,11 +407,11 @@ public class AnnotationService {
     }
     
     /**
-     * 根据包名模式匹配包匹配模式备注
-     * 支持精确的匹配策略：
-     * 1. 正则表达式匹配（如 ".*\\.service\\..*"）
-     * 2. 完整路径段匹配（如 "service" 只匹配完整的路径段，不匹配 "consumer.service"）
-     * 3. 完全匹配（完全相同的包路径）
+     * Ищет заметку по шаблону пакета для имени пакета
+     * Порядок проверки:
+     * 1. Регулярное выражение (например ".*\\.service\\..*")
+     * 2. Целые сегменты пути (например "service" совпадает только с целым сегментом, не с "consumer.service")
+     * 3. Полное совпадение пути пакета
      */
     @Nullable
     public String getPackageMatchAnnotation(@NotNull String packageName) {
@@ -419,24 +419,24 @@ public class AnnotationService {
             return null;
         }
         
-        // 优先进行完全匹配
+        // Сначала полное совпадение
         String exactMatch = packageMatchAnnotations.get(packageName);
         if (exactMatch != null) {
             return exactMatch;
         }
         
-        // 按优先级进行模式匹配
+        // Затем шаблоны по очереди
         return packageMatchAnnotations.entrySet().stream()
             .filter(entry -> {
                 String pattern = entry.getKey();
                 String value = entry.getValue();
                 
-                // 跳过空值
+                // Пустые значения пропускаем
                 if (value == null || value.trim().isEmpty()) {
                     return false;
                 }
                 
-                // 使用精确匹配逻辑
+                // Точное сопоставление
                 return matchesPackagePattern(packageName, pattern);
             })
             .map(Map.Entry::getValue)
@@ -445,27 +445,27 @@ public class AnnotationService {
     }
     
     /**
-     * 删除文件备注
+     * Удаляет заметку файла
      */
     public void removeAnnotation(@NotNull String filePath) {
         annotations.remove(filePath);
-        // 同时清理颜色配置
+        // Заодно удаляем настройку цвета
         filesTextColor.remove(filePath);
-        saveToFile(); // 立即保存到文件
+        saveToFile(); // сразу сохраняем в файл
     }
     
     /**
-     * 删除包/目录备注
+     * Удаляет заметку пакета или папки
      */
     public void removePackageAnnotation(@NotNull String packagePath) {
         packageAnnotations.remove(packagePath);
-        // 同时清理颜色配置
+        // Заодно удаляем настройку цвета
         packagesTextColor.remove(packagePath);
-        saveToFile(); // 立即保存到文件
+        saveToFile(); // сразу сохраняем в файл
     }
     
     /**
-     * 删除备注（VirtualFile版本）
+     * Удаляет заметку (по VirtualFile)
      */
     public void removeAnnotation(@NotNull VirtualFile file) {
         String relativePath = getRelativePath(file);
@@ -475,21 +475,21 @@ public class AnnotationService {
     }
     
     /**
-     * 检查是否有文件备注
+     * Есть ли заметка у файла
      */
     public boolean hasAnnotation(@NotNull String filePath) {
         return annotations.containsKey(filePath);
     }
     
     /**
-     * 检查是否有包/目录备注
+     * Есть ли заметка у пакета или папки
      */
     public boolean hasPackageAnnotation(@NotNull String packagePath) {
         return packageAnnotations.containsKey(packagePath);
     }
     
     /**
-     * 检查是否有文件备注（VirtualFile版本）
+     * Есть ли заметка у файла (по VirtualFile)
      */
     public boolean hasAnnotation(@NotNull VirtualFile file) {
         String relativePath = getRelativePath(file);
@@ -497,7 +497,7 @@ public class AnnotationService {
     }
     
     /**
-     * 检查是否有包/目录备注（VirtualFile版本）
+     * Есть ли заметка у пакета или папки (по VirtualFile)
      */
     public boolean hasPackageAnnotation(@NotNull VirtualFile file) {
         String relativePath = getRelativePath(file);
@@ -505,7 +505,7 @@ public class AnnotationService {
     }
     
     /**
-     * 获取所有文件备注
+     * Все заметки файлов
      */
     @NotNull
     public Map<String, String> getAllAnnotations() {
@@ -513,7 +513,7 @@ public class AnnotationService {
     }
     
     /**
-     * 获取所有包备注
+     * Все заметки пакетов
      */
     @NotNull
     public Map<String, String> getAllPackageAnnotations() {
@@ -521,7 +521,7 @@ public class AnnotationService {
     }
     
     /**
-     * 获取所有文件匹配模式备注
+     * Все заметки по шаблонам файлов
      */
     @NotNull
     public Map<String, String> getAllFileMatchAnnotations() {
@@ -529,7 +529,7 @@ public class AnnotationService {
     }
     
     /**
-     * 获取所有包匹配模式备注
+     * Все заметки по шаблонам пакетов
      */
     @NotNull
     public Map<String, String> getAllPackageMatchAnnotations() {
@@ -537,21 +537,21 @@ public class AnnotationService {
     }
     
     /**
-     * 获取包备注字体颜色
+     * Цвет заметки пакета
      */
     public String getPackageTextColor(@NotNull String packagePath) {
         return packagesTextColor.get(packagePath);
     }
     
     /**
-     * 获取文件备注字体颜色
+     * Цвет заметки файла
      */
     public String getFileTextColor(@NotNull String filePath) {
         return filesTextColor.get(filePath);
     }
     
     /**
-     * 设置包备注字体颜色
+     * Задаёт цвет заметки пакета
      */
     public void setPackageTextColor(@NotNull String packagePath, @NotNull String color) {
         packagesTextColor.put(packagePath, color);
@@ -559,7 +559,7 @@ public class AnnotationService {
     }
     
     /**
-     * 设置文件备注字体颜色
+     * Задаёт цвет заметки файла
      */
     public void setFileTextColor(@NotNull String filePath, @NotNull String color) {
         filesTextColor.put(filePath, color);
@@ -567,86 +567,86 @@ public class AnnotationService {
     }
     
     /**
-     * 获取所有包备注字体颜色
+     * Все цвета заметок пакетов
      */
     public Map<String, String> getAllPackageTextColors() {
         return new HashMap<>(packagesTextColor);
     }
     
     /**
-     * 获取所有文件备注字体颜色
+     * Все цвета заметок файлов
      */
     public Map<String, String> getAllFileTextColors() {
         return new HashMap<>(filesTextColor);
     }
     
     /**
-     * 获取内置映射库开关状态
+     * Включена ли встроенная библиотека сопоставлений
      */
     public boolean isBuiltinMappingsEnabled() {
         return builtinMappingsEnabled;
     }
     
     /**
-     * 设置内置映射库开关状态
+     * Включает или выключает встроенную библиотеку сопоставлений
      */
     public void setBuiltinMappingsEnabled(boolean enabled) {
         if (this.builtinMappingsEnabled != enabled) {
             this.builtinMappingsEnabled = enabled;
-            saveToFile(); // 立即保存到文件
+            saveToFile(); // сразу сохраняем в файл
         }
     }
     
     /**
-     * 批量设置文件备注
+     * Задаёт заметки файлов целиком
      */
     public void setAnnotations(@NotNull Map<String, String> newAnnotations) {
         annotations.putAll(newAnnotations);
-        saveToFile(); // 立即保存到文件
+        saveToFile(); // сразу сохраняем в файл
     }
     
     /**
-     * 批量设置包备注
+     * Задаёт заметки пакетов целиком
      */
     public void setPackageAnnotations(@NotNull Map<String, String> newAnnotations) {
         packageAnnotations.putAll(newAnnotations);
-        saveToFile(); // 立即保存到文件
+        saveToFile(); // сразу сохраняем в файл
     }
     
     /**
-     * 添加或更新单个文件匹配模式备注
+     * Добавляет или обновляет заметку по шаблону файла
      */
     public void setFileMatchAnnotation(@NotNull String pattern, @NotNull String annotation) {
         fileMatchAnnotations.put(pattern, annotation);
-        saveToFile(); // 立即保存到文件
+        saveToFile(); // сразу сохраняем в файл
     }
     
     /**
-     * 添加或更新单个包匹配模式备注
+     * Добавляет или обновляет заметку по шаблону пакета
      */
     public void setPackageMatchAnnotation(@NotNull String pattern, @NotNull String annotation) {
         packageMatchAnnotations.put(pattern, annotation);
-        saveToFile(); // 立即保存到文件
+        saveToFile(); // сразу сохраняем в файл
     }
     
     /**
-     * 批量设置文件匹配模式备注
+     * Задаёт заметки по шаблонам файлов целиком
      */
     public void setFileMatchAnnotations(@NotNull Map<String, String> newAnnotations) {
         fileMatchAnnotations.putAll(newAnnotations);
-        saveToFile(); // 立即保存到文件
+        saveToFile(); // сразу сохраняем в файл
     }
     
     /**
-     * 批量设置包匹配模式备注
+     * Задаёт заметки по шаблонам пакетов целиком
      */
     public void setPackageMatchAnnotations(@NotNull Map<String, String> newAnnotations) {
         packageMatchAnnotations.putAll(newAnnotations);
-        saveToFile(); // 立即保存到文件
+        saveToFile(); // сразу сохраняем в файл
     }
     
     /**
-     * 清空所有备注
+     * Удаляет все заметки
      */
     public void clearAllAnnotations() {
         annotations.clear();
@@ -659,14 +659,14 @@ public class AnnotationService {
         // Удаляем из папки рабочих JSON всё, кроме local-description.json
         clearMappingsDirectory();
         
-        saveToFile(); // 立即保存到文件
+        saveToFile(); // сразу сохраняем в файл
         
-        // 强制刷新UI和编辑器内容
+        // Принудительно обновляем интерфейс и редакторы
         forceRefreshUIAndEditors();
     }
     
     /**
-     * 获取文件相对于项目根目录的路径
+     * Путь файла относительно корня проекта
      */
     @Nullable
     private String getRelativePath(@NotNull VirtualFile file) {
@@ -678,13 +678,13 @@ public class AnnotationService {
         String filePath = file.getPath();
         
         if (filePath.startsWith(projectPath)) {
-            // 确保有子路径才截取，避免StringIndexOutOfBoundsException
+            // Обрезаем, только если есть вложенный путь, иначе StringIndexOutOfBoundsException
             if (filePath.length() > projectPath.length()) {
                 String relativePath = filePath.substring(projectPath.length());
 
                 return relativePath.startsWith("/") ? relativePath.substring(1) : relativePath;
             } else if (filePath.equals(projectPath)) {
-                // 如果是项目根目录本身
+                // Это сам корень проекта
                 return "";
             }
         }
@@ -695,13 +695,13 @@ public class AnnotationService {
 
     
     /**
-     * 将备注导出为与映射库兼容的格式
+     * Экспортирует заметки в формате, совместимом с библиотекой сопоставлений
      */
     public String exportToMappingFormat() {
         Map<String, Object> exportData = new HashMap<>();
-        exportData.put("name", "用户备注");
+        exportData.put("name", "Заметки пользователя");
         exportData.put("version", "1.0.0");
-        exportData.put("description", "用户自定义备注");
+        exportData.put("description", "Пользовательские заметки");
         
         Map<String, Object> mappings = new HashMap<>();
         mappings.put("files", annotations);
@@ -720,7 +720,7 @@ public class AnnotationService {
     }
     
     /**
-     * 从映射库格式导入备注
+     * Импортирует заметки из формата библиотеки сопоставлений
      */
     @SuppressWarnings("unchecked")
     public boolean importFromMappingFormat(String jsonContent) {
@@ -730,47 +730,47 @@ public class AnnotationService {
                 LocalMappingFile.Mappings mappings = mappingFile.getMappings();
                 boolean hasImported = false;
                 
-                // 导入文件备注
+                // Заметки файлов
                 Map<String, String> files = mappings.getFiles();
                 if (files != null && !files.isEmpty()) {
                     annotations.putAll(files);
                     hasImported = true;
                 }
                 
-                // 导入包备注
+                // Заметки пакетов
                 Map<String, String> packages = mappings.getPackages();
                 if (packages != null && !packages.isEmpty()) {
                     packageAnnotations.putAll(packages);
                     hasImported = true;
                 }
                 
-                // 导入文件匹配模式备注
+                // Заметки по шаблонам файлов
                 Map<String, String> fileMatchPatterns = mappings.getFileMatch();
                 if (fileMatchPatterns != null && !fileMatchPatterns.isEmpty()) {
                     fileMatchAnnotations.putAll(fileMatchPatterns);
                     hasImported = true;
                 }
                 
-                // 导入包匹配模式备注
+                // Заметки по шаблонам пакетов
                 Map<String, String> packageMatchPatterns = mappings.getPackageMatch();
                 if (packageMatchPatterns != null && !packageMatchPatterns.isEmpty()) {
                     packageMatchAnnotations.putAll(packageMatchPatterns);
                     hasImported = true;
                 }
                 
-                // 导入内置映射库开关状态
+                // Переключатель встроенной библиотеки сопоставлений
                 if (mappingFile.getBuiltinMappingsEnabled() != null) {
                     this.builtinMappingsEnabled = mappingFile.getBuiltinMappingsEnabled();
                     hasImported = true;
                 }
                 
                 if (hasImported) {
-                    saveToFile(); // 立即保存到文件
+                    saveToFile(); // сразу сохраняем в файл
                     return true;
                 }
             }
         } catch (JsonSyntaxException e) {
-            LOG.error("导入备注失败: " + e.getMessage(), e);
+            LOG.error("Не удалось импортировать заметки: " + e.getMessage(), e);
         }
         return false;
     }
@@ -796,21 +796,21 @@ public class AnnotationService {
                 // Читаем все JSON-файлы папки
                 scanAndLoadMappingFiles(mappingsDir);
                 
-                // 合并所有数据
+                // Объединяем все данные
                 mergeMappingData();
                 
                 LOG.info("Сопоставления загружены из папки рабочих JSON");
                 
-                // 加载完成后初始化JSON文件监听器
+                // После загрузки создаём слушатель JSON-файлов
                 ensureJsonFileWatcher();
                 
-                // 加载完成后初始化实时备注服务
+                // После загрузки создаём сервис живого обновления
                 ensureRealTimeAnnotationService();
             }
         } catch (IOException e) {
-            LOG.error("加载映射目录失败: " + e.getMessage(), e);
+            LOG.error("Не удалось загрузить папку сопоставлений: " + e.getMessage(), e);
             
-            // 尝试从旧的 annotations.xml 迁移
+            // Пробуем перенести данные из старого annotations.xml
             tryMigrateFromXml();
         }
     }
@@ -829,7 +829,7 @@ public class AnnotationService {
     }
     
     /**
-     * 加载单个映射文件
+     * Загружает один файл сопоставлений
      */
     private void loadSingleMappingFile(Path filePath) {
         try {
@@ -839,18 +839,18 @@ public class AnnotationService {
             if (mappingFile != null) {
                 String fileName = filePath.getFileName().toString();
                 allMappingFiles.put(fileName, mappingFile);
-                LOG.info("已加载映射文件: " + fileName);
+                LOG.info("Загружен файл сопоставлений: " + fileName);
             }
         } catch (IOException | JsonSyntaxException e) {
-            LOG.error("加载映射文件失败: " + filePath + ", 错误: " + e.getMessage(), e);
+            LOG.error("Не удалось загрузить файл сопоставлений: " + filePath + ", ошибка: " + e.getMessage(), e);
         }
     }
     
     /**
-     * 合并所有映射数据到主数据结构中
+     * Сводит данные всех файлов сопоставлений в основные структуры
      */
     private void mergeMappingData() {
-        // 清空现有数据
+        // Очищаем текущие данные
         annotations.clear();
         packageAnnotations.clear();
         fileMatchAnnotations.clear();
@@ -858,18 +858,18 @@ public class AnnotationService {
         packagesTextColor.clear();
         filesTextColor.clear();
         
-        // 先加载主文件
+        // Сначала основной файл
         LocalMappingFile localDescription = allMappingFiles.get(MappingsPaths.LOCAL_DESCRIPTION_FILE);
         if (localDescription != null) {
             mergeSingleMappingFile(localDescription);
             
-            // 从主文件获取全局设置
+            // Общие настройки берём из основного файла
             if (localDescription.getBuiltinMappingsEnabled() != null) {
                 this.builtinMappingsEnabled = localDescription.getBuiltinMappingsEnabled();
             }
         }
         
-        // 再加载其他文件
+        // Затем остальные файлы
         for (Map.Entry<String, LocalMappingFile> entry : allMappingFiles.entrySet()) {
             if (!MappingsPaths.LOCAL_DESCRIPTION_FILE.equals(entry.getKey())) {
                 mergeSingleMappingFile(entry.getValue());
@@ -878,51 +878,51 @@ public class AnnotationService {
     }
     
     /**
-     * 合并单个映射文件的数据
+     * Добавляет данные одного файла сопоставлений
      */
     private void mergeSingleMappingFile(LocalMappingFile mappingFile) {
         if (mappingFile != null && mappingFile.getMappings() != null) {
             LocalMappingFile.Mappings mappings = mappingFile.getMappings();
             
-            // 合并文件映射
+            // Сопоставления файлов
             if (mappings.getFiles() != null) {
                 annotations.putAll(mappings.getFiles());
             }
             
-            // 合并包映射
+            // Сопоставления пакетов
             if (mappings.getPackages() != null) {
                 packageAnnotations.putAll(mappings.getPackages());
             }
             
-            // 合并文件匹配映射
+            // Шаблоны файлов
             if (mappings.getFileMatch() != null) {
                 fileMatchAnnotations.putAll(mappings.getFileMatch());
             }
             
-            // 合并包匹配映射
+            // Шаблоны пакетов
             if (mappings.getPackageMatch() != null) {
                 packageMatchAnnotations.putAll(mappings.getPackageMatch());
             }
             
-            // 合并包备注字体颜色
+            // Цвета заметок пакетов
             if (mappings.getPackagesTextColor() != null) {
                 packagesTextColor.putAll(mappings.getPackagesTextColor());
             }
             
-            // 合并文件备注字体颜色
+            // Цвета заметок файлов
             if (mappings.getFilesTextColor() != null) {
                 filesTextColor.putAll(mappings.getFilesTextColor());
             }
             
-            // 合并语言设置
+            // Язык; старый код "zh" превращается в "ru"
             if (mappingFile.getLanguage() != null) {
-                language = mappingFile.getLanguage();
+                language = com.github.annotations.utils.LanguageManager.Language.normalizeCode(mappingFile.getLanguage());
             }
         }
     }
     
     /**
-     * 尝试从旧的 annotations.xml 迁移数据
+     * Пробует перенести данные из старого annotations.xml
      */
     private void tryMigrateFromXml() {
         try {
@@ -930,51 +930,51 @@ public class AnnotationService {
             if (basePath != null) {
                 Path oldXmlPath = Paths.get(basePath, "annotations.xml");
                 if (Files.exists(oldXmlPath)) {
-                    LOG.info("检测到旧的 annotations.xml 文件，尝试迁移...");
+                    LOG.info("Найден старый annotations.xml, переносим данные...");
                     
                     String xmlContent = Files.readString(oldXmlPath);
                     
-                    // 解析 XML 并迁移数据
+                    // Разбираем XML и переносим данные
                     migrateFromXmlContent(xmlContent);
                     
-                    // 保存为新格式
+                    // Сохраняем в новом формате
                     saveToFile();
                     
-                    LOG.info("数据迁移完成，建议删除旧的 annotations.xml 文件");
+                    LOG.info("Перенос данных завершён, старый annotations.xml можно удалить");
                 }
             }
         } catch (IOException e) {
-            LOG.error("迁移旧数据失败: " + e.getMessage(), e);
+            LOG.error("Не удалось перенести старые данные: " + e.getMessage(), e);
         }
     }
     
     /**
-     * 从 XML 内容迁移数据
+     * Переносит данные из содержимого XML
      */
     private void migrateFromXmlContent(String xmlContent) {
         try {
-            // 清空现有数据
+            // Очищаем текущие данные
             annotations.clear();
             packageAnnotations.clear();
             fileMatchAnnotations.clear();
             packageMatchAnnotations.clear();
             
-            // 解析各个部分
+            // Разбираем разделы
             parseXmlSectionForMigration(xmlContent, "files", annotations);
             parseXmlSectionForMigration(xmlContent, "packages", packageAnnotations);
             parseXmlSectionForMigration(xmlContent, "fileMatch", fileMatchAnnotations);
             parseXmlSectionForMigration(xmlContent, "packageMatch", packageMatchAnnotations);
             
-            // 解析内置映射库开关状态
+            // Переключатель встроенной библиотеки сопоставлений
             parseBuiltinMappingsEnabledFromXml(xmlContent);
             
         } catch (Exception e) {
-            LOG.error("迁移 XML 内容失败: " + e.getMessage(), e);
+            LOG.error("Не удалось перенести содержимое XML: " + e.getMessage(), e);
         }
     }
     
     /**
-     * 从 XML 解析特定部分（迁移用）
+     * Разбирает раздел XML (для переноса)
      */
     private void parseXmlSectionForMigration(String xmlContent, String sectionName, Map<String, String> targetMap) {
         try {
@@ -987,11 +987,11 @@ public class AnnotationService {
                 if (endIndex != -1) {
                     String sectionContent = xmlContent.substring(startIndex, endIndex + endTag.length());
                     
-                    // 解析entry标签
+                    // Разбираем теги entry
                     String[] lines = sectionContent.split("\n");
                     for (String line : lines) {
                         if (line.contains("<entry key=") && line.contains("value=")) {
-                            // 提取key和value
+                            // Извлекаем key и value
                             int keyStart = line.indexOf("key=\"") + 5;
                             int keyEnd = line.indexOf("\"", keyStart);
                             int valueStart = line.indexOf("value=\"") + 7;
@@ -1001,7 +1001,7 @@ public class AnnotationService {
                                 String key = line.substring(keyStart, keyEnd);
                                 String value = line.substring(valueStart, valueEnd);
                                 
-                                // 反转义XML特殊字符
+                                // Раскрываем экранирование XML
                                 key = unescapeXml(key);
                                 value = unescapeXml(value);
                                 
@@ -1012,12 +1012,12 @@ public class AnnotationService {
                 }
             }
         } catch (Exception e) {
-            LOG.error("解析 XML 部分 " + sectionName + " 失败: " + e.getMessage(), e);
+            LOG.error("Не удалось разобрать раздел XML " + sectionName + ": " + e.getMessage(), e);
         }
     }
     
     /**
-     * 从 XML 解析内置映射库开关状态（迁移用）
+     * Читает из XML переключатель встроенной библиотеки сопоставлений (для переноса)
      */
     private void parseBuiltinMappingsEnabledFromXml(String xmlContent) {
         try {
@@ -1032,127 +1032,127 @@ public class AnnotationService {
                 }
             }
         } catch (Exception e) {
-            LOG.error("解析内置映射库开关状态失败: " + e.getMessage(), e);
-            // 保持默认值 true
+            LOG.error("Не удалось прочитать переключатель встроенной библиотеки сопоставлений: " + e.getMessage(), e);
+            // Оставляем значение по умолчанию true
             this.builtinMappingsEnabled = true;
         }
     }
     
     /**
-     * 检查文件名是否匹配给定的模式
-     * @param fileName 文件名
-     * @param pattern 匹配模式
-     * @return 是否匹配
+     * Подходит ли имя файла под шаблон
+     * @param fileName имя файла
+     * @param pattern шаблон
+     * @return true, если подходит
      */
     private boolean matchesFilePattern(@NotNull String fileName, @NotNull String pattern) {
         return matchesFilePattern(fileName, pattern, null);
     }
     
     /**
-     * 检查文件名是否匹配给定的模式（支持混合匹配）
-     * @param fileName 文件名
-     * @param pattern 匹配模式
-     * @param relativePath 文件的相对路径（可为null）
-     * @return 是否匹配
+     * Подходит ли имя файла под шаблон (поддерживает смешанные шаблоны)
+     * @param fileName имя файла
+     * @param pattern шаблон
+     * @param relativePath относительный путь файла (может быть null)
+     * @return true, если подходит
      */
     private boolean matchesFilePattern(@NotNull String fileName, @NotNull String pattern, @Nullable String relativePath) {
         try {
-            // 1. 尝试正则表达式匹配
+            // 1. Пробуем как регулярное выражение
             if (pattern.contains(".*") || pattern.contains("\\") || pattern.contains("$") || pattern.contains("^")) {
                 return fileName.matches(pattern);
             }
             
-            // 2. 检查是否为混合匹配模式（包含路径分隔符）
+            // 2. Смешанный шаблон (есть разделитель пути)
             if (pattern.contains("/")) {
                 return matchesMixedPattern(fileName, pattern, relativePath);
             }
             
-            // 3. 完全匹配 - 文件名必须完全相等
+            // 3. Полное совпадение — имя файла должно совпасть целиком
             return fileName.equalsIgnoreCase(pattern);
             
         } catch (Exception e) {
-            // 如果出错，降级为简单包含匹配
+            // При ошибке — упрощённая проверка на вхождение
             return fileName.toLowerCase().contains(pattern.toLowerCase());
         }
     }
     
     /**
-     * 检查文件是否匹配混合模式（包路径+文件名）
-     * @param fileName 当前文件名
-     * @param pattern 混合模式，如 "com/common/pom.xml"
-     * @param relativePath 文件的相对路径（可为null）
-     * @return 是否匹配
+     * Подходит ли файл под смешанный шаблон (путь пакета + имя файла)
+     * @param fileName имя текущего файла
+     * @param pattern смешанный шаблон, например "com/common/pom.xml"
+     * @param relativePath относительный путь файла (может быть null)
+     * @return true, если подходит
      */
     private boolean matchesMixedPattern(@NotNull String fileName, @NotNull String pattern, @Nullable String relativePath) {
-        // 从pattern中提取文件名和包路径
+        // Делим шаблон на путь пакета и имя файла
         int lastSlashIndex = pattern.lastIndexOf('/');
         if (lastSlashIndex == -1) {
-            return false; // 不应该发生，因为调用前已检查包含'/'
+            return false; // не должно случаться: наличие '/' проверено до вызова
         }
         
         String expectedFileName = pattern.substring(lastSlashIndex + 1);
         String expectedPackagePath = pattern.substring(0, lastSlashIndex);
         
-        // 首先检查文件名是否匹配
+        // Сначала сверяем имя файла
         if (!fileName.equalsIgnoreCase(expectedFileName)) {
             return false;
         }
         
-        // 如果没有相对路径信息，只能基于文件名匹配
+        // Пути нет — сверяем только по имени файла
         if (relativePath == null || relativePath.isEmpty()) {
             return true;
         }
         
-        // 检查文件是否在期望的包路径中（后缀匹配）
-        // 从relativePath中提取目录路径
+        // Лежит ли файл в ожидаемом пакете (совпадение окончания пути)
+        // Берём путь папки из relativePath
         String fileDir = "";
         int fileLastSlashIndex = relativePath.lastIndexOf('/');
         if (fileLastSlashIndex != -1) {
             fileDir = relativePath.substring(0, fileLastSlashIndex);
         }
         
-        // 检查目录路径是否以期望的包路径结尾
+        // Оканчивается ли путь папки ожидаемым путём пакета
         return fileDir.endsWith(expectedPackagePath);
     }
     
     /**
-     * 检查包路径是否匹配给定的模式
-     * @param packagePath 包路径（可能使用 / 或 . 作为分隔符）
-     * @param pattern 匹配模式
-     * @return 是否匹配
+     * Подходит ли путь пакета под шаблон
+     * @param packagePath путь пакета (разделитель / или .)
+     * @param pattern шаблон
+     * @return true, если подходит
      */
     private boolean matchesPackagePattern(@NotNull String packagePath, @NotNull String pattern) {
         try {
-            // 1. 尝试正则表达式匹配
+            // 1. Пробуем как регулярное выражение
             if (pattern.contains(".*") || pattern.contains("\\") || pattern.contains("$") || pattern.contains("^")) {
-                // 将包路径标准化（支持 / 和 . 分隔符）
+                // Приводим путь пакета к одному виду (разделители / и .)
                 String normalizedPath = packagePath.replace("/", ".");
                 return normalizedPath.matches(pattern);
             }
             
-            // 2. 完整路径段匹配 - 确保pattern作为完整的路径段出现
+            // 2. Совпадение целыми сегментами пути: шаблон должен встречаться как полные сегменты
             String normalizedPath = packagePath.replace("/", ".").toLowerCase();
             String lowerPattern = pattern.toLowerCase();
             
-            // 将路径分割为段
+            // Делим путь на сегменты
             String[] pathSegments = normalizedPath.split("\\.");
             String[] patternSegments = lowerPattern.split("\\.");
             
-            // 检查是否有连续的路径段匹配pattern的所有段
+            // Ищем подряд идущие сегменты пути, совпадающие со всеми сегментами шаблона
             if (patternSegments.length == 1) {
-                // 单段匹配：只匹配路径的最后一段（目录名）
+                // Шаблон из одного сегмента: сравниваем только с последним сегментом пути (имя папки)
                 if (pathSegments.length > 0) {
                     String lastSegment = pathSegments[pathSegments.length - 1];
                     return lastSegment.equals(lowerPattern);
                 }
                 return false;
             } else {
-                // 多段匹配：后缀精准匹配（支持前缀路径，但后缀必须完全匹配）
+                // Шаблон из нескольких сегментов: точное совпадение окончания (впереди путь может быть любым)
                 if (patternSegments.length > pathSegments.length) {
-                    return false; // 模式段数不能超过路径段数
+                    return false; // в шаблоне не может быть больше сегментов, чем в пути
                 }
                 
-                // 检查后缀是否完全匹配
+                // Совпадает ли окончание целиком
                 int pathStart = pathSegments.length - patternSegments.length;
                 for (int i = 0; i < patternSegments.length; i++) {
                     if (!pathSegments[pathStart + i].equals(patternSegments[i])) {
@@ -1163,7 +1163,7 @@ public class AnnotationService {
             }
             
         } catch (Exception e) {
-            // 如果出错，降级为简单匹配
+            // При ошибке — упрощённая проверка
             String normalizedPath = packagePath.replace("/", ".").toLowerCase();
             return normalizedPath.contains(pattern.toLowerCase());
         }
@@ -1172,7 +1172,7 @@ public class AnnotationService {
 
     
     /**
-     * 反转义XML特殊字符（仅用于迁移）
+     * Раскрывает экранирование XML (только для переноса)
      */
     private String unescapeXml(String text) {
         if (text == null) return "";
@@ -1185,12 +1185,12 @@ public class AnnotationService {
     
     /**
      * Слушатель изменений JSON-файлов в папке рабочих JSON
-     * 实现实时双向绑定：修改JSON文件后自动刷新项目视图
+     * Двусторонняя связь: после правки JSON-файла дерево проекта обновляется само
      */
     private void setupFileWatcher() {
-        // 不再需要重复的VFS监听器，RealTimeAnnotationService中已有实时监听器
-        // 保留方法体为空，避免双重监听问题
-        LOG.info("VFS文件监听器已禁用，使用RealTimeAnnotationService的实时监听器");
+        // Отдельный слушатель VFS не нужен: он уже есть в RealTimeAnnotationService
+        // Тело оставлено пустым, чтобы события не обрабатывались дважды
+        LOG.info("Слушатель VFS здесь отключён, работает слушатель RealTimeAnnotationService");
     }
     
     /**
@@ -1201,27 +1201,27 @@ public class AnnotationService {
             Path mappingsDir = MappingsPaths.getMappingsDir(project);
             if (mappingsDir != null) {
                 if (Files.exists(mappingsDir)) {
-                    // 扫描并加载所有 JSON 文件
+                    // Читаем все JSON-файлы
                     scanAndLoadMappingFiles(mappingsDir);
                     
-                    // 合并数据
+                    // Объединяем данные
                     mergeMappingData();
                     
                     LOG.info("Сопоставления перечитаны из папки рабочих JSON");
                 }
             }
         } catch (IOException e) {
-            LOG.error("重新加载映射目录失败: " + e.getMessage(), e);
+            LOG.error("Не удалось перечитать папку сопоставлений: " + e.getMessage(), e);
         }
     }
     
     /**
-     * 重新加载备注数据（公共方法）
+     * Перечитывает заметки (публичный метод)
      */
     public void reloadAnnotations() {
         reloadFromMappingsDirectory();
         
-        // 强制刷新UI，确保备注显示更新
+        // Принудительно обновляем интерфейс, чтобы заметки отобразились
         forceRefreshUI();
     }
     
@@ -1238,9 +1238,9 @@ public class AnnotationService {
                              .forEach(path -> {
                                  try {
                                      Files.deleteIfExists(path);
-                                     LOG.info("已删除文件: " + path.toString());
+                                     LOG.info("Удалён файл: " + path.toString());
                                  } catch (IOException e) {
-                                     LOG.warn("删除文件失败: " + path.toString() + ", 错误: " + e.getMessage());
+                                     LOG.warn("Не удалось удалить файл: " + path.toString() + ", ошибка: " + e.getMessage());
                                  }
                              });
                     }
@@ -1252,14 +1252,14 @@ public class AnnotationService {
     }
     
     /**
-     * 强制刷新UI和编辑器内容
+     * Принудительно обновляет интерфейс и редакторы
      */
     private void forceRefreshUIAndEditors() {
         try {
-            // 异步执行刷新操作，避免阻塞UI
+            // Обновляем асинхронно, чтобы не блокировать интерфейс
             com.intellij.openapi.application.ApplicationManager.getApplication().invokeLater(() -> {
                 try {
-                    // 刷新VFS
+                    // Обновляем VFS
                     VFSRefreshService vfsService = new VFSRefreshService(project);
                     String jsonPath = MappingsPaths.getLocalDescriptionPath(project);
                     if (jsonPath != null) {
@@ -1267,48 +1267,48 @@ public class AnnotationService {
                         vfsService.refreshMappingsDirectory();
                     }
                     
-                    // 强制刷新项目视图
+                    // Принудительно обновляем дерево проекта
                     ProjectViewRefreshService refreshService = new ProjectViewRefreshService(project);
                     refreshService.refreshProjectView();
                     refreshService.forceNodeRedecoration();
                     
-                    // 强制重新装饰所有节点
+                    // Принудительно перерисовываем оформление всех узлов
                     com.intellij.ide.projectView.ProjectView projectView = com.intellij.ide.projectView.ProjectView.getInstance(project);
                     if (projectView != null) {
                         projectView.refresh();
                     }
                     
-                    // 强制刷新当前打开的编辑器
+                    // Принудительно обновляем открытые редакторы
                     refreshOpenEditors();
                     
-                    LOG.info("强制刷新UI和编辑器完成");
+                    LOG.info("Интерфейс и редакторы принудительно обновлены");
                 } catch (Exception e) {
-                    LOG.warn("强制刷新UI和编辑器失败: " + e.getMessage());
+                    LOG.warn("Не удалось принудительно обновить интерфейс и редакторы: " + e.getMessage());
                 }
             });
         } catch (Exception e) {
-            LOG.warn("安排强制刷新UI和编辑器失败: " + e.getMessage());
+            LOG.warn("Не удалось запланировать обновление интерфейса и редакторов: " + e.getMessage());
         }
     }
     
     /**
-     * 刷新当前打开的编辑器
+     * Обновляет открытые редакторы
      */
     private void refreshOpenEditors() {
         try {
             com.intellij.openapi.fileEditor.FileEditorManager editorManager = 
                 com.intellij.openapi.fileEditor.FileEditorManager.getInstance(project);
             
-            // 获取所有打开的文件
+            // Все открытые файлы
             VirtualFile[] openFiles = editorManager.getOpenFiles();
             
             for (VirtualFile file : openFiles) {
-                // 检查是否是JSON文件
+                // JSON ли это
                 if (file.getName().endsWith(".json")) {
-                    // 强制刷新文件内容
+                    // Принудительно перечитываем содержимое файла
                     file.refresh(false, false);
                     
-                    // 如果是local-description.json，触发编辑器重新加载
+                    // Для local-description.json заставляем редактор перезагрузить файл
                     if (file.getName().equals(MappingsPaths.LOCAL_DESCRIPTION_FILE)) {
                         com.intellij.openapi.fileEditor.FileEditor[] editors = editorManager.getEditors(file);
                         for (com.intellij.openapi.fileEditor.FileEditor editor : editors) {
@@ -1317,13 +1317,13 @@ public class AnnotationService {
                                     (com.intellij.openapi.fileEditor.TextEditor) editor;
                                 com.intellij.openapi.editor.Document document = textEditor.getEditor().getDocument();
                                 
-                                // 触发文档重新加载
+                                // Перезагружаем документ
                                 com.intellij.openapi.application.ApplicationManager.getApplication().runWriteAction(() -> {
                                     try {
                                         String content = new String(file.contentsToByteArray(), file.getCharset());
                                         document.setText(content);
                                     } catch (IOException e) {
-                                        LOG.warn("刷新编辑器内容失败: " + e.getMessage());
+                                        LOG.warn("Не удалось обновить содержимое редактора: " + e.getMessage());
                                     }
                                 });
                             }
@@ -1332,19 +1332,19 @@ public class AnnotationService {
                 }
             }
         } catch (Exception e) {
-            LOG.warn("刷新打开的编辑器失败: " + e.getMessage());
+            LOG.warn("Не удалось обновить открытые редакторы: " + e.getMessage());
         }
     }
     
     /**
-     * 强制刷新UI，确保备注显示更新
+     * Принудительно обновляет интерфейс, чтобы заметки отобразились
      */
     private void forceRefreshUI() {
         try {
-            // 异步执行刷新操作，避免阻塞UI
+            // Обновляем асинхронно, чтобы не блокировать интерфейс
             com.intellij.openapi.application.ApplicationManager.getApplication().invokeLater(() -> {
                 try {
-                    // 刷新VFS
+                    // Обновляем VFS
                     VFSRefreshService vfsService = new VFSRefreshService(project);
                     String jsonPath = MappingsPaths.getLocalDescriptionPath(project);
                     if (jsonPath != null) {
@@ -1352,34 +1352,34 @@ public class AnnotationService {
                         vfsService.refreshMappingsDirectory();
                     }
                     
-                    // 强制刷新项目视图
+                    // Принудительно обновляем дерево проекта
                     ProjectViewRefreshService refreshService = new ProjectViewRefreshService(project);
                     refreshService.refreshProjectView();
                     refreshService.forceNodeRedecoration();
                     
-                    // 强制重新装饰所有节点
+                    // Принудительно перерисовываем оформление всех узлов
                     com.intellij.ide.projectView.ProjectView projectView = com.intellij.ide.projectView.ProjectView.getInstance(project);
                     if (projectView != null) {
                         projectView.refresh();
                     }
                 } catch (Exception e) {
-                    LOG.warn("UI强制刷新失败: " + e.getMessage());
+                    LOG.warn("Не удалось принудительно обновить интерфейс: " + e.getMessage());
                 }
             });
         } catch (Exception e) {
-            LOG.warn("安排UI强制刷新失败: " + e.getMessage());
+            LOG.warn("Не удалось запланировать обновление интерфейса: " + e.getMessage());
         }
     }
     
     /**
-     * 保存后立即刷新VFS和项目视图
+     * Сразу после сохранения обновляет VFS и дерево проекта
      */
     private void refreshAfterSave() {
         try {
-            // 异步执行刷新操作，避免阻塞UI
+            // Обновляем асинхронно, чтобы не блокировать интерфейс
             com.intellij.openapi.application.ApplicationManager.getApplication().invokeLater(() -> {
                 try {
-                    // 刷新VFS
+                    // Обновляем VFS
                     VFSRefreshService vfsService = new VFSRefreshService(project);
                     String jsonPath = MappingsPaths.getLocalDescriptionPath(project);
                     if (jsonPath != null) {
@@ -1387,76 +1387,76 @@ public class AnnotationService {
                         vfsService.refreshMappingsDirectory();
                     }
                     
-                    // 刷新项目视图
+                    // Обновляем дерево проекта
                     ProjectViewRefreshService refreshService = new ProjectViewRefreshService(project);
                     refreshService.refreshProjectView();
                     refreshService.forceNodeRedecoration();
                     
-                    LOG.info("保存后刷新完成");
+                    LOG.info("Обновление после сохранения выполнено");
                 } catch (Exception e) {
-                    LOG.warn("保存后刷新失败: " + e.getMessage());
+                    LOG.warn("Не удалось обновить после сохранения: " + e.getMessage());
                 }
             });
         } catch (Exception e) {
-            LOG.warn("安排保存后刷新失败: " + e.getMessage());
+            LOG.warn("Не удалось запланировать обновление после сохранения: " + e.getMessage());
         }
     }
     
     /**
-     * 获取项目树备注显示开关状态
+     * Показываются ли заметки в дереве проекта
      */
     public boolean isProjectTreeAnnotationsEnabled() {
         return projectTreeAnnotationsEnabled;
     }
     
     /**
-     * 设置项目树备注显示开关状态
+     * Включает или выключает показ заметок в дереве проекта
      */
     public void setProjectTreeAnnotationsEnabled(boolean enabled) {
         this.projectTreeAnnotationsEnabled = enabled;
-        // 刷新项目视图以应用更改
+        // Обновляем дерево проекта, чтобы применить изменение
         ProjectView.getInstance(project).refresh();
     }
     
     /**
-     * 获取语言设置
+     * Возвращает язык интерфейса
      */
     public String getLanguage() {
         return language;
     }
     
     /**
-     * 设置语言
+     * Задаёт язык интерфейса
      */
     public void setLanguage(String language) {
         this.language = language;
-        // 同步到 LanguageManager
+        // Передаём в LanguageManager
         com.github.annotations.utils.LanguageManager.setCurrentLanguage(
             com.github.annotations.utils.LanguageManager.Language.fromCode(language)
         );
-        saveToFile(); // 保存到文件
+        saveToFile(); // сохраняем в файл
     }
     
     /**
-     * 初始化语言设置（由PostStartupActivity调用）
+     * Инициализирует язык (вызывается из PostStartupActivity)
      */
     public void initializeLanguageSettings() {
         try {
-            // 项目打开后初始化语言设置
+            // Язык настраиваем после открытия проекта
             com.github.annotations.utils.LanguageManager.setCurrentLanguage(
                 com.github.annotations.utils.LanguageManager.Language.fromCode(this.getLanguage())
             );
         } catch (Exception e) {
-            LOG.warn("初始化语言设置失败: " + e.getMessage());
+            LOG.warn("Не удалось инициализировать язык: " + e.getMessage());
         }
     }
     
     /**
-     * 注册项目启动监听器（使用StartupActivity替代已过时的ProjectManagerListener）
+     * Регистрирует слушатель запуска проекта (StartupActivity вместо устаревшего ProjectManagerListener)
      */
     private void registerProjectListener() {
-        // 此方法已由PostStartupActivity替代，不再需要内部API调用
-        // 语言设置初始化现在由ProjectInitActivity处理
+        // Метод заменён PostStartupActivity, внутренний API больше не нужен
+        // Язык теперь инициализирует ProjectInitActivity
     }
 
 

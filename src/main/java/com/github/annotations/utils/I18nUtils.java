@@ -12,32 +12,32 @@ public class I18nUtils {
     /**
      * Возвращает текст на языке, выбранном в настройках проекта
      * @param project проект
-     * @param chinese русский текст
+     * @param russian русский текст
      * @param english английский текст
      * @return текст на текущем языке
      */
-    public static String getText(Project project, String chinese, String english) {
+    public static String getText(Project project, String russian, String english) {
         if (project == null) {
-            return chinese; // по умолчанию русский
+            return russian; // по умолчанию русский
         }
         
         AnnotationService service = AnnotationService.getInstance(project);
         if (service == null) {
-            return chinese; // по умолчанию русский
+            return russian; // по умолчанию русский
         }
         
         String currentLanguage = service.getLanguage();
-        return "en".equals(currentLanguage) ? english : chinese;
+        return "en".equals(currentLanguage) ? english : russian;
     }
     
     /**
      * Возвращает текст на указанном языке (без проекта)
      * @param language код языка
-     * @param chinese русский текст
+     * @param russian русский текст
      * @param english английский текст
      * @return текст на указанном языке
      */
-    public static String getText(String language, String chinese, String english) {
-        return "en".equals(language) ? english : chinese;
+    public static String getText(String language, String russian, String english) {
+        return "en".equals(language) ? english : russian;
     }
 }

@@ -218,8 +218,8 @@ public class ExtractCommentDialog extends DialogWrapper {
     /**
      * Название цвета на текущем языке
      */
-    private String getColorName(String chineseName) {
-        switch (chineseName) {
+    private String getColorName(String colorName) {
+        switch (colorName) {
             case "Серый": return I18nUtils.getText(project, "Серый", "Gray");
             case "Синий": return I18nUtils.getText(project, "Синий", "Blue");
             case "Зелёный": return I18nUtils.getText(project, "Зелёный", "Green");
@@ -228,7 +228,7 @@ public class ExtractCommentDialog extends DialogWrapper {
             case "Жёлтый": return I18nUtils.getText(project, "Жёлтый", "Yellow");
             case "Фиолетовый": return I18nUtils.getText(project, "Фиолетовый", "Purple");
             case "Розовый": return I18nUtils.getText(project, "Розовый", "Pink");
-            default: return chineseName;
+            default: return colorName;
         }
     }
     

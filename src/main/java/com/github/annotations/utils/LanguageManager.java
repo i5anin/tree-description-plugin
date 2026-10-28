@@ -2,6 +2,7 @@ package com.github.annotations.utils;
 
 import com.intellij.openapi.diagnostic.Logger;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Locale;
 
@@ -16,7 +17,7 @@ public class LanguageManager {
     // Поддерживаемые языки
     public enum Language {
         ENGLISH("en", "English", Locale.ENGLISH),
-        CHINESE("ru", "Русский", Locale.forLanguageTag("ru"));
+        RUSSIAN("ru", "Русский", Locale.forLanguageTag("ru"));
         
         private final String code;
         private final String displayName;
@@ -47,6 +48,22 @@ public class LanguageManager {
                 }
             }
             return ENGLISH; // по умолчанию английский
+        }
+
+        /**
+         * Приводит сохранённый код языка к поддерживаемому.
+         *
+         * Плагин понимает два языка: "en" и второй язык интерфейса — русский.
+         * До перевода вторым языком был китайский с кодом "zh", и он остался
+         * в local-description.json у существующих проектов. Любой код,
+         * кроме "en", считается русским, иначе fromCode вернул бы английский,
+         * а пункт меню «Русский» не был бы отмечен.
+         *
+         * Вызывается из AnnotationService при чтении файлов сопоставлений.
+         */
+        @NotNull
+        public static String normalizeCode(@Nullable String code) {
+            return ENGLISH.code.equals(code) ? ENGLISH.code : RUSSIAN.code;
         }
     }
     
@@ -79,8 +96,8 @@ public class LanguageManager {
     /**
      * Включён ли русский
      */
-    public static boolean isChinese() {
-        return currentLanguage == Language.CHINESE;
+    public static boolean isRussian() {
+        return currentLanguage == Language.RUSSIAN;
     }
     
     /**
@@ -95,22 +112,22 @@ public class LanguageManager {
      * Простая реализация; при необходимости заменяется полноценной локализацией
      */
     @NotNull
-    public static String getText(String chineseText, String englishText) {
-        return isChinese() ? chineseText : englishText;
+    public static String getText(String russianText, String englishText) {
+        return isRussian() ? russianText : englishText;
     }
     
     /**
      * Возвращает текст на текущем языке (перегрузка: передаётся только русский текст, английский не генерируется)
      */
     @NotNull
-    public static String getText(String chineseText) {
+    public static String getText(String russianText) {
         // Простое сопоставление русского и английского, можно доработать
-        if (isChinese()) {
-            return chineseText;
+        if (isRussian()) {
+            return russianText;
         } else {
             // Здесь можно добавить перевод с русского на английский
     
-            return chineseText;
+            return russianText;
         }
     }
 }

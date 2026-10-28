@@ -10,9 +10,9 @@ import org.jetbrains.annotations.NotNull;
 /**
  * Переключение на русский язык
  */
-public class SwitchToChineseAction extends AnAction {
+public class SwitchToRussianAction extends AnAction {
     
-    public SwitchToChineseAction() {
+    public SwitchToRussianAction() {
         super("Русский");
         getTemplatePresentation().setDescription("Переключить на русский");
     }
@@ -33,7 +33,7 @@ public class SwitchToChineseAction extends AnAction {
         
         try {
             // Включаем русский язык
-            service.setLanguage("zh");
+            service.setLanguage("ru");
             
             // Сообщение об успехе
             Messages.showInfoMessage(project, "Язык переключён на русский", "Смена языка");
@@ -59,7 +59,7 @@ public class SwitchToChineseAction extends AnAction {
         
         // Если русский уже включён — пункт неактивен
         String currentLanguage = service.getLanguage();
-        boolean isCurrentLanguage = "zh".equals(currentLanguage);
+        boolean isCurrentLanguage = "ru".equals(currentLanguage);
         e.getPresentation().setEnabled(!isCurrentLanguage);
         
         // Текст зависит от текущего языка
@@ -68,7 +68,7 @@ public class SwitchToChineseAction extends AnAction {
             e.getPresentation().setText("✓ Русский");
         } else {
             // Сейчас английский — показываем пункт русского
-            e.getPresentation().setText("Chinese");
+            e.getPresentation().setText("Russian");
         }
     }
 }

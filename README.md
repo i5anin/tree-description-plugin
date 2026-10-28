@@ -1,67 +1,77 @@
 
 <img width="2824" height="1364" alt="image" src="https://github.com/user-attachments/assets/a3d84e70-d989-468b-b441-73004807b38d" />
 
-###  项目简介
-**Tree Description - 项目树备注工具**  
-为 IntelliJ IDEA 项目树添加路径备注，帮助开发者快速理解项目结构和代码含义。
+## О проекте
 
-###  核心功能
-- **自定义备注**: 在包名和文件上添加自定义路径备注
-- **Windows**: `Alt + Shift + A`
-- **Mac**: `Option + Shift + A`
-- **实时显示**: 项目树中实时显示备注说明
-- **映射库**: 预置常用框架映射库
-- **自动匹配**: 支持文件名和包名模式匹配
-- **提取注释**: 支持提取类注释到文件备注说明
-- **Windows**: `Alt + Shift + E`
-- **Mac**: `Option + Shift + E`
-- **国际化**: 支持中英文界面切换
-- **颜色标记**: 支持自定义备注颜色
+**Tree Description** — плагин для IDE JetBrains: заметки к папкам и файлам
+прямо в дереве проекта, чтобы быстрее разбираться в структуре кода.
 
-###  使用场景
-- **学习大型开源项目**: 快速理解项目结构和模块职责
-- **团队协作**: 统一项目命名规范和代码理解
-- **编程教学**: 为学员提供清晰的项目结构说明
-- **代码审查**: 快速识别文件功能和包的作用
+Это форк [JaysonX-Tech/tree-description-plugin](https://github.com/JaysonX-Tech/tree-description-plugin):
+китайский интерфейс заменён русским, рабочие файлы перенесены в `.idea`.
 
-###  贡献指南
-欢迎提交 Issue 和 Pull Request！
+## Возможности
 
-###  支持
-如果这个插件对你有帮助，欢迎给我们一个 ⭐ Star！
+| Что | Сочетание клавиш (Windows / Mac) |
+| --- | --- |
+| Добавить заметку к пакету или файлу | `Alt + Shift + A` / `Option + Shift + A` |
+| Заметка из комментария класса | `Alt + Shift + E` / `Option + Shift + E` |
+| Поиск по заметкам | `Alt + Shift + F` / `Option + Shift + F` |
 
----
+- Заметки видны в дереве проекта сразу после правки.
+- Встроенные библиотеки сопоставлений для популярных фреймворков.
+- Шаблоны по имени файла и пакета.
+- Цвет заметки.
+- Интерфейс на русском и английском.
 
-### Project Introduction
-**Tree Description**  
-Add intelligent path annotations to IntelliJ IDEA project tree, helping developers quickly understand project structure and code meaning.
+## Сборка
 
-### Core Features
-- **Smart Annotations**: Add custom path annotations to package names and files
-- **Windows**: `Alt + Shift + A`
-- **Mac**: `Option + Shift + A`
-- **Real-time Display**: Display annotation descriptions in real-time in project tree
-- **Extract Comments**: Support extracting class comments into file comments
-- **Mapping Library**: Pre-built common framework mapping libraries
-- **Auto Matching**: Support filename and package name pattern matching
-- **Windows**: `Alt + Shift + E`
-- **Mac**: `Option + Shift + E`
-- **Internationalization**: Support Chinese and English interface switching
-- **Color Marking**: Support custom annotation colors
+Нужен JDK 17 или 21. Gradle 8.14 не запускается на Java 25 и новее,
+JBR из WebStorm 2025.2+ (Java 25) для сборки не подходит.
 
-### Use Cases
-- **Learning Large Open Source Projects**: Quickly understand project structure and module responsibilities
-- **Team Collaboration**: Unify project naming conventions and code understanding
-- **Programming Education**: Provide clear project structure explanations for students
-- **Code Review**: Quickly identify file functions and package purposes
+1. Указать JDK для текущего окна терминала (путь — свой):
 
-### Contributing
-Welcome to submit Issues and Pull Requests!
+   ```bash
+   export JAVA_HOME="/c/Program Files/Eclipse Adoptium/jdk-21"
+   ```
 
-### Support Us
-If this plugin helps you, welcome to give us a ⭐ Star!
+2. Собрать плагин из корня репозитория:
 
+   ```bash
+   ./gradlew buildPlugin
+   ```
 
+3. Готовый архив: `build/distributions/tree-description-plugin-<версия>.zip`.
+   Версия задаётся в `gradle.properties` (`pluginVersion`).
+
+Первая сборка скачивает IntelliJ IDEA Community 2023.1.5 (около 1 ГБ) — это
+SDK, против которого компилируется плагин; дальше берётся из кэша Gradle.
+
+## Установка в IDE
+
+1. `Settings` → `Plugins` → шестерёнка → `Install Plugin from Disk...`.
+2. Выбрать zip из `build/distributions/` (не распаковывать).
+3. Перезапустить IDE.
+
+Старая версия заменится автоматически: ID плагина прежний
+(`com.github.chinese-annotations`).
+
+## Запуск в отдельной IDE для отладки
+
+```bash
+./gradlew runIde
+```
+
+Открывается отдельная IntelliJ IDEA Community с установленным плагином;
+ваши настройки и проекты не затрагиваются.
+
+## Проверка перевода
+
+```bash
+python scripts/find_non_english.py
+```
+
+Печатает строки с текстом не на английском и не на русском; код выхода 1,
+если такие строки есть.
 
 ## Где хранятся заметки
 
@@ -78,3 +88,42 @@ If this plugin helps you, welcome to give us a ⭐ Star!
 - Если `.idea` исключена в `.gitignore`, а заметки нужны команде, замените строку
   `.idea/` на две: `.idea/*` и `!.idea/tree-description/`.
   Исключение внутри полностью игнорируемой папки (`.idea/`) git не применяет.
+
+## Частые проблемы
+
+| Симптом | Причина | Что сделать |
+| --- | --- | --- |
+| `What went wrong: 25.0.2` при сборке | Gradle запущен на Java 25 | указать `JAVA_HOME` на JDK 17/21 |
+| IDE пишет, что плагин несовместим | `untilBuild` в `build.gradle.kts` ниже сборки IDE | поднять `untilBuild` |
+| Заметки пропали после обновления | файлы остались в старой `.td-maps` из-за совпадения имён | перенести вручную в `.idea/tree-description/` |
+
+---
+
+## Project Introduction
+
+**Tree Description** adds notes to the IntelliJ IDEA project tree, helping
+developers quickly understand project structure and code meaning.
+
+### Core Features
+- **Smart Annotations**: Add custom path annotations to package names and files
+  (`Alt + Shift + A` / `Option + Shift + A`)
+- **Real-time Display**: Display annotation descriptions in real-time in project tree
+- **Extract Comments**: Support extracting class comments into file comments
+  (`Alt + Shift + E` / `Option + Shift + E`)
+- **Mapping Library**: Pre-built common framework mapping libraries
+- **Auto Matching**: Support filename and package name pattern matching
+- **Internationalization**: Russian and English interface switching
+- **Color Marking**: Support custom annotation colors
+
+### Use Cases
+- **Learning Large Open Source Projects**: Quickly understand project structure and module responsibilities
+- **Team Collaboration**: Unify project naming conventions and code understanding
+- **Programming Education**: Provide clear project structure explanations for students
+- **Code Review**: Quickly identify file functions and package purposes
+
+### Build and install
+`./gradlew buildPlugin` with JDK 17 or 21, then
+`Settings` → `Plugins` → `Install Plugin from Disk...` → `build/distributions/*.zip`.
+
+### Contributing
+Welcome to submit Issues and Pull Requests!
