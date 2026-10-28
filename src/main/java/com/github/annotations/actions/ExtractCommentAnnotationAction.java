@@ -1,5 +1,6 @@
 package com.github.annotations.actions;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.github.annotations.services.AnnotationService;
 import com.github.annotations.ui.ExtractCommentDialog;
 import com.github.annotations.utils.I18nUtils;
@@ -35,6 +36,8 @@ import java.util.regex.Pattern;
  * Берёт первую строку Javadoc-комментария Java-файла и делает её заметкой
  */
 public class ExtractCommentAnnotationAction extends AnAction {
+
+    private static final Logger LOG = Logger.getInstance(ExtractCommentAnnotationAction.class);
     
     // Заранее скомпилированное выражение для первой строки Javadoc
     private static final Pattern JAVADOC_PATTERN = Pattern.compile(
@@ -198,7 +201,8 @@ public class ExtractCommentAnnotationAction extends AnAction {
             // Первая строка Javadoc-комментария
             return extractFirstJavadocLine(content.toString());
         } catch (IOException e) {
-            // Ошибку ввода-вывода пропускаем, идём к следующему файлу
+            // Файл не прочитался — пропускаем его, остальные обрабатываем
+            LOG.warn("Не удалось прочитать " + file.getPath() + ": " + e.getMessage());
         }
         return null;
     }

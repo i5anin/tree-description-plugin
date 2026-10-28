@@ -53,8 +53,8 @@ public final class MappingLibraryService {
                     com.github.annotations.services.AnnotationService.getInstance(openProjects[0]);
                 return annotationService.isBuiltinMappingsEnabled();
             }
-        } catch (Exception e) {
-            // Не удалось получить — значение по умолчанию
+        } catch (RuntimeException e) {
+            LOG.warn("Не удалось прочитать переключатель встроенной библиотеки, считаем включённой: " + e.getMessage());
         }
         return true; // по умолчанию включена
     }

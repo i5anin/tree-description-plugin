@@ -1,5 +1,6 @@
 package com.github.annotations.ui;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.github.annotations.utils.I18nUtils;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -21,6 +22,8 @@ import javax.swing.text.StyledDocument;
 
 
 public class DonationDialog extends DialogWrapper {
+
+    private static final Logger LOG = Logger.getInstance(DonationDialog.class);
     
     private final Project project;
     
@@ -100,7 +103,8 @@ public class DonationDialog extends DialogWrapper {
             doc.insertString(doc.getLength(), I18nUtils.getText(project, "чтобы разработчикам было проще разбираться в проектах!\n\n", "providing better project understanding tools for developers!\n\n"), normalStyle);
             doc.insertString(doc.getLength(), I18nUtils.getText(project, "Если плагин полезен — поставьте звезду на GitHub!\n", "If you find it useful, welcome to give a Star support!!!\n"), normalStyle);
         } catch (BadLocationException e) {
-            // Исключение игнорируем
+            // Вставка в конец документа не может выйти за границы — это ошибка в коде
+            LOG.error(e);
         }
         
         // Слушатель гиперссылок

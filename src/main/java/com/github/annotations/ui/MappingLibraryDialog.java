@@ -1,5 +1,6 @@
 package com.github.annotations.ui;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.github.annotations.utils.MappingsPaths;
 import com.github.annotations.services.GitHubMappingService;
 import com.github.annotations.services.GitHubMappingService.GitHubMappingFile;
@@ -30,6 +31,8 @@ import java.awt.event.MouseEvent;
  * Показывает содержимое открытой библиотеки сопоставлений на GitHub
  */
 public class MappingLibraryDialog extends DialogWrapper {
+
+    private static final Logger LOG = Logger.getInstance(MappingLibraryDialog.class);
     
     private final Project project;
     private JBTable mappingTable;
@@ -146,7 +149,8 @@ public class MappingLibraryDialog extends DialogWrapper {
             doc.insertString(doc.getLength(), " \n" + I18nUtils.getText(project, "Если скачивание не работает, скачайте файл с GitHub вручную", "If you encounter download issues, please go to Github to download manually."), normalStyle);
             doc.insertString(doc.getLength(), " \n" + I18nUtils.getText(project, "Пул-реквесты приветствуются!", "Welcome to submit PR to contribute!!"), normalStyle);
         } catch (BadLocationException e) {
-            // Исключение игнорируем
+            // Вставка в конец документа не может выйти за границы — это ошибка в коде
+            LOG.error(e);
         }
         
         // Слушатель гиперссылок
@@ -191,6 +195,7 @@ public class MappingLibraryDialog extends DialogWrapper {
                         }
                     });
                 } catch (Exception e) {
+                    LOG.warn("Не удалось получить список библиотек с GitHub: " + e.getMessage());
                     SwingUtilities.invokeLater(() -> {
                         libraryComboBox.removeAllItems();
                         String errorMessage;
@@ -245,6 +250,7 @@ public class MappingLibraryDialog extends DialogWrapper {
                     });
                 }
             } catch (Exception e) {
+                LOG.warn("Не удалось загрузить библиотеку " + selectedFile.path + ": " + e.getMessage());
                 SwingUtilities.invokeLater(() -> {
                     clearMappingTable();
                     model.addRow(new Object[]{"Ошибка", selectedFile.path, "Не удалось загрузить"});
@@ -448,7 +454,8 @@ public class MappingLibraryDialog extends DialogWrapper {
             }
             
             return true;
-        } catch (Exception e) {
+        } catch (java.io.IOException | RuntimeException e) {
+            LOG.warn("Не удалось сохранить библиотеку " + fileName + ": " + e.getMessage());
             return false;
         }
     }

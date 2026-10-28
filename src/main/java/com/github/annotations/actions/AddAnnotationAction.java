@@ -1,5 +1,6 @@
 package com.github.annotations.actions;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.github.annotations.services.AnnotationService;
 import com.github.annotations.services.MappingLibraryService;
 import com.github.annotations.ui.AddAnnotationDialog;
@@ -23,6 +24,8 @@ import org.jetbrains.annotations.Nullable;
 
 
 public class AddAnnotationAction extends AnAction {
+
+    private static final Logger LOG = Logger.getInstance(AddAnnotationAction.class);
     
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
@@ -310,8 +313,8 @@ public class AddAnnotationAction extends AnAction {
             if (openFiles.length > 0) {
                 return openFiles[0];
             }
-        } catch (Exception e) {
-            // Ошибку игнорируем, возвращаем null
+        } catch (RuntimeException e) {
+            LOG.warn("Не удалось определить активный файл: " + e.getMessage());
         }
         
         return null;

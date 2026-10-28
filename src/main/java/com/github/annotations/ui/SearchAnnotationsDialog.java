@@ -5,6 +5,7 @@ import com.github.annotations.services.MappingLibraryService;
 import com.github.annotations.utils.I18nUtils;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -390,18 +391,14 @@ public class SearchAnnotationsDialog extends DialogWrapper {
     private List<String> findFilesMatchingPattern(String pattern) {
         List<String> matchedFiles = new ArrayList<>();
         
-        try {
-            String projectPath = project.getBasePath();
-            if (projectPath == null) return matchedFiles;
-            
-            VirtualFile projectRoot = VirtualFileManager.getInstance().findFileByUrl("file://" + projectPath);
-            if (projectRoot == null) return matchedFiles;
-            
-            // Рекурсивно обходим все файлы проекта
-            findFilesMatchingPatternRecursive(projectRoot, pattern, matchedFiles);
-        } catch (Exception e) {
-            // Исключение игнорируем, возвращаем пустой список
-        }
+        String projectPath = project.getBasePath();
+        if (projectPath == null) return matchedFiles;
+        
+        VirtualFile projectRoot = VirtualFileManager.getInstance().findFileByUrl("file://" + projectPath);
+        if (projectRoot == null) return matchedFiles;
+        
+        // Рекурсивно обходим все файлы проекта
+        findFilesMatchingPatternRecursive(projectRoot, pattern, matchedFiles);
         
         return matchedFiles;
     }
@@ -412,31 +409,28 @@ public class SearchAnnotationsDialog extends DialogWrapper {
     private void findFilesMatchingPatternRecursive(VirtualFile directory, String pattern, List<String> matchedFiles) {
         if (directory == null || !directory.isDirectory()) return;
         
-        try {
-            for (VirtualFile child : directory.getChildren()) {
-                if (child.isDirectory()) {
-                    // Обходим вложенные папки
-                    findFilesMatchingPatternRecursive(child, pattern, matchedFiles);
-                } else {
-                    // Имя файла должно совпасть с шаблоном целиком, а не просто содержать его
-                    String fileName = child.getName();
-                    if (fileName.equalsIgnoreCase(pattern)) {
-                        // Путь относительно корня проекта
-                        String projectPath = project.getBasePath();
-                        if (projectPath != null) {
-                            VirtualFile projectRoot = VirtualFileManager.getInstance().findFileByUrl("file://" + projectPath);
-                            if (projectRoot != null) {
-                                String relativePath = getRelativePath(projectRoot, child);
-                                if (relativePath != null) {
-                                    matchedFiles.add(relativePath);
-                                }
+        for (VirtualFile child : directory.getChildren()) {
+            ProgressManager.checkCanceled(); // поиск отменён новым вводом — прервать обход
+            if (child.isDirectory()) {
+                // Обходим вложенные папки
+                findFilesMatchingPatternRecursive(child, pattern, matchedFiles);
+            } else {
+                // Имя файла должно совпасть с шаблоном целиком, а не просто содержать его
+                String fileName = child.getName();
+                if (fileName.equalsIgnoreCase(pattern)) {
+                    // Путь относительно корня проекта
+                    String projectPath = project.getBasePath();
+                    if (projectPath != null) {
+                        VirtualFile projectRoot = VirtualFileManager.getInstance().findFileByUrl("file://" + projectPath);
+                        if (projectRoot != null) {
+                            String relativePath = getRelativePath(projectRoot, child);
+                            if (relativePath != null) {
+                                matchedFiles.add(relativePath);
                             }
                         }
                     }
                 }
             }
-        } catch (Exception e) {
-            // Исключение игнорируем, продолжаем поиск
         }
     }
     
@@ -446,18 +440,14 @@ public class SearchAnnotationsDialog extends DialogWrapper {
     private List<String> findPackagesMatchingPattern(String pattern) {
         List<String> matchedPackages = new ArrayList<>();
         
-        try {
-            String projectPath = project.getBasePath();
-            if (projectPath == null) return matchedPackages;
-            
-            VirtualFile projectRoot = VirtualFileManager.getInstance().findFileByUrl("file://" + projectPath);
-            if (projectRoot == null) return matchedPackages;
-            
-            // Рекурсивно обходим все папки проекта
-            findPackagesMatchingPatternRecursive(projectRoot, pattern, matchedPackages);
-        } catch (Exception e) {
-            // Исключение игнорируем, возвращаем пустой список
-        }
+        String projectPath = project.getBasePath();
+        if (projectPath == null) return matchedPackages;
+        
+        VirtualFile projectRoot = VirtualFileManager.getInstance().findFileByUrl("file://" + projectPath);
+        if (projectRoot == null) return matchedPackages;
+        
+        // Рекурсивно обходим все папки проекта
+        findPackagesMatchingPatternRecursive(projectRoot, pattern, matchedPackages);
         
         return matchedPackages;
     }
@@ -468,31 +458,28 @@ public class SearchAnnotationsDialog extends DialogWrapper {
     private void findPackagesMatchingPatternRecursive(VirtualFile directory, String pattern, List<String> matchedPackages) {
         if (directory == null || !directory.isDirectory()) return;
         
-        try {
-            for (VirtualFile child : directory.getChildren()) {
-                if (child.isDirectory()) {
-                    // Имя папки должно совпасть с шаблоном целиком, а не просто содержать его
-                    String dirName = child.getName();
-                    if (dirName.equalsIgnoreCase(pattern)) {
-                        // Путь относительно корня проекта
-                        String projectPath = project.getBasePath();
-                        if (projectPath != null) {
-                            VirtualFile projectRoot = VirtualFileManager.getInstance().findFileByUrl("file://" + projectPath);
-                            if (projectRoot != null) {
-                                String relativePath = getRelativePath(projectRoot, child);
-                                if (relativePath != null) {
-                                    matchedPackages.add(relativePath);
-                                }
+        for (VirtualFile child : directory.getChildren()) {
+            ProgressManager.checkCanceled(); // поиск отменён новым вводом — прервать обход
+            if (child.isDirectory()) {
+                // Имя папки должно совпасть с шаблоном целиком, а не просто содержать его
+                String dirName = child.getName();
+                if (dirName.equalsIgnoreCase(pattern)) {
+                    // Путь относительно корня проекта
+                    String projectPath = project.getBasePath();
+                    if (projectPath != null) {
+                        VirtualFile projectRoot = VirtualFileManager.getInstance().findFileByUrl("file://" + projectPath);
+                        if (projectRoot != null) {
+                            String relativePath = getRelativePath(projectRoot, child);
+                            if (relativePath != null) {
+                                matchedPackages.add(relativePath);
                             }
                         }
                     }
-                    
-                    // Обходим вложенные папки
-                    findPackagesMatchingPatternRecursive(child, pattern, matchedPackages);
                 }
+                
+                // Обходим вложенные папки
+                findPackagesMatchingPatternRecursive(child, pattern, matchedPackages);
             }
-        } catch (Exception e) {
-            // Исключение игнорируем, продолжаем поиск
         }
     }
     
@@ -500,19 +487,15 @@ public class SearchAnnotationsDialog extends DialogWrapper {
      * Путь файла относительно корня проекта
      */
     private String getRelativePath(VirtualFile baseDir, VirtualFile file) {
-        try {
-            String basePath = baseDir.getPath();
-            String filePath = file.getPath();
-            
-            if (filePath.startsWith(basePath)) {
-                String relativePath = filePath.substring(basePath.length());
-                if (relativePath.startsWith("/")) {
-                    relativePath = relativePath.substring(1);
-                }
-                return relativePath;
+        String basePath = baseDir.getPath();
+        String filePath = file.getPath();
+        
+        if (filePath.startsWith(basePath)) {
+            String relativePath = filePath.substring(basePath.length());
+            if (relativePath.startsWith("/")) {
+                relativePath = relativePath.substring(1);
             }
-        } catch (Exception e) {
-            // Исключение игнорируем
+            return relativePath;
         }
         return null;
     }
@@ -605,17 +588,14 @@ public class SearchAnnotationsDialog extends DialogWrapper {
             return false;
         }
         
-        try {
-            for (VirtualFile child : directory.getChildren()) {
-                if (child.getName().equals(fileName)) {
-                    return true;
-                }
-                if (child.isDirectory() && searchFileInProject(child, fileName)) {
-                    return true;
-                }
+        for (VirtualFile child : directory.getChildren()) {
+            ProgressManager.checkCanceled(); // поиск отменён новым вводом — прервать обход
+            if (child.getName().equals(fileName)) {
+                return true;
             }
-        } catch (Exception ex) {
-            // Исключение игнорируем, продолжаем поиск
+            if (child.isDirectory() && searchFileInProject(child, fileName)) {
+                return true;
+            }
         }
         
         return false;
@@ -625,22 +605,18 @@ public class SearchAnnotationsDialog extends DialogWrapper {
      * Ищет файл в проекте и возвращает полный относительный путь
      */
     private String findFileInProject(String fileName) {
-        try {
-            // Сначала проверяем корень
-            String rootPath = fileName;
-            if (fileExistsInProject(rootPath)) {
-                return rootPath;
-            }
-            
-            // Обходим весь проект, возвращаем первый подходящий относительный путь
-            String projectPath = project.getBasePath();
-            if (projectPath == null) return null;
-            VirtualFile projectRoot = VirtualFileManager.getInstance().findFileByUrl("file://" + projectPath);
-            if (projectRoot == null) return null;
-            return searchFilePathInProject(projectRoot, fileName, "");
-        } catch (Exception ex) {
-            return null;
+        // Сначала проверяем корень
+        String rootPath = fileName;
+        if (fileExistsInProject(rootPath)) {
+            return rootPath;
         }
+        
+        // Обходим весь проект, возвращаем первый подходящий относительный путь
+        String projectPath = project.getBasePath();
+        if (projectPath == null) return null;
+        VirtualFile projectRoot = VirtualFileManager.getInstance().findFileByUrl("file://" + projectPath);
+        if (projectRoot == null) return null;
+        return searchFilePathInProject(projectRoot, fileName, "");
     }
     
     /**
@@ -648,15 +624,11 @@ public class SearchAnnotationsDialog extends DialogWrapper {
      */
     private List<String> findAllFilesInProject(String fileName) {
         Set<String> allPaths = new LinkedHashSet<>();
-        try {
-            String projectPath = project.getBasePath();
-            if (projectPath == null) return new ArrayList<>();
-            VirtualFile projectRoot = VirtualFileManager.getInstance().findFileByUrl("file://" + projectPath);
-            if (projectRoot == null) return new ArrayList<>();
-            searchAllFilePathsInProject(projectRoot, fileName, "", allPaths);
-        } catch (Exception ex) {
-            // Исключение обрабатываем без сообщений
-        }
+        String projectPath = project.getBasePath();
+        if (projectPath == null) return new ArrayList<>();
+        VirtualFile projectRoot = VirtualFileManager.getInstance().findFileByUrl("file://" + projectPath);
+        if (projectRoot == null) return new ArrayList<>();
+        searchAllFilePathsInProject(projectRoot, fileName, "", allPaths);
         return new ArrayList<>(allPaths);
     }
     
@@ -668,23 +640,20 @@ public class SearchAnnotationsDialog extends DialogWrapper {
             return null;
         }
         
-        try {
-            for (VirtualFile child : directory.getChildren()) {
-                String childPath = currentPath.isEmpty() ? child.getName() : currentPath + "/" + child.getName();
-                
-                if (child.getName().equals(fileName)) {
-                    return childPath;
-                }
-                
-                if (child.isDirectory()) {
-                    String result = searchFilePathInProject(child, fileName, childPath);
-                    if (result != null) {
-                        return result;
-                    }
+        for (VirtualFile child : directory.getChildren()) {
+            ProgressManager.checkCanceled(); // поиск отменён новым вводом — прервать обход
+            String childPath = currentPath.isEmpty() ? child.getName() : currentPath + "/" + child.getName();
+            
+            if (child.getName().equals(fileName)) {
+                return childPath;
+            }
+            
+            if (child.isDirectory()) {
+                String result = searchFilePathInProject(child, fileName, childPath);
+                if (result != null) {
+                    return result;
                 }
             }
-        } catch (Exception ex) {
-            // Исключение игнорируем, продолжаем поиск
         }
         
         return null;
@@ -698,20 +667,17 @@ public class SearchAnnotationsDialog extends DialogWrapper {
             return;
         }
         
-        try {
-            for (VirtualFile child : directory.getChildren()) {
-                String childPath = currentPath.isEmpty() ? child.getName() : currentPath + "/" + child.getName();
-                
-                if (child.getName().equals(fileName)) {
-                    results.add(childPath);
-                }
-                
-                if (child.isDirectory()) {
-                    searchAllFilePathsInProject(child, fileName, childPath, results);
-                }
+        for (VirtualFile child : directory.getChildren()) {
+            ProgressManager.checkCanceled(); // поиск отменён новым вводом — прервать обход
+            String childPath = currentPath.isEmpty() ? child.getName() : currentPath + "/" + child.getName();
+            
+            if (child.getName().equals(fileName)) {
+                results.add(childPath);
             }
-        } catch (Exception ex) {
-            // Исключение обрабатываем без сообщений
+            
+            if (child.isDirectory()) {
+                searchAllFilePathsInProject(child, fileName, childPath, results);
+            }
         }
     }
     
