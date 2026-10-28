@@ -1,5 +1,6 @@
 package com.github.annotations.ui;
 
+import com.github.annotations.utils.MappingsPaths;
 import com.github.annotations.services.AnnotationService;
 import com.github.annotations.utils.I18nUtils;
 import com.intellij.openapi.project.Project;
@@ -111,11 +112,11 @@ public class AddFileMatchDialog extends DialogWrapper {
         JTextArea helpText = new JTextArea();
         helpText.setText(I18nUtils.getText(project, 
             "• заметка ставится на файлы, подходящие под шаблон\n" +
-            "• сопоставления хранятся в: корень проекта/.td-maps/local-description.json\n" +
+            "• сопоставления хранятся в: " + MappingsPaths.MAPPINGS_DIR + "/" + MappingsPaths.LOCAL_DESCRIPTION_FILE + "\n" +
             "• pom.xml — все файлы с именем pom.xml\n" +
             "• com/common/pom.xml — файл pom.xml в пакете com.common",
             "• Will match the corresponding files\n" +
-            "• Mapping save location: project root/.td-maps/local-description.json\n" +
+            "• Mapping save location: " + MappingsPaths.MAPPINGS_DIR + "/" + MappingsPaths.LOCAL_DESCRIPTION_FILE + "\n" +
             "• pom.xml will match all files named pom.xml\n" +
             "• com/common/pom.xml will match pom.xml files in com.common package"));
         helpText.setEditable(false);

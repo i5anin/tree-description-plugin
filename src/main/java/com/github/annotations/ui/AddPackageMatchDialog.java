@@ -1,5 +1,6 @@
 package com.github.annotations.ui;
 
+import com.github.annotations.utils.MappingsPaths;
 import com.github.annotations.services.AnnotationService;
 import com.github.annotations.utils.I18nUtils;
 import com.intellij.openapi.project.Project;
@@ -106,10 +107,10 @@ public class AddPackageMatchDialog extends DialogWrapper {
         JTextArea helpText = new JTextArea();
         helpText.setText(I18nUtils.getText(project,
             "• заметка ставится на папки, подходящие под шаблон\n" +
-            "• сопоставления хранятся в: корень проекта/.td-maps/local-description.json\n" +
+            "• сопоставления хранятся в: " + MappingsPaths.MAPPINGS_DIR + "/" + MappingsPaths.LOCAL_DESCRIPTION_FILE + "\n" +
             "• например, springframework.core — все пакеты, оканчивающиеся на *.springframework.core",
             "• Will match the corresponding directories\n" +
-            "• Mapping save location: project root/.td-maps/local-description.json\n" +
+            "• Mapping save location: " + MappingsPaths.MAPPINGS_DIR + "/" + MappingsPaths.LOCAL_DESCRIPTION_FILE + "\n" +
             "• Example: springframework.core will match all packages ending with *.springframework.core"));
         helpText.setEditable(false);
         helpText.setLineWrap(true);

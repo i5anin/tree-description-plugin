@@ -1,5 +1,6 @@
 package com.github.annotations.services;
 
+import com.github.annotations.utils.MappingsPaths;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -13,11 +14,10 @@ import java.util.List;
 
 /**
  * Слушатель JSON-файлов
- * Следит за правками всех JSON-файлов в папке .td-maps внутри IDE и сразу обновляет заметки
+ * Следит за правками рабочих JSON-файлов плагина (MappingsPaths) внутри IDE и сразу обновляет заметки
  */
 public class JsonFileWatcher implements BulkFileListener {
     
-    private static final String MAPPINGS_DIR_NAME = ".td-maps";
     
     private final Project project;
     private final AnnotationService annotationService;
@@ -52,20 +52,10 @@ public class JsonFileWatcher implements BulkFileListener {
     }
     
     /**
-     * JSON-файл ли это в папке .td-maps
+     * JSON-файл ли это в папке рабочих JSON плагина (MappingsPaths)
      */
     private boolean isOurJsonFile(@NotNull VirtualFile file) {
-        if (file == null || !file.exists() || !file.getName().endsWith(".json")) {
-            return false;
-        }
-        
-        String projectBasePath = project.getBasePath();
-        if (projectBasePath == null) {
-            return false;
-        }
-        
-        String mappingsPath = projectBasePath + "/" + MAPPINGS_DIR_NAME;
-        return file.getPath().startsWith(mappingsPath);
+        return file.exists() && MappingsPaths.isMappingsJson(project, file);
     }
     
     /**

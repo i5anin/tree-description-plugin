@@ -1,5 +1,6 @@
 package com.github.annotations.ui;
 
+import com.github.annotations.utils.MappingsPaths;
 import com.github.annotations.services.GitHubMappingService;
 import com.github.annotations.services.GitHubMappingService.GitHubMappingFile;
 import com.github.annotations.services.GitHubMappingService.GitHubMappingLibrary;
@@ -339,12 +340,12 @@ public class MappingLibraryDialog extends DialogWrapper {
         // Окно подтверждения
         int result = JOptionPane.showConfirmDialog(getContentPane(), 
             I18nUtils.getText(project,
-                "Скачать \"" + selectedFile.displayName + "\" в папку .td-maps проекта?\n\n" +
+                "Скачать \"" + selectedFile.displayName + "\" в папку " + MappingsPaths.MAPPINGS_DIR + " проекта?\n\n" +
                 "Имя файла: " + selectedFile.displayName + "\n" +
-                "Куда: корень проекта/.td-maps/",
-            "Are you sure you want to download \"" + selectedFile.displayName + "\" to the local .td-maps folder?\n\n" +
+                "Куда: " + MappingsPaths.MAPPINGS_DIR + "/",
+            "Are you sure you want to download \"" + selectedFile.displayName + "\" to the " + MappingsPaths.MAPPINGS_DIR + " folder?\n\n" +
                 "File will be saved as: " + selectedFile.displayName + "\n" +
-                "Save location: project root/.td-maps/"), 
+                "Save location: " + MappingsPaths.MAPPINGS_DIR + "/"), 
             I18nUtils.getText(project, "Подтверждение скачивания", "Download Confirmation"), JOptionPane.YES_NO_OPTION, JOptionPane.PLAIN_MESSAGE);
         
         if (result != JOptionPane.YES_OPTION) {
@@ -380,9 +381,9 @@ public class MappingLibraryDialog extends DialogWrapper {
                             JOptionPane.showMessageDialog(getContentPane(), 
                                 I18nUtils.getText(project,
                                     "Скачано!\n\n" +
-                                    "Файл сохранён в: .td-maps/" + fileName + "\n",
+                                    "Файл сохранён в: " + MappingsPaths.MAPPINGS_DIR + "/" + fileName + "\n",
                                     "Download successful!\n\n" +
-                                    "File saved to: .td-maps/" + fileName + "\n"), 
+                                    "File saved to: " + MappingsPaths.MAPPINGS_DIR + "/" + fileName + "\n"), 
                                 I18nUtils.getText(project, "Скачано!", "Download Successful!"), JOptionPane.PLAIN_MESSAGE);
                         } else {
                             JOptionPane.showMessageDialog(getContentPane(), 
@@ -424,15 +425,16 @@ public class MappingLibraryDialog extends DialogWrapper {
     }
     
     /**
-     * Сохраняет библиотеку сопоставлений в папку .td-maps проекта
+     * Сохраняет библиотеку сопоставлений в папку рабочих JSON проекта (MappingsPaths)
      */
     private boolean saveToLocalMappings(String fileName, String jsonContent) {
         try {
-            if (project == null || project.getBasePath() == null) {
+            java.nio.file.Path mappingsPath = project == null ? null : MappingsPaths.getMappingsDir(project);
+            if (mappingsPath == null) {
                 return false;
             }
-            
-            java.io.File mappingsDir = new java.io.File(project.getBasePath(), ".td-maps");
+
+            java.io.File mappingsDir = mappingsPath.toFile();
             if (!mappingsDir.exists()) {
                 if (!mappingsDir.mkdirs()) {
                     return false;

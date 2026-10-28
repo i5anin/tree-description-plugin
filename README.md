@@ -62,3 +62,19 @@ Welcome to submit Issues and Pull Requests!
 If this plugin helps you, welcome to give us a ⭐ Star!
 
 
+
+## Где хранятся заметки
+
+| Что | Где |
+| --- | --- |
+| Заметки пользователя | `.idea/tree-description/local-description.json` |
+| Скачанные библиотеки сопоставлений | `.idea/tree-description/*.json` |
+| Путь в коде | `MappingsPaths.MAPPINGS_DIR` |
+
+- Раньше папка называлась `.td-maps` и лежала в корне проекта.
+  При открытии проекта плагин сам переносит её содержимое в `.idea/tree-description/`.
+- Если файл с тем же именем уже есть на новом месте, старый остаётся в `.td-maps`
+  (в журнале IDE будет предупреждение) — сравните и перенесите вручную.
+- Если `.idea` исключена в `.gitignore`, а заметки нужны команде, замените строку
+  `.idea/` на две: `.idea/*` и `!.idea/tree-description/`.
+  Исключение внутри полностью игнорируемой папки (`.idea/`) git не применяет.

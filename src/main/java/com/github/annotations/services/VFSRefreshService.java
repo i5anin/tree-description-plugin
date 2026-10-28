@@ -1,5 +1,6 @@
 package com.github.annotations.services;
 
+import com.github.annotations.utils.MappingsPaths;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -36,13 +37,12 @@ public class VFSRefreshService {
     }
     
     /**
-     * Обновляет всю папку .td-maps
+     * Обновляет всю папку рабочих JSON плагина (MappingsPaths)
      */
     public void refreshMappingsDirectory() {
         try {
-            String basePath = project.getBasePath();
-            if (basePath != null) {
-                String mappingsPath = basePath + "/.td-maps";
+            String mappingsPath = MappingsPaths.getMappingsDirVfsPath(project);
+            if (mappingsPath != null) {
                 VirtualFile mappingsDir = LocalFileSystem.getInstance()
                     .refreshAndFindFileByPath(mappingsPath);
                 if (mappingsDir != null) {
@@ -51,7 +51,7 @@ public class VFSRefreshService {
             }
         } catch (Exception e) {
             com.intellij.openapi.diagnostic.Logger.getInstance(VFSRefreshService.class)
-                .warn("Не удалось обновить папку .td-maps: " + e.getMessage());
+                .warn("Не удалось обновить папку рабочих JSON: " + e.getMessage());
         }
     }
 }

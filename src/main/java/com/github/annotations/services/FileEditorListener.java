@@ -1,5 +1,6 @@
 package com.github.annotations.services;
 
+import com.github.annotations.utils.MappingsPaths;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.FileEditorManagerListener;
 import com.intellij.openapi.project.Project;
@@ -13,7 +14,6 @@ import org.jetbrains.annotations.NotNull;
  */
 public class FileEditorListener {
     
-    private static final String MAPPINGS_DIR_NAME = ".td-maps";
     
     private final Project project;
     private final RealTimeAnnotationService realTimeAnnotationService;
@@ -52,20 +52,10 @@ public class FileEditorListener {
     }
     
     /**
-     * JSON-файл ли это в папке .td-maps
+     * JSON-файл ли это в папке рабочих JSON плагина (MappingsPaths)
      */
     private boolean isOurJsonFile(VirtualFile file) {
-        if (file == null || !file.exists() || !file.getName().endsWith(".json")) {
-            return false;
-        }
-        
-        String projectBasePath = project.getBasePath();
-        if (projectBasePath == null) {
-            return false;
-        }
-        
-        String mappingsPath = projectBasePath + "/" + MAPPINGS_DIR_NAME;
-        return file.getPath().startsWith(mappingsPath);
+        return file != null && file.exists() && MappingsPaths.isMappingsJson(project, file);
     }
     
     /**

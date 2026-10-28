@@ -1,5 +1,6 @@
 package com.github.annotations.services;
 
+import com.github.annotations.utils.MappingsPaths;
 import com.github.annotations.model.LocalMappingFile;
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
@@ -27,7 +28,6 @@ import java.util.Map;
  */
 public class JsonEditorListener {
     private static final Logger LOG = Logger.getInstance(JsonEditorListener.class);
-    private static final String MAPPINGS_DIR_NAME = ".td-maps";
     
     private final Project project;
     private final AnnotationService annotationService;
@@ -141,20 +141,10 @@ public class JsonEditorListener {
     }
     
     /**
-     * JSON-файл ли это в папке .td-maps
+     * JSON-файл ли это в папке рабочих JSON плагина (MappingsPaths)
      */
     private boolean isOurJsonFile(VirtualFile file) {
-        if (file == null || !file.getName().endsWith(".json")) {
-            return false;
-        }
-        
-        String projectBasePath = project.getBasePath();
-        if (projectBasePath == null) {
-            return false;
-        }
-        
-        String mappingsPath = projectBasePath + "/" + MAPPINGS_DIR_NAME;
-        return file.getPath().startsWith(mappingsPath);
+        return MappingsPaths.isMappingsJson(project, file);
     }
     
     /**

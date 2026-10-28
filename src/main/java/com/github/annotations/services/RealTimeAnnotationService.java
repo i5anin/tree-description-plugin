@@ -1,5 +1,6 @@
 package com.github.annotations.services;
 
+import com.github.annotations.utils.MappingsPaths;
 import com.github.annotations.model.LocalMappingFile;
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
@@ -37,7 +38,6 @@ import java.util.concurrent.TimeUnit;
  */
 public class RealTimeAnnotationService {
     private static final Logger LOG = Logger.getInstance(RealTimeAnnotationService.class);
-    private static final String MAPPINGS_DIR_NAME = ".td-maps";
     
     private final Project project;
     private final ProjectViewRefreshService treeRefreshService;
@@ -73,7 +73,7 @@ public class RealTimeAnnotationService {
     }
     
     /**
-     * Подключает слушатель VFS для внешних изменений JSON-файлов в папке .td-maps
+     * Подключает слушатель VFS для внешних изменений рабочих JSON-файлов (MappingsPaths)
      */
     private void setupVfsFileWatcher() {
         messageBusConnection = project.getMessageBus().connect();
@@ -84,31 +84,24 @@ public class RealTimeAnnotationService {
                     VirtualFile eventFile = event.getFile();
                     String fileName = eventFile != null ? eventFile.getName() : "null";
                     LOG.info("Событие VFS: " + event.getClass().getSimpleName() + " - " + fileName);
-                    if (event instanceof VFileContentChangeEvent) {
-                        VirtualFile file = event.getFile();
-                        if (file != null && file.getName().toLowerCase().endsWith(".json")) {
-                            // Лежит ли файл в папке .td-maps
-                            String basePath = project.getBasePath();
-                            if (basePath != null) {
-                                String mappingsDirPath = basePath + "/" + MAPPINGS_DIR_NAME + "/";
-                                if (file.getPath().startsWith(mappingsDirPath)) {
-                                    LOG.info("Изменён JSON-файл в папке .td-maps: " + file.getName());
-                                    // Обработка с задержкой, чтобы не обновлять слишком часто
-                                    ApplicationManager.getApplication().invokeLater(() -> {
-                                        try {
-                                            // Перечитываем файл в кэш памяти
-                                            reloadFromFile(file);
-                                            // Обновляем дерево проекта
-                                            treeRefreshService.refreshProjectView();
-                                            LOG.info("Файл изменён извне, заметки обновлены: " + file.getName());
-                                        } catch (Exception e) {
-                                            LOG.error("Не удалось обновить заметки: " + e.getMessage(), e);
-                                        }
-                                    });
-                                }
-                            }
-                        }
+                    VirtualFile file = event.getFile();
+                    // Интересуют только правки содержимого рабочих JSON плагина
+                    if (!(event instanceof VFileContentChangeEvent) || !MappingsPaths.isMappingsJson(project, file)) {
+                        continue;
                     }
+                    LOG.info("Изменён рабочий JSON-файл: " + file.getName());
+                    // Обработка с задержкой, чтобы не обновлять слишком часто
+                    ApplicationManager.getApplication().invokeLater(() -> {
+                        try {
+                            // Перечитываем файл в кэш памяти
+                            reloadFromFile(file);
+                            // Обновляем дерево проекта
+                            treeRefreshService.refreshProjectView();
+                            LOG.info("Файл изменён извне, заметки обновлены: " + file.getName());
+                        } catch (Exception e) {
+                            LOG.error("Не удалось обновить заметки: " + e.getMessage(), e);
+                        }
+                    });
                 }
             }
         });
@@ -185,20 +178,10 @@ public class RealTimeAnnotationService {
     }
     
     /**
-     * JSON-файл ли это в папке .td-maps
+     * JSON-файл ли это в папке рабочих JSON плагина (MappingsPaths)
      */
     private boolean isOurJsonFile(VirtualFile file) {
-        if (file == null || !file.getName().endsWith(".json")) {
-            return false;
-        }
-        
-        String projectBasePath = project.getBasePath();
-        if (projectBasePath == null) {
-            return false;
-        }
-        
-        String mappingsPath = projectBasePath + "/" + MAPPINGS_DIR_NAME;
-        return file.getPath().startsWith(mappingsPath);
+        return MappingsPaths.isMappingsJson(project, file);
     }
     
     /**
