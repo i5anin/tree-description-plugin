@@ -11,14 +11,14 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * 备注工具菜单组Action
- * 支持动态语言切换
+ * Группа меню «Инструменты заметок»
+ * Текст меняется вместе с языком
  */
 public class ToolsMenuAction extends ActionGroup {
     
     public ToolsMenuAction() {
-        super("备注工具", true);
-        // 图标通过plugin.xml设置
+        super("Инструменты заметок", true);
+        // Иконка задаётся в plugin.xml
     }
     
     @Override
@@ -31,7 +31,7 @@ public class ToolsMenuAction extends ActionGroup {
                 if ("en".equals(currentLanguage)) {
                     e.getPresentation().setText("Annotation Tools");
                 } else {
-                    e.getPresentation().setText("备注工具");
+                    e.getPresentation().setText("Инструменты заметок");
                 }
             }
         }
@@ -40,17 +40,17 @@ public class ToolsMenuAction extends ActionGroup {
     @NotNull
     @Override
     public AnAction[] getChildren(@Nullable AnActionEvent e) {
-        // 使用 ActionManager 获取已注册的 Action，保留快捷键显示
+        // Действия берём из ActionManager, чтобы показывались сочетания клавиш
         ActionManager actionManager = ActionManager.getInstance();
         
         return new AnAction[]{
             new LanguageSubMenuAction(),
-            Separator.getInstance(),  // 分隔符
+            Separator.getInstance(),  // разделитель
             new ToggleProjectTreeAnnotationsAction(),
             actionManager.getAction("ChineseAnnotations.SearchAnnotations"),
-            Separator.getInstance(),  // 分隔符
+            Separator.getInstance(),  // разделитель
             new ViewMappingsAction(),
-            Separator.getInstance(),  // 分隔符
+            Separator.getInstance(),  // разделитель
             new AboutPluginAction()
         };
     }

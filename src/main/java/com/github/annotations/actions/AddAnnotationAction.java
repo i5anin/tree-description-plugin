@@ -57,17 +57,17 @@ public class AddAnnotationAction extends AnAction {
         }
         
         StringBuilder message = new StringBuilder();
-        message.append("为选中的 ").append(files.length).append(" 个");
+        message.append("Для выбранных ").append(files.length).append(" ");
         
         if (fileCount > 0 && directoryCount > 0) {
-            message.append("文件/目录");
+            message.append("файлов/папок");
         } else if (fileCount > 0) {
-            message.append("文件");
+            message.append("файлов");
         } else {
-            message.append("目录");
+            message.append("папок");
         }
         
-        message.append("添加或更新备注：");
+        message.append("добавить или обновить заметку:");
         
         AnnotationService annotationService = AnnotationService.getInstance(project);
         
@@ -83,7 +83,7 @@ public class AddAnnotationAction extends AnAction {
         String initialValue = existingAnnotation != null ? existingAnnotation : 
                              (suggestedAnnotation != null ? suggestedAnnotation : "");
         
-        // 获取首个文件的现有颜色
+        // Цвет берём у первого файла
         String existingColor = null;
         String firstRelativePath = getRelativePath(project, firstFile);
         if (firstRelativePath != null) {
@@ -94,7 +94,7 @@ public class AddAnnotationAction extends AnAction {
             }
         }
         
-        AddAnnotationDialog dialog = new AddAnnotationDialog(project, I18nUtils.getText(project, "批量文件", "Multiple Files"), initialValue, existingColor);
+        AddAnnotationDialog dialog = new AddAnnotationDialog(project, I18nUtils.getText(project, "Несколько файлов", "Multiple Files"), initialValue, existingColor);
         
         if (dialog.showAndGet()) {
             String annotation = dialog.getAnnotation();
@@ -117,13 +117,13 @@ public class AddAnnotationAction extends AnAction {
                 }
             }
             
-            // 保存后立即刷新VFS和项目视图（修复多选文件不刷新问题）
+            // Сразу после сохранения обновляем VFS и дерево проекта (иначе при выборе нескольких файлов дерево не обновлялось)
             try {
                 java.lang.reflect.Method refreshMethod = annotationService.getClass().getDeclaredMethod("refreshAfterSave");
                 refreshMethod.setAccessible(true);
                 refreshMethod.invoke(annotationService);
             } catch (Exception ex) {
-                // 如果反射失败，使用备用刷新方法
+                // Если вызов через рефлексию не удался — запасной способ обновления
                 ProjectView.getInstance(project).refresh();
             }
         }
@@ -133,8 +133,8 @@ public class AddAnnotationAction extends AnAction {
         VirtualFile file = getSelectedFile(e);
         if (file == null) {
             Messages.showWarningDialog(project, 
-                I18nUtils.getText(project, "请选择一个文件或目录", "Please select a file or directory"), 
-                I18nUtils.getText(project, "添加备注", "Add Annotation"));
+                I18nUtils.getText(project, "Выберите файл или папку", "Please select a file or directory"),
+                I18nUtils.getText(project, "Добавить заметку", "Add Annotation"));
             return;
         }
         
@@ -151,7 +151,7 @@ public class AddAnnotationAction extends AnAction {
         String initialValue = existingAnnotation != null ? existingAnnotation : 
                              (suggestedAnnotation != null ? suggestedAnnotation : "");
         
-        // 获取现有颜色
+        // Текущий цвет
         String existingColor = null;
         String relativePath = getRelativePath(project, file);
         if (relativePath != null) {
@@ -186,7 +186,7 @@ public class AddAnnotationAction extends AnAction {
                 }
             }
             
-            // 不再需要手动刷新，setAnnotationAndRefresh已经处理了
+            // Ручное обновление не нужно: setAnnotationAndRefresh уже всё сделал
         }
     }
     
@@ -198,11 +198,11 @@ public class AddAnnotationAction extends AnAction {
             return;
         }
         
-        // 采用宽松显示策略，始终显示菜单项
+        // Пункт меню показывается всегда
         e.getPresentation().setVisible(true);
         e.getPresentation().setEnabled(true);
         
-        // 根据当前语言动态显示菜单文本
+        // Текст пункта меню зависит от текущего языка
         AnnotationService service = AnnotationService.getInstance(project);
         if (service != null) {
             String currentLanguage = service.getLanguage();
@@ -210,12 +210,12 @@ public class AddAnnotationAction extends AnAction {
                 e.getPresentation().setText("Add Annotation");
                 e.getPresentation().setDescription("Add user annotation to selected files");
             } else {
-                e.getPresentation().setText("添加备注");
-                e.getPresentation().setDescription("为选中文件添加用户备注");
+                e.getPresentation().setText("Добавить заметку");
+                e.getPresentation().setDescription("Добавить свою заметку к выбранному файлу");
             }
         } else {
-            e.getPresentation().setText("添加备注");
-            e.getPresentation().setDescription("为选中文件添加用户备注");
+            e.getPresentation().setText("Добавить заметку");
+            e.getPresentation().setDescription("Добавить свою заметку к выбранному файлу");
         }
     }
     
@@ -228,13 +228,13 @@ public class AddAnnotationAction extends AnAction {
 
     @Nullable
     private VirtualFile getSelectedFile(@NotNull AnActionEvent e) {
-        // 1. 优先从选中的文件数组获取
+        // 1. Сначала — из массива выбранных файлов
         VirtualFile[] files = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY);
         if (files != null && files.length > 0) {
             return files[0];
         }
         
-        // 2. 从PSI元素获取
+        // 2. Из PSI-элемента
         PsiElement psiElement = e.getData(CommonDataKeys.PSI_ELEMENT);
         if (psiElement instanceof PsiFile) {
             return ((PsiFile) psiElement).getVirtualFile();
@@ -242,13 +242,13 @@ public class AddAnnotationAction extends AnAction {
             return ((PsiDirectory) psiElement).getVirtualFile();
         }
         
-        // 3. 从单个虚拟文件获取
+        // 3. Из одиночного виртуального файла
         VirtualFile file = e.getData(CommonDataKeys.VIRTUAL_FILE);
         if (file != null) {
             return file;
         }
         
-        // 4. 新增：从当前编辑器获取文件（解决光标在文件内的问题）
+        // 4. Из текущего редактора (курсор стоит внутри файла)
         Editor editor = e.getData(CommonDataKeys.EDITOR);
         if (editor != null) {
             VirtualFile editorFile = getFileFromEditor(editor);
@@ -257,7 +257,7 @@ public class AddAnnotationAction extends AnAction {
             }
         }
         
-        // 5. 新增：从当前活动的编辑器获取文件
+        // 5. Из активного редактора
         Project project = e.getProject();
         if (project != null) {
             VirtualFile activeFile = getActiveFileFromProject(project);
@@ -272,7 +272,7 @@ public class AddAnnotationAction extends AnAction {
     @Nullable
     private String getSuggestedAnnotation(@NotNull VirtualFile file, @Nullable String existingAnnotation) {
         if (existingAnnotation != null) {
-            return null; // 已有备注时不提供建议
+            return null; // если заметка уже есть, подсказку не предлагаем
         }
         
         MappingLibraryService mappingService = MappingLibraryService.getInstance();
@@ -280,12 +280,12 @@ public class AddAnnotationAction extends AnAction {
     }
     
     /**
-     * 从编辑器获取文件
+     * Получает файл из редактора
      */
     @Nullable
     private VirtualFile getFileFromEditor(@NotNull Editor editor) {
         try {
-            // 通过Document获取文件
+            // Файл через Document
             com.intellij.openapi.fileEditor.FileDocumentManager fileDocumentManager = 
                 com.intellij.openapi.fileEditor.FileDocumentManager.getInstance();
             return fileDocumentManager.getFile(editor.getDocument());
@@ -295,7 +295,7 @@ public class AddAnnotationAction extends AnAction {
     }
     
     /**
-     * 从项目获取当前活动的文件
+     * Получает активный файл проекта
      */
     @Nullable
     private VirtualFile getActiveFileFromProject(@NotNull Project project) {
@@ -313,13 +313,13 @@ public class AddAnnotationAction extends AnAction {
                 }
             }
             
-            // 如果没有选中的编辑器，尝试获取当前打开的文件
+            // Если выбранного редактора нет — берём открытый файл
             VirtualFile[] openFiles = fileEditorManager.getOpenFiles();
             if (openFiles.length > 0) {
                 return openFiles[0];
             }
         } catch (Exception e) {
-            // 忽略错误，返回null
+            // Ошибку игнорируем, возвращаем null
         }
         
         return null;

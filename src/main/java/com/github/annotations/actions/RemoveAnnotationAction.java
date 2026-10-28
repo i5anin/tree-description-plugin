@@ -58,28 +58,28 @@ public class RemoveAnnotationAction extends AnAction {
         
         if (annotatedCount == 0) {
             Messages.showInfoMessage(project, 
-                I18nUtils.getText(project, "选中的文件/目录没有备注", "Selected files/directories have no annotations"), 
-                I18nUtils.getText(project, "删除备注", "Remove Annotation"));
+                I18nUtils.getText(project, "У выбранных файлов и папок нет заметок", "Selected files/directories have no annotations"),
+                I18nUtils.getText(project, "Удалить заметку", "Remove Annotation"));
             return;
         }
         
         StringBuilder message = new StringBuilder();
-        message.append(I18nUtils.getText(project, "确定要删除选中的 ", "Are you sure you want to delete the selected ")).append(annotatedCount).append(I18nUtils.getText(project, " 个", " "));
+        message.append(I18nUtils.getText(project, "Удалить заметки у выбранных ", "Are you sure you want to delete the selected ")).append(annotatedCount).append(I18nUtils.getText(project, " ", " "));
         
         if (fileCount > 0 && directoryCount > 0) {
-            message.append(I18nUtils.getText(project, "文件/目录", "files/directories"));
+            message.append(I18nUtils.getText(project, "файлов/папок", "files/directories"));
         } else if (fileCount > 0) {
-            message.append(I18nUtils.getText(project, "文件", "files"));
+            message.append(I18nUtils.getText(project, "файлов", "files"));
         } else {
-            message.append(I18nUtils.getText(project, "目录", "directories"));
+            message.append(I18nUtils.getText(project, "папок", "directories"));
         }
         
-        message.append(I18nUtils.getText(project, "的备注吗？", " annotations?"));
+        message.append(I18nUtils.getText(project, "?", " annotations?"));
         
         int result = Messages.showYesNoDialog(
             project,
             message.toString(),
-            I18nUtils.getText(project, "确认批量删除", "Confirm Batch Delete"),
+            I18nUtils.getText(project, "Подтверждение удаления", "Confirm Batch Delete"),
             Messages.getQuestionIcon()
         );
         
@@ -115,13 +115,13 @@ public class RemoveAnnotationAction extends AnAction {
                 }
             }
             
-            // 使用AnnotationService的刷新机制，确保JSON文件和UI同步更新
+            // Обновляем через AnnotationService, чтобы JSON-файл и интерфейс совпадали
             try {
                 java.lang.reflect.Method refreshMethod = annotationService.getClass().getDeclaredMethod("refreshAfterSave");
                 refreshMethod.setAccessible(true);
                 refreshMethod.invoke(annotationService);
             } catch (Exception ex) {
-                // 如果反射调用失败，回退到基本的项目视图刷新
+                // Если вызов через рефлексию не удался — простое обновление дерева проекта
                 ProjectView.getInstance(project).refresh();
             }
         }
@@ -144,18 +144,18 @@ public class RemoveAnnotationAction extends AnAction {
         
         if (existingAnnotation == null) {
             String message = file.isDirectory() ? 
-                I18nUtils.getText(project, "该目录没有备注", "This directory has no annotation") : 
-                I18nUtils.getText(project, "该文件没有备注", "This file has no annotation");
-            Messages.showInfoMessage(project, message, I18nUtils.getText(project, "删除备注", "Remove Annotation"));
+                I18nUtils.getText(project, "У папки нет заметки", "This directory has no annotation") :
+                I18nUtils.getText(project, "У файла нет заметки", "This file has no annotation");
+            Messages.showInfoMessage(project, message, I18nUtils.getText(project, "Удалить заметку", "Remove Annotation"));
             return;
         }
         
         int result = Messages.showYesNoDialog(
             project,
             I18nUtils.getText(project, 
-                "确定要删除 \"" + file.getName() + "\" 的备注吗？\n\n当前备注：" + existingAnnotation,
+                "Удалить заметку у \"" + file.getName() + "\"?\n\nТекущая заметка: " + existingAnnotation,
                 "Are you sure you want to delete the annotation for \"" + file.getName() + "\"?\n\nCurrent annotation: " + existingAnnotation),
-            I18nUtils.getText(project, "确认删除备注", "Confirm Delete Annotation"),
+            I18nUtils.getText(project, "Подтверждение удаления заметки", "Confirm Delete Annotation"),
             Messages.getQuestionIcon()
         );
         
@@ -175,13 +175,13 @@ public class RemoveAnnotationAction extends AnAction {
                 }
             }
             
-            // 使用AnnotationService的刷新机制，确保JSON文件和UI同步更新
+            // Обновляем через AnnotationService, чтобы JSON-файл и интерфейс совпадали
             try {
                 java.lang.reflect.Method refreshMethod = annotationService.getClass().getDeclaredMethod("refreshAfterSave");
                 refreshMethod.setAccessible(true);
                 refreshMethod.invoke(annotationService);
             } catch (Exception ex) {
-                // 如果反射调用失败，回退到基本的项目视图刷新
+                // Если вызов через рефлексию не удался — простое обновление дерева проекта
                 ProjectView.getInstance(project).refresh();
             }
         }
@@ -195,19 +195,19 @@ public class RemoveAnnotationAction extends AnAction {
             return;
         }
         
-        // 始终显示菜单项，不进行任何可见性控制
+        // Пункт меню показывается всегда
         e.getPresentation().setVisible(true);
         e.getPresentation().setEnabled(true);
         
-        // 根据当前语言动态显示菜单文本
+        // Текст пункта меню зависит от текущего языка
         AnnotationService annotationService = AnnotationService.getInstance(project);
         String currentLanguage = annotationService.getLanguage();
         if ("en".equals(currentLanguage)) {
             e.getPresentation().setText("Remove Annotation");
             e.getPresentation().setDescription("Remove user annotation from selected files");
         } else {
-            e.getPresentation().setText("删除备注");
-            e.getPresentation().setDescription("删除选中文件的用户备注");
+            e.getPresentation().setText("Удалить заметку");
+            e.getPresentation().setDescription("Удалить свою заметку у выбранного файла");
         }
     }
     
@@ -230,7 +230,7 @@ public class RemoveAnnotationAction extends AnAction {
             return ((PsiDirectory) psiElement).getVirtualFile();
         }
         
-        // 方法3：从导航目标获取
+        // Способ 3: из цели навигации
         VirtualFile file = e.getData(CommonDataKeys.VIRTUAL_FILE);
         if (file != null) {
             return file;

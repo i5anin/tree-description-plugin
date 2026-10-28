@@ -24,7 +24,7 @@ import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-// 使用固定颜色，不再依赖主题感知
+// Цвет фиксированный, от темы оформления не зависит
 import java.util.List;
 import java.util.Map;
 import java.util.ArrayList;
@@ -33,8 +33,8 @@ import java.util.LinkedHashSet;
 import java.util.Set;
 
 /**
- * 备注搜索对话框
- * 提供全局搜索项目备注的功能
+ * Диалог поиска по заметкам
+ * Ищет по всем заметкам проекта
  */
 public class SearchAnnotationsDialog extends DialogWrapper {
     
@@ -53,8 +53,8 @@ public class SearchAnnotationsDialog extends DialogWrapper {
         this.annotationService = AnnotationService.getInstance(project);
         this.mappingLibraryService = MappingLibraryService.getInstance();
         
-        setTitle(I18nUtils.getText(project, "搜索项目树备注", "Search Project Tree Annotations"));
-        setSize(850, 600);  // ← 这里设置窗口大小：宽度 1000px, 高度 700px
+        setTitle(I18nUtils.getText(project, "Поиск по заметкам дерева проекта", "Search Project Tree Annotations"));
+        setSize(850, 600);  // ← размер окна: ширина и высота в пикселях
         init();
     }
     
@@ -63,16 +63,16 @@ public class SearchAnnotationsDialog extends DialogWrapper {
         JPanel mainPanel = new JPanel(new BorderLayout());
         mainPanel.setBorder(JBUI.Borders.empty(10));
         
-        // 搜索输入框
+        // Поле поиска
         JPanel searchPanel = createSearchPanel();
         mainPanel.add(searchPanel, BorderLayout.NORTH);
         
-        // 结果列表
+        // Список результатов
         JPanel resultsPanel = createResultsPanel();
         mainPanel.add(resultsPanel, BorderLayout.CENTER);
         
-        // 状态栏
-        statusLabel = new JLabel(I18nUtils.getText(project, "请输入搜索关键词", "Please enter search keywords"));
+        // Строка состояния
+        statusLabel = new JLabel(I18nUtils.getText(project, "Введите слово для поиска", "Please enter search keywords"));
         statusLabel.setBorder(JBUI.Borders.empty(5, 0, 0, 0));
         mainPanel.add(statusLabel, BorderLayout.SOUTH);
         
@@ -82,13 +82,13 @@ public class SearchAnnotationsDialog extends DialogWrapper {
     private JPanel createSearchPanel() {
         JPanel panel = new JPanel(new BorderLayout());
         
-        JLabel label = new JLabel(I18nUtils.getText(project, "搜索关键词:", "Search Keywords:"));
+        JLabel label = new JLabel(I18nUtils.getText(project, "Искать:", "Search Keywords:"));
         label.setBorder(JBUI.Borders.empty(0, 0, 5, 5));
         
         searchField = new JBTextField();
-        searchField.setToolTipText(I18nUtils.getText(project, "输入关键词搜索项目树备注内容", "Enter keywords to search project tree annotations"));
+        searchField.setToolTipText(I18nUtils.getText(project, "Введите слово для поиска по заметкам дерева проекта", "Enter keywords to search project tree annotations"));
         
-        // 添加实时搜索监听器
+        // Поиск по мере ввода
         searchField.getDocument().addDocumentListener(new DocumentListener() {
             @Override
             public void insertUpdate(DocumentEvent e) { performSearch(); }
@@ -109,7 +109,7 @@ public class SearchAnnotationsDialog extends DialogWrapper {
     private JPanel createResultsPanel() {
         JPanel panel = new JPanel(new BorderLayout());
         
-        JLabel resultsLabel = new JLabel(I18nUtils.getText(project, "搜索结果:", "Search Results:"));
+        JLabel resultsLabel = new JLabel(I18nUtils.getText(project, "Результаты:", "Search Results:"));
         resultsLabel.setBorder(JBUI.Borders.empty(10, 0, 5, 0));
         
         listModel = new DefaultListModel<>();
@@ -117,7 +117,7 @@ public class SearchAnnotationsDialog extends DialogWrapper {
         resultsList.setCellRenderer(new SearchResultCellRenderer());
         resultsList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         
-        // 双击跳转到文件
+        // Двойной щелчок — переход к файлу
         resultsList.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
@@ -127,7 +127,7 @@ public class SearchAnnotationsDialog extends DialogWrapper {
             }
         });
         
-        // 回车键跳转到文件
+        // Enter — переход к файлу
         resultsList.addKeyListener(new KeyAdapter() {
             @Override
             public void keyPressed(KeyEvent e) {
@@ -138,7 +138,7 @@ public class SearchAnnotationsDialog extends DialogWrapper {
         });
         
         JBScrollPane scrollPane = new JBScrollPane(resultsList);
-        scrollPane.setPreferredSize(new Dimension(800, 400));  // ← 这里设置滚动区域首选大小
+        scrollPane.setPreferredSize(new Dimension(800, 400));  // ← предпочтительный размер области прокрутки
         
         panel.add(resultsLabel, BorderLayout.NORTH);
         panel.add(scrollPane, BorderLayout.CENTER);
@@ -151,52 +151,52 @@ public class SearchAnnotationsDialog extends DialogWrapper {
         listModel.clear();
         
         if (keyword.isEmpty()) {
-            statusLabel.setText("请输入搜索关键词");
+            statusLabel.setText("Введите слово для поиска");
             return;
         }
         
         List<SearchResult> results = new ArrayList<>();
-        Set<String> userAnnotatedPaths = new HashSet<>(); // 记录已有用户备注的文件路径
+        Set<String> userAnnotatedPaths = new HashSet<>(); // пути файлов, у которых уже есть пользовательская заметка
         
-        // 1. 搜索用户自定义备注（files）
+        // 1. Пользовательские заметки файлов (files)
         Map<String, String> userAnnotations = annotationService.getAllAnnotations();
         for (Map.Entry<String, String> entry : userAnnotations.entrySet()) {
             String filePath = entry.getKey();
             String annotation = entry.getValue();
             
-            // 检查备注内容是否包含关键词（忽略大小写）
+            // Есть ли слово в тексте заметки (без учёта регистра)
             if (annotation.toLowerCase().contains(keyword.toLowerCase())) {
-                                                SearchResult result = new SearchResult(filePath, annotation, keyword, "用户文件映射");
+                                                SearchResult result = new SearchResult(filePath, annotation, keyword, "Пользовательский файл");
                 results.add(result);
-                userAnnotatedPaths.add(filePath); // 记录此路径已有用户备注
+                userAnnotatedPaths.add(filePath); // у этого пути уже есть пользовательская заметка
             }
         }
         
-        // 2. 搜索用户自定义包备注（packages）
+        // 2. Пользовательские заметки пакетов (packages)
         Map<String, String> userPackageAnnotations = annotationService.getAllPackageAnnotations();
         for (Map.Entry<String, String> entry : userPackageAnnotations.entrySet()) {
             String packagePath = entry.getKey();
             String annotation = entry.getValue();
             
             if (annotation.toLowerCase().contains(keyword.toLowerCase())) {
-                SearchResult result = new SearchResult(packagePath, annotation, keyword, "用户包映射");
+                SearchResult result = new SearchResult(packagePath, annotation, keyword, "Пользовательский пакет");
                 results.add(result);
                 userAnnotatedPaths.add(packagePath);
             }
         }
         
-        // 3. 搜索用户自定义文件匹配模式匹配的文件
+        // 3. Файлы под пользовательскими шаблонами файлов
         Map<String, String> userFileMatchAnnotations = annotationService.getAllFileMatchAnnotations();
         for (Map.Entry<String, String> entry : userFileMatchAnnotations.entrySet()) {
             String pattern = entry.getKey();
             String annotation = entry.getValue();
             
             if (annotation.toLowerCase().contains(keyword.toLowerCase())) {
-                // 找到所有匹配该pattern的文件
+                // Все файлы, подходящие под шаблон
                 List<String> matchedFiles = findFilesMatchingPattern(pattern);
                 for (String filePath : matchedFiles) {
                     if (!userAnnotatedPaths.contains(filePath)) {
-                        SearchResult result = new SearchResult(filePath, annotation, keyword, "用户文件匹配映射");
+                        SearchResult result = new SearchResult(filePath, annotation, keyword, "Пользовательский шаблон файла");
                         results.add(result);
                         userAnnotatedPaths.add(filePath);
                     }
@@ -204,18 +204,18 @@ public class SearchAnnotationsDialog extends DialogWrapper {
             }
         }
         
-        // 4. 搜索用户自定义包匹配模式匹配的包
+        // 4. Пакеты под пользовательскими шаблонами пакетов
         Map<String, String> userPackageMatchAnnotations = annotationService.getAllPackageMatchAnnotations();
         for (Map.Entry<String, String> entry : userPackageMatchAnnotations.entrySet()) {
             String pattern = entry.getKey();
             String annotation = entry.getValue();
             
             if (annotation.toLowerCase().contains(keyword.toLowerCase())) {
-                // 找到所有匹配该pattern的包
+                // Все пакеты, подходящие под шаблон
                 List<String> matchedPackages = findPackagesMatchingPattern(pattern);
                 for (String packagePath : matchedPackages) {
                     if (!userAnnotatedPaths.contains(packagePath)) {
-                        SearchResult result = new SearchResult(packagePath, annotation, keyword, "用户包匹配映射");
+                        SearchResult result = new SearchResult(packagePath, annotation, keyword, "Пользовательский шаблон пакета");
                         results.add(result);
                         userAnnotatedPaths.add(packagePath);
                     }
@@ -223,44 +223,44 @@ public class SearchAnnotationsDialog extends DialogWrapper {
             }
         }
         
-        // 5. 搜索内置映射库的files和packages（只搜索实际文件和包，不搜索模式匹配）
-        // 只有在启用内置映射库时才搜索
+        // 5. files и packages встроенной библиотеки (только реальные файлы и пакеты, без шаблонов)
+        // Ищем, только если встроенная библиотека включена
         if (mappingLibraryService.isBuiltinMappingsEnabled()) {
             Map<String, String> builtinMappings = mappingLibraryService.getAllMappings();
             for (Map.Entry<String, String> entry : builtinMappings.entrySet()) {
                 String keyName = entry.getKey();
                 String annotation = entry.getValue();
                 
-                // 检查备注内容是否包含关键词（忽略大小写）
+                // Есть ли слово в тексте заметки (без учёта регистра)
                 if (annotation.toLowerCase().contains(keyword.toLowerCase())) {
-                    // 判断是文件名还是包名
+                    // Имя файла или имя пакета
                     if (isFileName(keyName)) {
-                        // 对于文件名，搜索项目中所有匹配的完整路径
+                        // Для имени файла ищем все подходящие полные пути в проекте
                         List<String> allPaths = findAllFilesInProject(keyName);
                         if (!allPaths.isEmpty()) {
                             for (String fullPath : allPaths) {
-                                // 只有当该文件路径没有用户备注时，才添加内置映射结果
+                                // Встроенный результат добавляем, только если у пути нет пользовательской заметки
                                 if (!userAnnotatedPaths.contains(fullPath)) {
-                                    // 再次验证文件确实存在
+                                    // Ещё раз проверяем, что файл существует
                                     if (fileExistsInProject(fullPath)) {
-                                        SearchResult result = new SearchResult(fullPath, annotation, keyword, "内置文件映射");
+                                        SearchResult result = new SearchResult(fullPath, annotation, keyword, "Встроенный файл");
                                         results.add(result);
                                     }
                                 }
                             }
                         } else {
-                            // 如果没找到匹配的文件，但该映射确实存在，则添加一个通用的结果
+                            // Файлов не нашлось, но сопоставление есть — добавляем общий результат
                             if (fileExistsInProject(keyName)) {
                                 if (!userAnnotatedPaths.contains(keyName)) {
-                                    SearchResult result = new SearchResult(keyName, annotation, keyword, "内置文件映射");
+                                    SearchResult result = new SearchResult(keyName, annotation, keyword, "Встроенный файл");
                                     results.add(result);
                                 }
                             }
                         }
                     } else {
-                        // 对于包名，验证包路径是否真实存在于项目中
+                        // Для имени пакета проверяем, что такой путь есть в проекте
                         if (!userAnnotatedPaths.contains(keyName) && packageExistsInProject(keyName)) {
-                            SearchResult result = new SearchResult(keyName, annotation, keyword, "内置包映射");
+                            SearchResult result = new SearchResult(keyName, annotation, keyword, "Встроенный пакет");
                             results.add(result);
                             userAnnotatedPaths.add(keyName);
                         }
@@ -269,8 +269,8 @@ public class SearchAnnotationsDialog extends DialogWrapper {
             }
         }
         
-        // 6. 搜索内置映射库的fileMatch模式匹配的文件
-        // 只有在启用内置映射库时才搜索
+        // 6. Файлы под шаблонами fileMatch встроенной библиотеки
+        // Ищем, только если встроенная библиотека включена
         if (mappingLibraryService.isBuiltinMappingsEnabled()) {
             Map<String, String> builtinFileMatchPatterns = mappingLibraryService.getAllFileMatchPatterns();
             for (Map.Entry<String, String> entry : builtinFileMatchPatterns.entrySet()) {
@@ -278,11 +278,11 @@ public class SearchAnnotationsDialog extends DialogWrapper {
                 String annotation = entry.getValue();
                 
                 if (annotation.toLowerCase().contains(keyword.toLowerCase())) {
-                    // 找到所有匹配该pattern的文件
+                    // Все файлы, подходящие под шаблон
                     List<String> matchedFiles = findFilesMatchingPattern(pattern);
                     for (String filePath : matchedFiles) {
                         if (!userAnnotatedPaths.contains(filePath)) {
-                            SearchResult result = new SearchResult(filePath, annotation, keyword, "内置文件匹配映射");
+                            SearchResult result = new SearchResult(filePath, annotation, keyword, "Встроенный шаблон файла");
                             results.add(result);
                             userAnnotatedPaths.add(filePath);
                         }
@@ -291,8 +291,8 @@ public class SearchAnnotationsDialog extends DialogWrapper {
             }
         }
         
-        // 7. 搜索内置映射库的packageMatch模式匹配的包
-        // 只有在启用内置映射库时才搜索
+        // 7. Пакеты под шаблонами packageMatch встроенной библиотеки
+        // Ищем, только если встроенная библиотека включена
         if (mappingLibraryService.isBuiltinMappingsEnabled()) {
             Map<String, String> builtinPackageMatchPatterns = mappingLibraryService.getAllPackageMatchPatterns();
             for (Map.Entry<String, String> entry : builtinPackageMatchPatterns.entrySet()) {
@@ -300,11 +300,11 @@ public class SearchAnnotationsDialog extends DialogWrapper {
                 String annotation = entry.getValue();
                 
                 if (annotation.toLowerCase().contains(keyword.toLowerCase())) {
-                    // 找到所有匹配该pattern的包
+                    // Все пакеты, подходящие под шаблон
                     List<String> matchedPackages = findPackagesMatchingPattern(pattern);
                     for (String packagePath : matchedPackages) {
                         if (!userAnnotatedPaths.contains(packagePath)) {
-                            SearchResult result = new SearchResult(packagePath, annotation, keyword, "内置包匹配映射");
+                            SearchResult result = new SearchResult(packagePath, annotation, keyword, "Встроенный шаблон пакета");
                             results.add(result);
                             userAnnotatedPaths.add(packagePath);
                         }
@@ -313,10 +313,10 @@ public class SearchAnnotationsDialog extends DialogWrapper {
             }
         }
         
-        // 按类型和文件路径排序 - 用户映射优先
+        // Сортировка по типу и пути — пользовательские сопоставления первыми
         results.sort((a, b) -> {
-            // 先按类型排序：用户文件映射 > 用户包映射 > 用户文件匹配映射 > 用户包匹配映射 > 内置文件映射 > 内置包映射 > 内置文件匹配映射 > 内置包匹配映射
-            String[] priorityOrder = {"用户文件映射", "用户包映射", "用户文件匹配映射", "用户包匹配映射", "内置文件映射", "内置包映射", "内置文件匹配映射", "内置包匹配映射"};
+            // Порядок типов: пользовательский файл > пользовательский пакет > пользовательский шаблон файла > пользовательский шаблон пакета > встроенный файл > встроенный пакет > встроенный шаблон файла > встроенный шаблон пакета
+            String[] priorityOrder = {"Пользовательский файл", "Пользовательский пакет", "Пользовательский шаблон файла", "Пользовательский шаблон пакета", "Встроенный файл", "Встроенный пакет", "Встроенный шаблон файла", "Встроенный шаблон пакета"};
             int aPriority = getPriority(a.source, priorityOrder);
             int bPriority = getPriority(b.source, priorityOrder);
             
@@ -324,30 +324,30 @@ public class SearchAnnotationsDialog extends DialogWrapper {
                 return Integer.compare(aPriority, bPriority);
             }
             
-            // 同类型的按文件路径排序
+            // Внутри одного типа — по пути файла
             return a.filePath.compareToIgnoreCase(b.filePath);
         });
         
-        // 添加到列表
+        // Добавляем в список
         for (SearchResult result : results) {
             listModel.addElement(result);
         }
         
-        // 更新状态
+        // Обновляем строку состояния
         if (results.isEmpty()) {
             statusLabel.setText(I18nUtils.getText(project, 
-                "未找到包含 \"" + keyword + "\" 的备注",
+                "Заметок со словом \"" + keyword + "\" не найдено",
                 "No annotations found containing \"" + keyword + "\""));
         } else {
-            long userCount = results.stream().filter(r -> r.source.startsWith("用户")).count();
+            long userCount = results.stream().filter(r -> r.source.startsWith("Пользовательский")).count();
             statusLabel.setText(I18nUtils.getText(project,
-                "找到 " + results.size() + " 个匹配的备注",
+                "Найдено заметок: " + results.size(),
                 "Found " + results.size() + " matching annotations"));
         }
     }
     
     /**
-     * 获取优先级顺序
+     * Позиция типа в порядке сортировки
      */
     private int getPriority(String source, String[] priorityOrder) {
         for (int i = 0; i < priorityOrder.length; i++) {
@@ -355,11 +355,11 @@ public class SearchAnnotationsDialog extends DialogWrapper {
                 return i;
             }
         }
-        return priorityOrder.length; // 未知类型排在最后
+        return priorityOrder.length; // неизвестный тип — в конец
     }
     
     /**
-     * 查找匹配指定pattern的所有文件
+     * Ищет все файлы, подходящие под шаблон
      */
     private List<String> findFilesMatchingPattern(String pattern) {
         List<String> matchedFiles = new ArrayList<>();
@@ -371,17 +371,17 @@ public class SearchAnnotationsDialog extends DialogWrapper {
             VirtualFile projectRoot = VirtualFileManager.getInstance().findFileByUrl("file://" + projectPath);
             if (projectRoot == null) return matchedFiles;
             
-            // 递归搜索项目中的所有文件
+            // Рекурсивно обходим все файлы проекта
             findFilesMatchingPatternRecursive(projectRoot, pattern, matchedFiles);
         } catch (Exception e) {
-            // 忽略异常，返回空列表
+            // Исключение игнорируем, возвращаем пустой список
         }
         
         return matchedFiles;
     }
     
     /**
-     * 递归搜索匹配pattern的文件
+     * Рекурсивно ищет файлы, подходящие под шаблон
      */
     private void findFilesMatchingPatternRecursive(VirtualFile directory, String pattern, List<String> matchedFiles) {
         if (directory == null || !directory.isDirectory()) return;
@@ -389,13 +389,13 @@ public class SearchAnnotationsDialog extends DialogWrapper {
         try {
             for (VirtualFile child : directory.getChildren()) {
                 if (child.isDirectory()) {
-                    // 递归搜索子目录
+                    // Обходим вложенные папки
                     findFilesMatchingPatternRecursive(child, pattern, matchedFiles);
                 } else {
-                    // 检查文件名是否匹配pattern - 使用完全匹配而不是包含匹配
+                    // Имя файла должно совпасть с шаблоном целиком, а не просто содержать его
                     String fileName = child.getName();
                     if (fileName.equalsIgnoreCase(pattern)) {
-                        // 获取相对于项目根目录的路径
+                        // Путь относительно корня проекта
                         String projectPath = project.getBasePath();
                         if (projectPath != null) {
                             VirtualFile projectRoot = VirtualFileManager.getInstance().findFileByUrl("file://" + projectPath);
@@ -410,12 +410,12 @@ public class SearchAnnotationsDialog extends DialogWrapper {
                 }
             }
         } catch (Exception e) {
-            // 忽略异常，继续搜索
+            // Исключение игнорируем, продолжаем поиск
         }
     }
     
     /**
-     * 查找匹配指定pattern的所有包
+     * Ищет все пакеты, подходящие под шаблон
      */
     private List<String> findPackagesMatchingPattern(String pattern) {
         List<String> matchedPackages = new ArrayList<>();
@@ -427,17 +427,17 @@ public class SearchAnnotationsDialog extends DialogWrapper {
             VirtualFile projectRoot = VirtualFileManager.getInstance().findFileByUrl("file://" + projectPath);
             if (projectRoot == null) return matchedPackages;
             
-            // 递归搜索项目中的所有目录
+            // Рекурсивно обходим все папки проекта
             findPackagesMatchingPatternRecursive(projectRoot, pattern, matchedPackages);
         } catch (Exception e) {
-            // 忽略异常，返回空列表
+            // Исключение игнорируем, возвращаем пустой список
         }
         
         return matchedPackages;
     }
     
     /**
-     * 递归搜索匹配pattern的包
+     * Рекурсивно ищет пакеты, подходящие под шаблон
      */
     private void findPackagesMatchingPatternRecursive(VirtualFile directory, String pattern, List<String> matchedPackages) {
         if (directory == null || !directory.isDirectory()) return;
@@ -445,10 +445,10 @@ public class SearchAnnotationsDialog extends DialogWrapper {
         try {
             for (VirtualFile child : directory.getChildren()) {
                 if (child.isDirectory()) {
-                    // 检查目录名是否匹配pattern - 使用完全匹配而不是包含匹配
+                    // Имя папки должно совпасть с шаблоном целиком, а не просто содержать его
                     String dirName = child.getName();
                     if (dirName.equalsIgnoreCase(pattern)) {
-                        // 获取相对于项目根目录的路径
+                        // Путь относительно корня проекта
                         String projectPath = project.getBasePath();
                         if (projectPath != null) {
                             VirtualFile projectRoot = VirtualFileManager.getInstance().findFileByUrl("file://" + projectPath);
@@ -461,17 +461,17 @@ public class SearchAnnotationsDialog extends DialogWrapper {
                         }
                     }
                     
-                    // 递归搜索子目录
+                    // Обходим вложенные папки
                     findPackagesMatchingPatternRecursive(child, pattern, matchedPackages);
                 }
             }
         } catch (Exception e) {
-            // 忽略异常，继续搜索
+            // Исключение игнорируем, продолжаем поиск
         }
     }
     
     /**
-     * 获取文件相对于项目根目录的路径
+     * Путь файла относительно корня проекта
      */
     private String getRelativePath(VirtualFile baseDir, VirtualFile file) {
         try {
@@ -486,16 +486,16 @@ public class SearchAnnotationsDialog extends DialogWrapper {
                 return relativePath;
             }
         } catch (Exception e) {
-            // 忽略异常
+            // Исключение игнорируем
         }
         return null;
     }
     
     /**
-     * 判断是否为文件名（而不是包名）
+     * Имя файла это или имя пакета
      */
     private boolean isFileName(String name) {
-        // 包含文件扩展名的肯定是文件
+        // Есть расширение — точно файл
         if (name.contains(".") && (name.endsWith(".xml") || name.endsWith(".yml") || name.endsWith(".yaml") || 
             name.endsWith(".properties") || name.endsWith(".json") || name.endsWith(".gradle") || 
             name.endsWith(".md") || name.endsWith(".txt") || name.endsWith(".gitignore") || 
@@ -503,13 +503,13 @@ public class SearchAnnotationsDialog extends DialogWrapper {
             return true;
         }
         
-        // 特殊文件名（无扩展名）
+        // Особые имена файлов без расширения
         if (name.equals(".gitignore") || name.equals("Dockerfile") || name.equals("Jenkinsfile") || 
             name.equals("Makefile") || name.equals("README")) {
             return true;
         }
         
-        // 包含多个点的通常是包名（如 org.springframework.boot）
+        // Несколько точек — обычно имя пакета (например, org.springframework.boot)
         if (name.contains(".") && name.split("\\.").length > 2) {
             return false;
         }
@@ -519,7 +519,7 @@ public class SearchAnnotationsDialog extends DialogWrapper {
     }
     
     /**
-     * 检查文件是否存在于当前项目中
+     * Есть ли файл в текущем проекте
      */
     private boolean fileExistsInProject(String relativePath) {
         try {
@@ -532,9 +532,9 @@ public class SearchAnnotationsDialog extends DialogWrapper {
     }
     
     /**
-     * 检查包路径是否存在于项目中
-     * 将包名转换为文件夹路径进行检查，例如：org.springframework.boot -> org/springframework/boot
-     * 性能优化：减少文件系统调用
+     * Есть ли путь пакета в проекте
+     * Имя пакета превращается в путь папки, например: org.springframework.boot -> org/springframework/boot
+     * Производительность: меньше обращений к файловой системе
      */
     private boolean packageExistsInProject(String packageName) {
         if (packageName == null || packageName.isEmpty()) {
@@ -542,19 +542,19 @@ public class SearchAnnotationsDialog extends DialogWrapper {
         }
         
         try {
-            // 将包名转换为路径格式
+            // Имя пакета в виде пути
             String packagePath = packageName.replace(".", "/");
             String projectBasePath = project.getBasePath();
             if (projectBasePath == null) {
                 return false;
             }
             
-            // 检查常见的源码目录下是否存在该包路径（按概率排序）
+            // Проверяем обычные папки исходников (в порядке вероятности)
             String[] basePaths = {
-                "src/main/java/" + packagePath,  // 最常见
-                "src/" + packagePath,            // 简化结构
+                "src/main/java/" + packagePath,  // самый частый случай
+                "src/" + packagePath,            // упрощённая структура
                 "src/test/java/" + packagePath,
-                packagePath                      // 根目录
+                packagePath                      // корень проекта
             };
             
             VirtualFileManager vfm = VirtualFileManager.getInstance();
@@ -572,7 +572,7 @@ public class SearchAnnotationsDialog extends DialogWrapper {
     }
     
     /**
-     * 在项目中递归搜索文件
+     * Рекурсивно ищет файл в проекте
      */
     private boolean searchFileInProject(VirtualFile directory, String fileName) {
         if (directory == null || !directory.isDirectory()) {
@@ -589,24 +589,24 @@ public class SearchAnnotationsDialog extends DialogWrapper {
                 }
             }
         } catch (Exception ex) {
-            // 忽略异常，继续搜索
+            // Исключение игнорируем, продолжаем поиск
         }
         
         return false;
     }
     
     /**
-     * 在项目中搜索文件并返回完整的相对路径
+     * Ищет файл в проекте и возвращает полный относительный путь
      */
     private String findFileInProject(String fileName) {
         try {
-            // 首先检查根目录
+            // Сначала проверяем корень
             String rootPath = fileName;
             if (fileExistsInProject(rootPath)) {
                 return rootPath;
             }
             
-            // 递归搜索整个项目，返回第一个匹配的相对路径
+            // Обходим весь проект, возвращаем первый подходящий относительный путь
             String projectPath = project.getBasePath();
             if (projectPath == null) return null;
             VirtualFile projectRoot = VirtualFileManager.getInstance().findFileByUrl("file://" + projectPath);
@@ -618,7 +618,7 @@ public class SearchAnnotationsDialog extends DialogWrapper {
     }
     
     /**
-     * 在项目中搜索所有匹配的文件并返回完整的相对路径列表
+     * Ищет все подходящие файлы в проекте и возвращает список относительных путей
      */
     private List<String> findAllFilesInProject(String fileName) {
         Set<String> allPaths = new LinkedHashSet<>();
@@ -629,13 +629,13 @@ public class SearchAnnotationsDialog extends DialogWrapper {
             if (projectRoot == null) return new ArrayList<>();
             searchAllFilePathsInProject(projectRoot, fileName, "", allPaths);
         } catch (Exception ex) {
-            // 静默处理异常
+            // Исключение обрабатываем без сообщений
         }
         return new ArrayList<>(allPaths);
     }
     
     /**
-     * 递归搜索文件并返回相对路径
+     * Рекурсивно ищет файл и возвращает относительный путь
      */
     private String searchFilePathInProject(VirtualFile directory, String fileName, String currentPath) {
         if (directory == null || !directory.isDirectory()) {
@@ -658,14 +658,14 @@ public class SearchAnnotationsDialog extends DialogWrapper {
                 }
             }
         } catch (Exception ex) {
-            // 忽略异常，继续搜索
+            // Исключение игнорируем, продолжаем поиск
         }
         
         return null;
     }
     
     /**
-     * 递归搜索所有匹配的文件并收集路径
+     * Рекурсивно ищет все подходящие файлы и собирает пути
      */
     private void searchAllFilePathsInProject(VirtualFile directory, String fileName, String currentPath, Set<String> results) {
         if (directory == null || !directory.isDirectory()) {
@@ -685,7 +685,7 @@ public class SearchAnnotationsDialog extends DialogWrapper {
                 }
             }
         } catch (Exception ex) {
-            // 静默处理异常
+            // Исключение обрабатываем без сообщений
         }
     }
     
@@ -694,31 +694,31 @@ public class SearchAnnotationsDialog extends DialogWrapper {
         if (selected == null) return;
         
         try {
-            // 构建完整文件路径
+            // Полный путь файла
             String fullPath = project.getBasePath() + "/" + selected.filePath;
             VirtualFile file = VirtualFileManager.getInstance().findFileByUrl("file://" + fullPath);
             
             if (file != null && file.exists()) {
-                // 在编辑器中打开文件
+                // Открываем файл в редакторе
                 FileEditorManager.getInstance(project).openFile(file, true);
                 
-                // 在Project View中选中文件
+                // Выделяем файл в Project View
                 ProjectView.getInstance(project).select(null, file, true);
                 
-                // 关闭对话框
+                // Закрываем диалог
                 close(OK_EXIT_CODE);
             } else {
-                statusLabel.setText("文件不存在: " + selected.filePath);
+                statusLabel.setText("Файл не найден: " + selected.filePath);
             }
         } catch (Exception ex) {
-            statusLabel.setText("无法打开文件: " + ex.getMessage());
+            statusLabel.setText("Не удалось открыть файл: " + ex.getMessage());
         }
     }
     
     @Override
     protected @NotNull Action[] createActions() {
         return new Action[]{
-            new AbstractAction(I18nUtils.getText(project, "跳转到选中结果", "Navigate to Selected Result")) {
+            new AbstractAction(I18nUtils.getText(project, "Перейти к выбранному результату", "Navigate to Selected Result")) {
                 @Override
                 public void actionPerformed(java.awt.event.ActionEvent e) {
                     navigateToSelectedFile();
@@ -734,13 +734,13 @@ public class SearchAnnotationsDialog extends DialogWrapper {
     }
     
     /**
-     * 搜索结果数据类
+     * Данные одного результата поиска
      */
     public static class SearchResult {
         public final String filePath;
         public final String annotation;
         public final String keyword;
-        public final String source; // "用户备注" 或 "内置映射"
+        public final String source; // тип источника, например "Пользовательский файл" или "Встроенный файл"
         
         public SearchResult(String filePath, String annotation, String keyword, String source) {
             this.filePath = filePath;
@@ -756,7 +756,7 @@ public class SearchAnnotationsDialog extends DialogWrapper {
     }
     
     /**
-     * 搜索结果渲染器 - 高亮关键词
+     * Отрисовка результата поиска с подсветкой слова
      */
     private class SearchResultCellRenderer extends DefaultListCellRenderer {
         @Override
@@ -767,17 +767,17 @@ public class SearchAnnotationsDialog extends DialogWrapper {
             if (value instanceof SearchResult) {
                 SearchResult result = (SearchResult) value;
                 
-                // 根据是否选中状态和当前主题决定文字颜色
-                String textColor = isSelected ? "#FFFFFF" : getUnselectedTextColor(); // 选中时白色，未选中时根据主题调整
-                String annotationColor = isSelected ? "#FFFFFF" : getUnselectedAnnotationColor(); // 选中时白色，未选中时根据主题调整
+                // Цвет текста зависит от выделения и темы
+                String textColor = isSelected ? "#FFFFFF" : getUnselectedTextColor(); // выделено — белый, иначе по теме
+                String annotationColor = isSelected ? "#FFFFFF" : getUnselectedAnnotationColor(); // выделено — белый, иначе по теме
                 
-                // 创建HTML格式的文本，高亮关键词
+                // HTML-текст с подсвеченным словом
                 String highlightedText = highlightKeyword(result.annotation, result.keyword, isSelected);
                 
-                // 根据来源设置不同的颜色 - 使用固定颜色方案
-                String sourceColor = "#6088F0"; // 与路径颜色一致
+                // Цвет зависит от источника — фиксированная схема
+                String sourceColor = "#6088F0"; // как у пути
                 
-                // 选中状态下，标签颜色调整为白色以保持清晰；未选中状态下使用灰色
+                // В выделенной строке метка белая для контраста, иначе серая
                 String labelColor = isSelected ? "#FFFFFF" : "#787A7C";
                 
                 String displayText = "<html>" +
@@ -787,7 +787,7 @@ public class SearchAnnotationsDialog extends DialogWrapper {
                 
                 setText(displayText);
                 setToolTipText(I18nUtils.getText(project, 
-                    "双击跳转到: " + result.filePath + " (" + result.source + ")",
+                    "Двойной щелчок — перейти к: " + result.filePath + " (" + result.source + ")",
                     "Double-click to navigate to: " + result.filePath + " (" + result.source + ")"));
             }
             
@@ -797,13 +797,13 @@ public class SearchAnnotationsDialog extends DialogWrapper {
         private String highlightKeyword(String text, String keyword, boolean isSelected) {
             if (keyword.isEmpty()) return text;
             
-            // 根据选中状态决定高亮样式
+            // Стиль подсветки зависит от выделения
             String highlightStyle;
             if (isSelected) {
-                // 选中状态下：黄色背景 + 黑色粗体文字（在蓝色选中行上更清晰）
+                // В выделенной строке: жёлтый фон и чёрный жирный текст (контраст на синем выделении)
                 highlightStyle = "background-color: #FFD700; color: #000000; font-weight: bold;";
             } else {
-                // 未选中状态下：浅黄色背景 + 黑色粗体文字
+                // В невыделенной строке: светло-жёлтый фон и чёрный жирный текст
                 highlightStyle = "background-color: #FFFF99; color: #000000; font-weight: bold;";
             }
             
@@ -813,25 +813,25 @@ public class SearchAnnotationsDialog extends DialogWrapper {
     }
     
     /**
-     * 将Color对象转换为十六进制字符串
+     * Переводит Color в шестнадцатеричную строку
      */
     private static String colorToHex(Color color) {
         return String.format("#%02x%02x%02x", color.getRed(), color.getGreen(), color.getBlue());
     }
     
         /**
-     * 获取未选中状态下的文件路径文字颜色（固定颜色方案）
+     * Цвет пути файла в невыделенной строке (фиксированная схема)
      */
     private static String getUnselectedTextColor() {
-        // 使用固定的蓝色，确保在各种背景下都清晰可见
-        return "#6088F0"; // 蓝色
+        // Фиксированный синий, читается на любом фоне
+        return "#6088F0"; // синий
     }
 
     /**
-     * 获取未选中状态下的备注文字颜色（固定颜色方案）
+     * Цвет текста заметки в невыделенной строке (фиксированная схема)
      */
     private static String getUnselectedAnnotationColor() {
-        // 使用固定的灰色，确保备注文字清晰易读
-        return "#787A7C"; // 灰色
+        // Фиксированный серый, текст заметки хорошо читается
+        return "#787A7C"; // серый
     }
 }

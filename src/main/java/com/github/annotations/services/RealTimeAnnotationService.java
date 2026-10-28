@@ -32,8 +32,8 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
 /**
- * 基于DocumentListener的实时备注服务
- * 实现无需保存的实时更新功能
+ * Сервис живого обновления заметок на основе DocumentListener
+ * Заметки обновляются прямо во время правки, без сохранения файла
  */
 public class RealTimeAnnotationService {
     private static final Logger LOG = Logger.getInstance(RealTimeAnnotationService.class);
@@ -42,38 +42,38 @@ public class RealTimeAnnotationService {
     private final Project project;
     private final ProjectViewRefreshService treeRefreshService;
     
-    // 内存中的实时缓存 - 这是关键！
+    // Кэш в памяти для живого обновления — на нём всё держится
     private final Map<String, String> liveFileAnnotations = new HashMap<>();
     private final Map<String, String> livePackageAnnotations = new HashMap<>();
     private final Map<String, String> liveFileTextColors = new HashMap<>();
     private final Map<String, String> livePackageTextColors = new HashMap<>();
     
-    // 后台保存相关
+    // Фоновое сохранение
     private ScheduledFuture<?> saveTask;
     private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
     private volatile boolean isSavingInProgress = false;
     
-    // Document监听器映射
+    // Слушатели Document по файлам
     private final Map<VirtualFile, DocumentListener> documentListeners = new HashMap<>();
     
-    // VFS监听器相关
+    // Слушатель VFS
     private MessageBusConnection messageBusConnection;
     
     public RealTimeAnnotationService(Project project) {
         this.project = project;
         this.treeRefreshService = new ProjectViewRefreshService(project);
         
-        // 检查当前已打开的JSON文件
+        // Проверяем уже открытые JSON-файлы
         checkAndRegisterOpenFiles();
         
-        // 设置VFS文件监听器，监听外部文件变化
+        // Слушатель VFS для изменений файлов извне
         setupVfsFileWatcher();
         
-        LOG.info("RealTimeAnnotationService初始化成功");
+        LOG.info("RealTimeAnnotationService инициализирован");
     }
     
     /**
-     * 设置VFS文件监听器，监听 .td-maps 目录下 JSON 文件的外部变化
+     * Подключает слушатель VFS для внешних изменений JSON-файлов в папке .td-maps
      */
     private void setupVfsFileWatcher() {
         messageBusConnection = project.getMessageBus().connect();
@@ -83,26 +83,26 @@ public class RealTimeAnnotationService {
                 for (VFileEvent event : events) {
                     VirtualFile eventFile = event.getFile();
                     String fileName = eventFile != null ? eventFile.getName() : "null";
-                    LOG.info("检测到VFS事件: " + event.getClass().getSimpleName() + " - " + fileName);
+                    LOG.info("Событие VFS: " + event.getClass().getSimpleName() + " - " + fileName);
                     if (event instanceof VFileContentChangeEvent) {
                         VirtualFile file = event.getFile();
                         if (file != null && file.getName().toLowerCase().endsWith(".json")) {
-                            // 检查是否在 .td-maps 目录下
+                            // Лежит ли файл в папке .td-maps
                             String basePath = project.getBasePath();
                             if (basePath != null) {
                                 String mappingsDirPath = basePath + "/" + MAPPINGS_DIR_NAME + "/";
                                 if (file.getPath().startsWith(mappingsDirPath)) {
-                                    LOG.info("检测到.td-maps目录下的JSON文件变化: " + file.getName());
-                                    // 延迟执行，避免频繁刷新
+                                    LOG.info("Изменён JSON-файл в папке .td-maps: " + file.getName());
+                                    // Обработка с задержкой, чтобы не обновлять слишком часто
                                     ApplicationManager.getApplication().invokeLater(() -> {
                                         try {
-                                            // 重新加载极文件内容到内存缓存
+                                            // Перечитываем файл в кэш памяти
                                             reloadFromFile(file);
-                                            // 刷新项目视图
+                                            // Обновляем дерево проекта
                                             treeRefreshService.refreshProjectView();
-                                            LOG.info("检测到外部文件变化，已自动刷新备注: " + file.getName());
+                                            LOG.info("Файл изменён извне, заметки обновлены: " + file.getName());
                                         } catch (Exception e) {
-                                            LOG.error("刷新备注失败: " + e.getMessage(), e);
+                                            LOG.error("Не удалось обновить заметки: " + e.getMessage(), e);
                                         }
                                     });
                                 }
@@ -115,19 +115,19 @@ public class RealTimeAnnotationService {
     }
     
     /**
-     * 从文件重新加载内容到内存缓存
+     * Перечитывает файл в кэш памяти
      */
     private void reloadFromFile(VirtualFile file) {
         try {
             String content = new String(file.contentsToByteArray());
             updateLiveCacheImmediately(content);
         } catch (IOException e) {
-            LOG.error("重新加载文件失败: " + e.getMessage(), e);
+            LOG.error("Не удалось перечитать файл: " + e.getMessage(), e);
         }
     }
     
     /**
-     * 检查并注册当前已打开的JSON文件
+     * Находит и регистрирует уже открытые JSON-файлы
      */
     private void checkAndRegisterOpenFiles() {
         FileEditor[] editors = FileEditorManager.getInstance(project).getAllEditors();
@@ -142,11 +142,11 @@ public class RealTimeAnnotationService {
     }
     
     /**
-     * 为指定的JSON文件注册文档监听器
+     * Регистрирует слушатель документа для JSON-файла
      */
     public void registerDocumentListener(VirtualFile file) {
         if (documentListeners.containsKey(file)) {
-            return; // 已经注册过了
+            return; // уже зарегистрирован
         }
         
         FileEditor[] editors = FileEditorManager.getInstance(project).getEditors(file);
@@ -159,14 +159,14 @@ public class RealTimeAnnotationService {
                 document.addDocumentListener(listener);
                 documentListeners.put(file, listener);
                 
-                LOG.info("为文件 " + file.getName() + " 注册了文档监听器");
+                LOG.info("Слушатель документа зарегистрирован для файла " + file.getName());
                 break;
             }
         }
     }
     
     /**
-     * 移除指定文件的文档监听器
+     * Снимает слушатель документа с файла
      */
     public void unregisterDocumentListener(VirtualFile file) {
         DocumentListener listener = documentListeners.remove(file);
@@ -180,12 +180,12 @@ public class RealTimeAnnotationService {
                     break;
                 }
             }
-            LOG.info("为文件 " + file.getName() + " 移除了文档监听器");
+            LOG.info("Слушатель документа снят с файла " + file.getName());
         }
     }
     
     /**
-     * 检查是否是.td-maps目录下的JSON文件
+     * JSON-файл ли это в папке .td-maps
      */
     private boolean isOurJsonFile(VirtualFile file) {
         if (file == null || !file.getName().endsWith(".json")) {
@@ -202,42 +202,42 @@ public class RealTimeAnnotationService {
     }
     
     /**
-     * Document监听器 - 用户每输入一个字符都会触发
+     * Слушатель Document — срабатывает на каждый введённый символ
      */
     public class JsonDocumentListener implements DocumentListener {
         @Override
         public void documentChanged(@NotNull DocumentEvent event) {
-            // 用户正在编辑时立即触发，无需等待保存！
+            // Срабатывает сразу во время правки, сохранять файл не нужно
             Document document = event.getDocument();
             
             if (isOurJsonFile(document)) {
-                // 立即从编辑器获取最新内容
+                // Сразу берём свежее содержимое из редактора
                 String currentContent = document.getText();
                 
-                // 立即更新内存缓存
+                // Сразу обновляем кэш в памяти
                 updateLiveCacheImmediately(currentContent);
                 
-                // 立即刷新项目树UI
+                // Сразу обновляем дерево проекта
                 refreshProjectTreeImmediately();
                 
-                // 后台异步保存（用户感知不到）
+                // Фоновое асинхронное сохранение (пользователь его не замечает)
                 scheduleBackgroundSave(document);
             }
         }
     }
     
     /**
-     * 立即更新内存缓存 - 核心方法
+     * Сразу обновляет кэш в памяти — основной метод
      */
     private void updateLiveCacheImmediately(String jsonContent) {
         try {
-            // 解析JSON内容
+            // Разбираем JSON
             LocalMappingFile mapping = parseJsonContent(jsonContent);
             
             if (mapping != null && mapping.getMappings() != null) {
                 LocalMappingFile.Mappings mappings = mapping.getMappings();
                 
-                // 立即更新内存缓存
+                // Сразу обновляем кэш в памяти
                 liveFileAnnotations.clear();
                 livePackageAnnotations.clear();
                 liveFileTextColors.clear();
@@ -256,31 +256,31 @@ public class RealTimeAnnotationService {
                     livePackageTextColors.putAll(mappings.getPackagesTextColor());
                 }
                 
-                LOG.info("内存缓存已更新，包含 " + liveFileAnnotations.size() + " 条文件备注，"
-                        + livePackageAnnotations.size() + " 条包备注");
+                LOG.info("Кэш в памяти обновлён: заметок файлов " + liveFileAnnotations.size() + ", "
+                        + "заметок пакетов " + livePackageAnnotations.size());
             }
         } catch (Exception e) {
-            // JSON格式错误时保持原有缓存，不影响显示
-            LOG.warn("JSON格式有误，保持当前显示: " + e.getMessage());
+            // При ошибке формата JSON старый кэш остаётся, показ не меняется
+            LOG.warn("Ошибка формата JSON, показ не изменён: " + e.getMessage());
         }
     }
     
     /**
-     * 立即刷新项目树UI
+     * Сразу обновляет дерево проекта
      */
     private void refreshProjectTreeImmediately() {
-        // 在EDT线程中立即执行UI更新
+        // Обновление интерфейса — сразу в потоке EDT
         ApplicationManager.getApplication().invokeLater(() -> {
             treeRefreshService.refreshProjectView();
-            LOG.info("项目树UI已刷新");
+            LOG.info("Дерево проекта обновлено");
         });
     }
     
     /**
-     * 获取文件备注 - 项目树调用此方法显示备注
+     * Возвращает заметку файла — вызывается деревом проекта для показа
      */
     public String getFileAnnotation(String filePath) {
-        // 直接从内存缓存返回，超快速度！
+        // Отдаём прямо из кэша в памяти, это быстро
         String annotation = liveFileAnnotations.get(normalizeFilePath(filePath));
         
         if (annotation != null) {
@@ -291,10 +291,10 @@ public class RealTimeAnnotationService {
     }
     
     /**
-     * 获取包备注 - 项目树调用此方法显示备注
+     * Возвращает заметку пакета — вызывается деревом проекта для показа
      */
     public String getPackageAnnotation(String packagePath) {
-        // 直接从内存缓存返回，超快速度！
+        // Отдаём прямо из кэша в памяти, это быстро
         String annotation = livePackageAnnotations.get(normalizeFilePath(packagePath));
         
         if (annotation != null) {
@@ -305,39 +305,39 @@ public class RealTimeAnnotationService {
     }
     
     /**
-     * 获取文件文本颜色
+     * Возвращает цвет текста файла
      */
     public String getFileTextColor(String filePath) {
         return liveFileTextColors.get(normalizeFilePath(filePath));
     }
     
     /**
-     * 获取包文本颜色
+     * Возвращает цвет текста пакета
      */
     public String getPackageTextColor(String packagePath) {
         return livePackageTextColors.get(normalizeFilePath(packagePath));
     }
     
     /**
-     * 后台异步保存 - 用户感知不到
+     * Фоновое асинхронное сохранение — пользователь его не замечает
      */
     private void scheduleBackgroundSave(Document document) {
-        // 取消之前的保存任务（防抖机制）
+        // Отменяем предыдущее сохранение (защита от дребезга)
         if (saveTask != null) {
             saveTask.cancel(false);
         }
         
-        // 延迟保存到磁盘，避免频繁IO和冲突
+        // Пишем на диск с задержкой, чтобы не было частых операций ввода-вывода и конфликтов
         saveTask = scheduler.schedule(() -> {
             saveToFileInBackground(document);
-        }, 50, TimeUnit.MILLISECONDS); // 从200ms改为50ms，实现更实时响应
+        }, 50, TimeUnit.MILLISECONDS); // было 200 мс, уменьшено до 50 мс ради отзывчивости
     }
     
     /**
-     * 后台保存到文件 - 使用安全的API
+     * Фоновое сохранение в файл через безопасный API
      */
     private void saveToFileInBackground(Document document) {
-        // 检查是否正在保存，避免重复保存
+        // Если сохранение уже идёт, второе не запускаем
         if (isSavingInProgress) {
 
             return;
@@ -348,11 +348,11 @@ public class RealTimeAnnotationService {
                 try {
                     isSavingInProgress = true;
                     
-                    // 使用Document API保存，避免VFS冲突
+                    // Сохраняем через Document API, чтобы не было конфликтов с VFS
                     FileDocumentManager.getInstance().saveDocument(document);
-                    LOG.info("文件已在后台保存");
+                    LOG.info("Файл сохранён в фоне");
                 } catch (Exception e) {
-                    LOG.warn("后台保存失败，但不影响显示: " + e.getMessage());
+                    LOG.warn("Фоновое сохранение не удалось, на показ это не влияет: " + e.getMessage());
                 } finally {
                     isSavingInProgress = false;
                 }
@@ -361,20 +361,20 @@ public class RealTimeAnnotationService {
     }
     
     /**
-     * 解析JSON内容
+     * Разбирает JSON
      */
     private LocalMappingFile parseJsonContent(String jsonContent) {
         try {
             Gson gson = new Gson();
             return gson.fromJson(jsonContent, LocalMappingFile.class);
         } catch (JsonSyntaxException e) {
-            LOG.warn("JSON解析失败: " + e.getMessage());
+            LOG.warn("Не удалось разобрать JSON: " + e.getMessage());
             return null;
         }
     }
     
     /**
-     * 检查是否是我们的JSON文件
+     * Наш ли это JSON-файл
      */
     private boolean isOurJsonFile(Document document) {
         VirtualFile file = FileDocumentManager.getInstance().getFile(document);
@@ -382,22 +382,22 @@ public class RealTimeAnnotationService {
     }
     
     /**
-     * 标准化文件路径
+     * Приводит путь файла к единому виду
      */
     private String normalizeFilePath(String path) {
         return path.replace('\\', '/');
     }
     
     /**
-     * 释放资源
+     * Освобождает ресурсы
      */
     public void dispose() {
-        // 移除VFS监听器
+        // Снимаем слушатель VFS
         if (messageBusConnection != null) {
             messageBusConnection.disconnect();
         }
         
-        // 移除所有文档监听器
+        // Снимаем все слушатели документов
         for (Map.Entry<VirtualFile, DocumentListener> entry : documentListeners.entrySet()) {
             VirtualFile file = entry.getKey();
             DocumentListener listener = entry.getValue();
@@ -405,16 +405,16 @@ public class RealTimeAnnotationService {
         }
         documentListeners.clear();
         
-        // 取消保存任务
+        // Отменяем задачу сохранения
         if (saveTask != null) {
             saveTask.cancel(false);
         }
         
-        // 关闭调度器
+        // Останавливаем планировщик
         if (scheduler != null) {
             scheduler.shutdown();
         }
         
-        LOG.info("RealTimeAnnotationService已释放资源");
+        LOG.info("RealTimeAnnotationService освободил ресурсы");
     }
 }

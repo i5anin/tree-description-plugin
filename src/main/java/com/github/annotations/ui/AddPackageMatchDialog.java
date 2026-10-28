@@ -17,8 +17,8 @@ import java.util.Map;
 import java.awt.Font;
 
 /**
- * 添加包匹配模式对话框
- * 允许用户添加包匹配模式规则
+ * Диалог добавления шаблона пакета
+ * Пользователь задаёт правило сопоставления по пакету
  */
 public class AddPackageMatchDialog extends DialogWrapper {
     
@@ -39,7 +39,7 @@ public class AddPackageMatchDialog extends DialogWrapper {
         this.annotationService = AnnotationService.getInstance(project);
         this.defaultFolderName = defaultFolderName;
         
-        setTitle(I18nUtils.getText(project, "添加路径匹配映射", "Add Package Match Mapping"));
+        setTitle(I18nUtils.getText(project, "Добавить сопоставление по пути", "Add Package Match Mapping"));
         setSize(540, 200);
         init();
     }
@@ -49,14 +49,14 @@ public class AddPackageMatchDialog extends DialogWrapper {
         JPanel mainPanel = new JPanel(new BorderLayout());
         mainPanel.setBorder(JBUI.Borders.empty(10));
         
-        // 创建表单
+        // Форма
         JPanel formPanel = FormBuilder.createFormBuilder()
-                .addLabeledComponent(I18nUtils.getText(project, "匹配路径:", "Match Package:"), createPatternField())
-                .addLabeledComponent(I18nUtils.getText(project, "备注描述:", "Annotation Description:"), createDescriptionField())
+                .addLabeledComponent(I18nUtils.getText(project, "Шаблон пути:", "Match Package:"), createPatternField())
+                .addLabeledComponent(I18nUtils.getText(project, "Текст заметки:", "Annotation Description:"), createDescriptionField())
                 .addComponentFillVertically(new JPanel(), 0)
                 .getPanel();
         
-        // 添加使用说明
+        // Справка по использованию
         JPanel helpPanel = createHelpPanel();
         mainPanel.add(helpPanel, BorderLayout.SOUTH);
         
@@ -67,12 +67,12 @@ public class AddPackageMatchDialog extends DialogWrapper {
     private JComponent createPatternField() {
         patternField = new JBTextField();
         
-        // 如果有默认文件夹名称，预填充到文本框中
+        // Если передано имя папки по умолчанию — подставляем в поле
         if (defaultFolderName != null && !defaultFolderName.isEmpty()) {
             patternField.setText(defaultFolderName);
         }
         
-        patternField.setToolTipText(I18nUtils.getText(project, "输入包名匹配模式，如：controller、service、dao等", "Enter package match pattern, e.g.: controller, service, dao"));
+        patternField.setToolTipText(I18nUtils.getText(project, "Шаблон имени пакета, например: controller, service, dao", "Enter package match pattern, e.g.: controller, service, dao"));
         patternField.getDocument().addDocumentListener(new javax.swing.event.DocumentListener() {
             @Override
             public void insertUpdate(javax.swing.event.DocumentEvent e) { validateInput(); }
@@ -101,13 +101,13 @@ public class AddPackageMatchDialog extends DialogWrapper {
     
     private JPanel createHelpPanel() {
         JPanel helpPanel = new JPanel(new BorderLayout());
-        helpPanel.setBorder(BorderFactory.createTitledBorder(I18nUtils.getText(project, "使用说明", "Usage Instructions")));
+        helpPanel.setBorder(BorderFactory.createTitledBorder(I18nUtils.getText(project, "Как пользоваться", "Usage Instructions")));
         
         JTextArea helpText = new JTextArea();
         helpText.setText(I18nUtils.getText(project,
-            "• 会匹配映射所对应的目录上\n" +
-            "• 映射保存位置：项目根目录/.td-maps/local-description.json\n" +
-            "• 例如：springframework.core 会匹配所有以 *.springframework.core 结尾的包",
+            "• заметка ставится на папки, подходящие под шаблон\n" +
+            "• сопоставления хранятся в: корень проекта/.td-maps/local-description.json\n" +
+            "• например, springframework.core — все пакеты, оканчивающиеся на *.springframework.core",
             "• Will match the corresponding directories\n" +
             "• Mapping save location: project root/.td-maps/local-description.json\n" +
             "• Example: springframework.core will match all packages ending with *.springframework.core"));
@@ -136,24 +136,24 @@ public class AddPackageMatchDialog extends DialogWrapper {
             return;
         }
         
-        // 如果模式以*.开头，去掉*.前缀进行保存
+        // Если шаблон начинается с *., сохраняем его без этого префикса
         String savePattern = pattern;
         if (pattern.startsWith("*.")) {
             savePattern = pattern.substring(2);
         }
         
-        // 直接覆盖已存在的模式，无需用户确认
+        // Существующий шаблон перезаписываем без подтверждения
         
-        // 保存到AnnotationService（使用去掉*.前缀的模式）
+        // Сохраняем в AnnotationService (шаблон без префикса *.)
         annotationService.setPackageMatchAnnotation(savePattern, description);
         
-        // 调用刷新机制，确保JSON文件和UI同步更新
+        // Обновляем, чтобы JSON-файл и интерфейс совпадали
         try {
             java.lang.reflect.Method refreshMethod = annotationService.getClass().getDeclaredMethod("refreshAfterSave");
             refreshMethod.setAccessible(true);
             refreshMethod.invoke(annotationService);
         } catch (Exception ex) {
-            // 如果反射调用失败，回退到基本的项目视图刷新
+            // Если вызов через рефлексию не удался — простое обновление дерева проекта
             com.intellij.ide.projectView.ProjectView.getInstance(project).refresh();
         }
         
@@ -166,16 +166,16 @@ public class AddPackageMatchDialog extends DialogWrapper {
         String description = descriptionField.getText().trim();
         
         if (pattern.isEmpty()) {
-            return new ValidationInfo(I18nUtils.getText(project, "请输入匹配模式", "Please enter match pattern"), patternField);
+            return new ValidationInfo(I18nUtils.getText(project, "Введите шаблон", "Please enter match pattern"), patternField);
         }
         
         if (description.isEmpty()) {
-            return new ValidationInfo(I18nUtils.getText(project, "请输入备注描述", "Please enter annotation description"), descriptionField);
+            return new ValidationInfo(I18nUtils.getText(project, "Введите текст заметки", "Please enter annotation description"), descriptionField);
         }
         
-        // 检查模式是否包含特殊字符
+        // Нет ли в шаблоне служебных символов
         if (pattern.contains("/") || pattern.contains("\\") || pattern.contains(":")) {
-            return new ValidationInfo(I18nUtils.getText(project, "匹配模式不能包含路径分隔符或特殊字符", "Match pattern cannot contain path separators or special characters"), patternField);
+            return new ValidationInfo(I18nUtils.getText(project, "Шаблон не может содержать разделители пути и служебные символы", "Match pattern cannot contain path separators or special characters"), patternField);
         }
         
         return null;

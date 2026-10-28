@@ -25,8 +25,8 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
 /**
- * 开源映射库管理对话框
- * 显示GitHub上的开源映射库内容
+ * Диалог открытой библиотеки сопоставлений
+ * Показывает содержимое открытой библиотеки сопоставлений на GitHub
  */
 public class MappingLibraryDialog extends DialogWrapper {
     
@@ -42,7 +42,7 @@ public class MappingLibraryDialog extends DialogWrapper {
         this.project = project;
         this.gitHubService = new GitHubMappingService();
         this.vfsRefreshService = new VFSRefreshService(project);
-        setTitle(I18nUtils.getText(project, "查看GitHub开源映射库", "View GitHub Open Source Mapping Library"));
+        setTitle(I18nUtils.getText(project, "Открытая библиотека сопоставлений на GitHub", "View GitHub Open Source Mapping Library"));
         setSize(900, 700);
         init();
     }
@@ -67,22 +67,22 @@ public class MappingLibraryDialog extends DialogWrapper {
     }
     
     /**
-     * 创建映射库选择面板
+     * Панель выбора библиотеки сопоставлений
      */
     private JPanel createLibrarySelectionPanel() {
         JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT));
         
-        panel.add(new JLabel(I18nUtils.getText(project, "选择映射库：", "Select Mapping Library:")));
+        panel.add(new JLabel(I18nUtils.getText(project, "Библиотека сопоставлений:", "Select Mapping Library:")));
         
         libraryComboBox = new JComboBox<>();
         libraryComboBox.addActionListener(e -> loadSelectedLibraryMappings());
         panel.add(libraryComboBox);
         
-        downloadButton = new JButton(I18nUtils.getText(project, "下载到本地", "Download to Local"));
+        downloadButton = new JButton(I18nUtils.getText(project, "Скачать в проект", "Download to Local"));
         downloadButton.addActionListener(e -> downloadSelectedLibraryToLocal());
         panel.add(downloadButton);
         
-        JButton refreshButton = new JButton(I18nUtils.getText(project, "刷新", "Refresh"));
+        JButton refreshButton = new JButton(I18nUtils.getText(project, "Обновить", "Refresh"));
         refreshButton.addActionListener(e -> loadGitHubLibraries());
         panel.add(refreshButton);
         
@@ -90,15 +90,15 @@ public class MappingLibraryDialog extends DialogWrapper {
     }
     
     /**
-     * 创建映射表格面板
+     * Панель с таблицей сопоставлений
      */
     private JPanel createMappingTablePanel() {
         JPanel panel = new JPanel(new BorderLayout());
         
         String[] columnNames = {
-            I18nUtils.getText(project, "类型", "Type"),
-            I18nUtils.getText(project, "名称", "Name"),
-            I18nUtils.getText(project, "映射", "Mapping")
+            I18nUtils.getText(project, "Тип", "Type"),
+            I18nUtils.getText(project, "Имя", "Name"),
+            I18nUtils.getText(project, "Описание", "Mapping")
         };
         DefaultTableModel tableModel = new DefaultTableModel(columnNames, 0) {
             @Override
@@ -120,7 +120,7 @@ public class MappingLibraryDialog extends DialogWrapper {
     }
     
     /**
-     * 创建说明信息面板
+     * Панель с пояснением
      */
     private JPanel createInfoPanel() {
         JPanel infoPanel = new JPanel(new BorderLayout());
@@ -131,7 +131,7 @@ public class MappingLibraryDialog extends DialogWrapper {
         infoArea.setBorder(JBUI.Borders.empty(10));
         infoArea.setFont(infoArea.getFont().deriveFont(Font.PLAIN, 13));
         
-        // 创建样式文档
+        // Документ со стилями
         StyledDocument doc = infoArea.getStyledDocument();
         SimpleAttributeSet normalStyle = new SimpleAttributeSet();
         SimpleAttributeSet linkStyle = new SimpleAttributeSet();
@@ -139,16 +139,16 @@ public class MappingLibraryDialog extends DialogWrapper {
         StyleConstants.setUnderline(linkStyle, true);
         
         try {
-            // 添加纯文本内容
-            doc.insertString(doc.getLength(), I18nUtils.getText(project, "映射库来源于 GitHub 开源仓库：", "Mapping library comes from GitHub open source repository: "), normalStyle);
+            // Обычный текст
+            doc.insertString(doc.getLength(), I18nUtils.getText(project, "Библиотека сопоставлений берётся из открытого репозитория на GitHub: ", "Mapping library comes from GitHub open source repository: "), normalStyle);
             doc.insertString(doc.getLength(), "https://github.com/JaysonX-Tech/tree-description-repository", linkStyle);
-            doc.insertString(doc.getLength(), " \n" + I18nUtils.getText(project, "如果遇到下载问题，请前往 Github 手动下载", "If you encounter download issues, please go to Github to download manually."), normalStyle);
-            doc.insertString(doc.getLength(), " \n" + I18nUtils.getText(project, "欢迎提交 PR 参与贡献 !!！", "Welcome to submit PR to contribute!!"), normalStyle);
+            doc.insertString(doc.getLength(), " \n" + I18nUtils.getText(project, "Если скачивание не работает, скачайте файл с GitHub вручную", "If you encounter download issues, please go to Github to download manually."), normalStyle);
+            doc.insertString(doc.getLength(), " \n" + I18nUtils.getText(project, "Пул-реквесты приветствуются!", "Welcome to submit PR to contribute!!"), normalStyle);
         } catch (BadLocationException e) {
-            // 忽略异常
+            // Исключение игнорируем
         }
         
-        // 添加超链接监听器
+        // Слушатель гиперссылок
         infoArea.addHyperlinkListener(e -> {
             if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
                 openGitHubPage();
@@ -161,12 +161,12 @@ public class MappingLibraryDialog extends DialogWrapper {
     }
     
     /**
-     * 加载GitHub上的映射库
+     * Загружает список библиотек сопоставлений с GitHub
      */
     private void loadGitHubLibraries() {
         SwingUtilities.invokeLater(() -> {
             libraryComboBox.removeAllItems();
-            libraryComboBox.addItem(new GitHubMappingFile("", I18nUtils.getText(project, "正在加载...", "Loading..."), false));
+            libraryComboBox.addItem(new GitHubMappingFile("", I18nUtils.getText(project, "Загрузка...", "Loading..."), false));
             
             new Thread(() -> {
                 try {
@@ -176,7 +176,7 @@ public class MappingLibraryDialog extends DialogWrapper {
                         libraryComboBox.removeAllItems();
                         
                         if (files.isEmpty()) {
-                            libraryComboBox.addItem(new GitHubMappingFile("", "(没有可用的映射库)", false));
+                            libraryComboBox.addItem(new GitHubMappingFile("", "(нет доступных библиотек сопоставлений)", false));
                             clearMappingTable();
                         } else {
                             for (GitHubMappingFile file : files) {
@@ -193,12 +193,12 @@ public class MappingLibraryDialog extends DialogWrapper {
                     SwingUtilities.invokeLater(() -> {
                         libraryComboBox.removeAllItems();
                         String errorMessage;
-                        if (e.getMessage() != null && e.getMessage().contains("速率限制")) {
-                            errorMessage = "(GitHub API速率限制，请稍后再试)";
-                        } else if (e.getMessage() != null && e.getMessage().contains("访问被拒绝")) {
-                            errorMessage = "(GitHub API访问被拒绝)";
+                        if (e.getMessage() != null && e.getMessage().contains("лимит запросов")) {
+                            errorMessage = "(превышен лимит запросов GitHub API, повторите позже)";
+                        } else if (e.getMessage() != null && e.getMessage().contains("отказал в доступе")) {
+                            errorMessage = "(GitHub API отказал в доступе)";
                         } else {
-                            errorMessage = "(加载失败，请检查网络连接)";
+                            errorMessage = "(не удалось загрузить: проверьте сетевое подключение)";
                         }
                         libraryComboBox.addItem(new GitHubMappingFile("", errorMessage, false));
                         clearMappingTable();
@@ -209,20 +209,20 @@ public class MappingLibraryDialog extends DialogWrapper {
     }
     
     /**
-     * 加载选中映射库的映射关系
+     * Загружает сопоставления выбранной библиотеки
      */
     private void loadSelectedLibraryMappings() {
         GitHubMappingFile selectedFile = (GitHubMappingFile) libraryComboBox.getSelectedItem();
         if (selectedFile == null || selectedFile.path.isEmpty() || 
-            selectedFile.path.contains("正在加载") || selectedFile.path.contains("没有可用的") || 
-            selectedFile.path.contains("加载失败")) {
+            selectedFile.path.contains("Загрузка") || selectedFile.path.contains("нет доступных") ||
+            selectedFile.path.contains("не удалось загрузить")) {
             clearMappingTable();
             return;
         }
         
         clearMappingTable();
         DefaultTableModel model = (DefaultTableModel) mappingTable.getModel();
-        model.addRow(new Object[]{"加载中", selectedFile.path, "正在下载..."});
+        model.addRow(new Object[]{"Загрузка", selectedFile.path, "Скачивание..."});
         
         new Thread(() -> {
             try {
@@ -234,40 +234,40 @@ public class MappingLibraryDialog extends DialogWrapper {
                     } else {
                         SwingUtilities.invokeLater(() -> {
                             clearMappingTable();
-                            model.addRow(new Object[]{"错误", selectedFile.path, "解析失败"});
+                            model.addRow(new Object[]{"Ошибка", selectedFile.path, "Не удалось разобрать"});
                         });
                     }
                 } else {
                     SwingUtilities.invokeLater(() -> {
                         clearMappingTable();
-                        model.addRow(new Object[]{"错误", selectedFile.path, "下载失败"});
+                        model.addRow(new Object[]{"Ошибка", selectedFile.path, "Не удалось скачать"});
                     });
                 }
             } catch (Exception e) {
                 SwingUtilities.invokeLater(() -> {
                     clearMappingTable();
-                    model.addRow(new Object[]{"错误", selectedFile.path, "加载失败"});
+                    model.addRow(new Object[]{"Ошибка", selectedFile.path, "Не удалось загрузить"});
                 });
             }
         }).start();
     }
     
     /**
-     * 加载指定映射库的数据到表格
+     * Заполняет таблицу данными указанной библиотеки сопоставлений
      */
     private void loadLibraryMappings(GitHubMappingLibrary library) {
         DefaultTableModel model = (DefaultTableModel) mappingTable.getModel();
         model.setRowCount(0);
         
         if (library.mappings == null) {
-            model.addRow(new Object[]{"信息", library.name != null ? library.name : "未知", "无映射数据"});
+            model.addRow(new Object[]{"Сведения", library.name != null ? library.name : "Неизвестно", "Нет сопоставлений"});
             return;
         }
         
         if (library.mappings.packages != null) {
             for (java.util.Map.Entry<String, String> entry : library.mappings.packages.entrySet()) {
                 model.addRow(new Object[]{
-                    "包映射",
+                    "Пакет",
                     entry.getKey(),
                     entry.getValue()
                 });
@@ -277,7 +277,7 @@ public class MappingLibraryDialog extends DialogWrapper {
         if (library.mappings.files != null) {
             for (java.util.Map.Entry<String, String> entry : library.mappings.files.entrySet()) {
                 model.addRow(new Object[]{
-                    "文件映射",
+                    "Файл",
                     entry.getKey(),
                     entry.getValue()
                 });
@@ -287,7 +287,7 @@ public class MappingLibraryDialog extends DialogWrapper {
         if (library.mappings.packageMatch != null) {
             for (java.util.Map.Entry<String, String> entry : library.mappings.packageMatch.entrySet()) {
                 model.addRow(new Object[]{
-                    "包匹配",
+                    "Шаблон пакета",
                     entry.getKey(),
                     entry.getValue()
                 });
@@ -297,7 +297,7 @@ public class MappingLibraryDialog extends DialogWrapper {
         if (library.mappings.fileMatch != null) {
             for (java.util.Map.Entry<String, String> entry : library.mappings.fileMatch.entrySet()) {
                 model.addRow(new Object[]{
-                    "文件匹配",
+                    "Шаблон файла",
                     entry.getKey(),
                     entry.getValue()
                 });
@@ -305,12 +305,12 @@ public class MappingLibraryDialog extends DialogWrapper {
         }
         
         if (model.getRowCount() == 0) {
-            model.addRow(new Object[]{"信息", library.name != null ? library.name : "未知", "无映射数据"});
+            model.addRow(new Object[]{"Сведения", library.name != null ? library.name : "Неизвестно", "Нет сопоставлений"});
         }
     }
     
     /**
-     * 清空映射表格
+     * Очищает таблицу сопоставлений
      */
     private void clearMappingTable() {
         DefaultTableModel model = (DefaultTableModel) mappingTable.getModel();
@@ -323,29 +323,29 @@ public class MappingLibraryDialog extends DialogWrapper {
     }
 
     /**
-     * 下载选中的映射库到本地
+     * Скачивает выбранную библиотеку сопоставлений в проект
      */
     private void downloadSelectedLibraryToLocal() {
         GitHubMappingFile selectedFile = (GitHubMappingFile) libraryComboBox.getSelectedItem();
         if (selectedFile == null || selectedFile.path.isEmpty() || 
-            selectedFile.path.contains("正在加载") || selectedFile.path.contains("没有可用的") || 
-            selectedFile.path.contains("加载失败")) {
+            selectedFile.path.contains("Загрузка") || selectedFile.path.contains("нет доступных") ||
+            selectedFile.path.contains("не удалось загрузить")) {
             JOptionPane.showMessageDialog(getContentPane(), 
-                I18nUtils.getText(project, "请先选择一个有效的映射库文件", "Please select a valid mapping library file first"), 
-                I18nUtils.getText(project, "提示", "Tip"), JOptionPane.PLAIN_MESSAGE);
+                I18nUtils.getText(project, "Сначала выберите файл библиотеки сопоставлений", "Please select a valid mapping library file first"),
+                I18nUtils.getText(project, "Подсказка", "Tip"), JOptionPane.PLAIN_MESSAGE);
             return;
         }
         
-        // 显示确认对话框
+        // Окно подтверждения
         int result = JOptionPane.showConfirmDialog(getContentPane(), 
             I18nUtils.getText(project,
-                "确定要将 \"" + selectedFile.displayName + "\" 下载到本地 .td-maps 文件夹吗？\n\n" +
-                "文件将保存为: " + selectedFile.displayName + "\n" +
-                "保存位置: 项目根目录/.td-maps/",
+                "Скачать \"" + selectedFile.displayName + "\" в папку .td-maps проекта?\n\n" +
+                "Имя файла: " + selectedFile.displayName + "\n" +
+                "Куда: корень проекта/.td-maps/",
             "Are you sure you want to download \"" + selectedFile.displayName + "\" to the local .td-maps folder?\n\n" +
                 "File will be saved as: " + selectedFile.displayName + "\n" +
                 "Save location: project root/.td-maps/"), 
-            I18nUtils.getText(project, "下载确认", "Download Confirmation"), JOptionPane.YES_NO_OPTION, JOptionPane.PLAIN_MESSAGE);
+            I18nUtils.getText(project, "Подтверждение скачивания", "Download Confirmation"), JOptionPane.YES_NO_OPTION, JOptionPane.PLAIN_MESSAGE);
         
         if (result != JOptionPane.YES_OPTION) {
             return;
@@ -353,7 +353,7 @@ public class MappingLibraryDialog extends DialogWrapper {
         
         if (downloadButton != null) {
             downloadButton.setEnabled(false);
-            downloadButton.setText(I18nUtils.getText(project, "下载中...", "Downloading..."));
+            downloadButton.setText(I18nUtils.getText(project, "Скачивание...", "Downloading..."));
         }
         
         new Thread(() -> {
@@ -370,61 +370,61 @@ public class MappingLibraryDialog extends DialogWrapper {
                     SwingUtilities.invokeLater(() -> {
                         if (downloadButton != null) {
                             downloadButton.setEnabled(true);
-                            downloadButton.setText("下载到本地");
+                            downloadButton.setText("Скачать в проект");
                         }
                         
                         if (success) {
-                            // 刷新项目视图以显示新下载的文件
+                            // Обновляем дерево проекта, чтобы показать скачанный файл
                             vfsRefreshService.refreshMappingsDirectory();
                             
                             JOptionPane.showMessageDialog(getContentPane(), 
                                 I18nUtils.getText(project,
-                                    "下载成功！\n\n" +
-                                    "文件已保存到: .td-maps/" + fileName + "\n",
+                                    "Скачано!\n\n" +
+                                    "Файл сохранён в: .td-maps/" + fileName + "\n",
                                     "Download successful!\n\n" +
                                     "File saved to: .td-maps/" + fileName + "\n"), 
-                                I18nUtils.getText(project, "下载成功！", "Download Successful!"), JOptionPane.PLAIN_MESSAGE);
+                                I18nUtils.getText(project, "Скачано!", "Download Successful!"), JOptionPane.PLAIN_MESSAGE);
                         } else {
                             JOptionPane.showMessageDialog(getContentPane(), 
-                                I18nUtils.getText(project, "下载失败！\n\n", "Download failed!\n\n"), 
-                                I18nUtils.getText(project, "下载失败", "Download Failed"), JOptionPane.PLAIN_MESSAGE);
+                                I18nUtils.getText(project, "Не удалось скачать!\n\n", "Download failed!\n\n"),
+                                I18nUtils.getText(project, "Не удалось скачать", "Download Failed"), JOptionPane.PLAIN_MESSAGE);
                         }
                     });
                 } else {
                     SwingUtilities.invokeLater(() -> {
                         if (downloadButton != null) {
                             downloadButton.setEnabled(true);
-                            downloadButton.setText("下载到本地");
+                            downloadButton.setText("Скачать в проект");
                         }
                         JOptionPane.showMessageDialog(getContentPane(), 
                             I18nUtils.getText(project,
-                                "下载失败！\n\n" +
-                                "无法获取文件内容，请检查网络连接",
+                                "Не удалось скачать!\n\n" +
+                                "Не удалось получить содержимое файла, проверьте сетевое подключение",
                                 "Download failed!\n\n" +
                                 "Unable to get file content, please check network connection"), 
-                            I18nUtils.getText(project, "下载失败", "Download Failed"), JOptionPane.PLAIN_MESSAGE);
+                            I18nUtils.getText(project, "Не удалось скачать", "Download Failed"), JOptionPane.PLAIN_MESSAGE);
                     });
                 }
             } catch (Exception e) {
                 SwingUtilities.invokeLater(() -> {
                     if (downloadButton != null) {
                         downloadButton.setEnabled(true);
-                        downloadButton.setText("下载到本地");
+                        downloadButton.setText("Скачать в проект");
                     }
                                             JOptionPane.showMessageDialog(getContentPane(), 
                             I18nUtils.getText(project,
-                                "下载失败！\n\n" +
-                                "错误信息: " + e.getMessage(),
+                                "Не удалось скачать!\n\n" +
+                                "Текст ошибки: " + e.getMessage(),
                                 "Download failed!\n\n" +
                                 "Error message: " + e.getMessage()), 
-                            I18nUtils.getText(project, "下载失败", "Download Failed"), JOptionPane.PLAIN_MESSAGE);
+                            I18nUtils.getText(project, "Не удалось скачать", "Download Failed"), JOptionPane.PLAIN_MESSAGE);
                 });
             }
         }).start();
     }
     
     /**
-     * 保存映射库到本地.td-maps文件夹
+     * Сохраняет библиотеку сопоставлений в папку .td-maps проекта
      */
     private boolean saveToLocalMappings(String fileName, String jsonContent) {
         try {
@@ -452,7 +452,7 @@ public class MappingLibraryDialog extends DialogWrapper {
     }
     
     /**
-     * 格式化JSON内容，使其更易读
+     * Форматирует JSON для удобного чтения
      */
     private String formatJsonContent(String jsonContent) {
         try {
@@ -470,13 +470,13 @@ public class MappingLibraryDialog extends DialogWrapper {
     }
 
     /**
-     * 打开GitHub主页
+     * Открывает страницу на GitHub
      */
     private void openGitHubPage() {
         try {
             java.awt.Desktop.getDesktop().browse(new java.net.URI("https://github.com/JaysonX-Tech/tree-description-repository"));
         } catch (Exception e) {
-            JOptionPane.showMessageDialog(getContentPane(), "无法打开GitHub链接: " + e.getMessage(), "错误", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(getContentPane(), "Не удалось открыть ссылку на GitHub: " + e.getMessage(), "Ошибка", JOptionPane.ERROR_MESSAGE);
         }
     }
 }

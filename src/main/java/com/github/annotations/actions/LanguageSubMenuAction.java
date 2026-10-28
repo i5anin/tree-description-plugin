@@ -9,13 +9,13 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * 语言子菜单组Action
- * 支持动态语言切换
+ * Подменю выбора языка
+ * Текст меняется вместе с языком
  */
 public class LanguageSubMenuAction extends ActionGroup {
     
     public LanguageSubMenuAction() {
-        super("语言", true);
+        super("Язык", true);
     }
     
     @Override
@@ -28,7 +28,7 @@ public class LanguageSubMenuAction extends ActionGroup {
                 if ("en".equals(currentLanguage)) {
                     e.getPresentation().setText("Language");
                 } else {
-                    e.getPresentation().setText("语言");
+                    e.getPresentation().setText("Язык");
                 }
             }
         }

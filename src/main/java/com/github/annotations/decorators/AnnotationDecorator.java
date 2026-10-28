@@ -10,42 +10,42 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.SimpleTextAttributes;
-// 使用固定颜色，不再依赖主题感知
+// Цвет фиксированный, от темы оформления не зависит
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 
     /**
-     * 项目树节点装饰器
-     * 负责在项目树中显示中文备注
+     * Оформление узлов дерева проекта
+     * Показывает заметки рядом с именами в дереве проекта
      * 
-     * 性能优化：
-     * - 快速路径检查避免不必要的计算
-     * - 实时检查映射库开关状态
+     * Производительность:
+     * - быстрая проверка в начале отсекает лишние вычисления
+     * - состояние переключателя библиотеки сопоставлений проверяется при каждом вызове
      */
 public class AnnotationDecorator implements ProjectViewNodeDecorator {
     
-    // 使用固定的颜色
+    // Фиксированный цвет
     private static SimpleTextAttributes getAnnotationAttributes() {
-        return new SimpleTextAttributes(SimpleTextAttributes.STYLE_ITALIC, new Color(187, 187, 187)); // 浅灰色 #BBBBBB
+        return new SimpleTextAttributes(SimpleTextAttributes.STYLE_ITALIC, new Color(187, 187, 187)); // светло-серый #BBBBBB
     }
     
-    // 根据颜色配置获取文本属性
+    // Атрибуты текста по настроенному цвету
     private static SimpleTextAttributes getAnnotationAttributesWithColor(String colorHex) {
         if (colorHex != null && !colorHex.trim().isEmpty()) {
             try {
                 Color color = Color.decode(colorHex);
                 return new SimpleTextAttributes(SimpleTextAttributes.STYLE_ITALIC, color);
             } catch (NumberFormatException e) {
-                // 如果颜色解析失败，使用默认颜色
+                // Если цвет не разобрался — цвет по умолчанию
                 return getAnnotationAttributes();
             }
         }
         return getAnnotationAttributes();
     }
     
-    // 不再使用缓存，确保开关状态实时更新
+    // Кэш не используем, чтобы переключатели срабатывали сразу
     
     @Override
     public void decorate(ProjectViewNode<?> node, PresentationData data) {
@@ -54,10 +54,10 @@ public class AnnotationDecorator implements ProjectViewNodeDecorator {
             return;
         }
         
-        // 检查项目树备注开关状态
+        // Включён ли показ заметок в дереве проекта
         AnnotationService annotationService = AnnotationService.getInstance(project);
         if (!annotationService.isProjectTreeAnnotationsEnabled()) {
-            return; // 如果开关关闭，不显示任何备注
+            return; // переключатель выключен — заметок не показываем
         }
         
         VirtualFile file = getVirtualFile(node);
@@ -67,13 +67,13 @@ public class AnnotationDecorator implements ProjectViewNodeDecorator {
         
         String annotation = getAnnotationForFile(project, file);
         if (annotation != null && !annotation.trim().isEmpty()) {
-            // 在原有文本后添加中文备注
+            // Дописываем заметку после имени узла
             String originalText = data.getPresentableText();
             if (originalText != null) {
                 data.clearText();
                 data.addText(originalText, SimpleTextAttributes.REGULAR_ATTRIBUTES);
                 
-                // 获取对应的颜色配置（传入备注内容避免循环调用）
+                // Цвет заметки (передаём текст заметки, чтобы не было циклического вызова)
                 String textColor = getTextColorForFile(project, file, annotation);
                 SimpleTextAttributes annotationAttributes = getAnnotationAttributesWithColor(textColor);
                 
@@ -83,7 +83,7 @@ public class AnnotationDecorator implements ProjectViewNodeDecorator {
     }
     
     /**
-     * 获取节点对应的虚拟文件
+     * Возвращает виртуальный файл узла
      */
     @Nullable
     private VirtualFile getVirtualFile(@NotNull ProjectViewNode<?> node) {
@@ -110,27 +110,27 @@ public class AnnotationDecorator implements ProjectViewNodeDecorator {
         
         AnnotationService annotationService = AnnotationService.getInstance(project);
         
-        // 优先从实时服务获取数据（如果可用）
+        // Сначала берём данные из сервиса живого обновления (если он доступен)
         String realTimeAnnotation = getRealTimeAnnotation(project, file);
         if (realTimeAnnotation != null && !realTimeAnnotation.isEmpty()) {
             return realTimeAnnotation.trim();
         }
         
-        // 1. 用户文件映射
+        // 1. Пользовательские сопоставления файлов
         String userFileAnnotation = annotationService.getAnnotation(file);
         if (userFileAnnotation != null && !userFileAnnotation.isEmpty()) {
             return userFileAnnotation.trim();
         }
         
-        // 2. 用户包映射
+        // 2. Пользовательские сопоставления пакетов
         String userPackageAnnotation = annotationService.getPackageAnnotation(file);
         if (userPackageAnnotation != null && !userPackageAnnotation.isEmpty()) {
             return userPackageAnnotation.trim();
         }
         
-        // 3. 用户文件匹配映射（仅对文件生效）
+        // 3. Пользовательские шаблоны файлов (только для файлов)
         if (!file.isDirectory()) {
-            // 获取完整的相对路径用于混合匹配
+            // Полный относительный путь для смешанного сопоставления
             String relativePath = getRelativePathForMatching(project, file);
             String userFileMatchAnnotation = getUserFilePatternAnnotation(annotationService, name, relativePath);
             if (userFileMatchAnnotation != null && !userFileMatchAnnotation.isEmpty()) {
@@ -138,9 +138,9 @@ public class AnnotationDecorator implements ProjectViewNodeDecorator {
             }
         }
         
-        // 4. 用户包匹配映射（仅对目录/包生效）
+        // 4. Пользовательские шаблоны пакетов (только для папок и пакетов)
         if (file.isDirectory()) {
-            // 获取完整的相对路径用于包匹配
+            // Полный относительный путь для сопоставления пакетов
             String relativePath = getRelativePathForMatching(project, file);
             String userPackageMatchAnnotation = getUserPackagePatternAnnotation(annotationService, relativePath != null ? relativePath : name);
             if (userPackageMatchAnnotation != null && !userPackageMatchAnnotation.isEmpty()) {
@@ -148,22 +148,22 @@ public class AnnotationDecorator implements ProjectViewNodeDecorator {
             }
         }
         
-        // 5. 检查内置映射库（如果启用）
+        // 5. Встроенная библиотека сопоставлений (если включена)
         MappingLibraryService mappingService = getMappingService();
         if (mappingService.isBuiltinMappingsEnabled()) {
-            // 5.1 内置文件映射
+            // 5.1 Встроенные сопоставления файлов
             String builtinFileMapping = mappingService.searchFileMapping(name);
             if (builtinFileMapping != null) {
                 return builtinFileMapping;
             }
             
-            // 5.2 内置包映射
+            // 5.2 Встроенные сопоставления пакетов
             String builtinPackageMapping = mappingService.searchPackageMapping(name);
             if (builtinPackageMapping != null) {
                 return builtinPackageMapping;
             }
             
-            // 5.3 内置文件匹配映射（仅对文件生效）
+            // 5.3 Встроенные шаблоны файлов (только для файлов)
             if (!file.isDirectory()) {
                 String builtinFileMatchMapping = mappingService.searchFileMatchMapping(name);
                 if (builtinFileMatchMapping != null) {
@@ -171,9 +171,9 @@ public class AnnotationDecorator implements ProjectViewNodeDecorator {
                 }
             }
             
-            // 5.4 内置包匹配映射（仅对目录/包生效）
+            // 5.4 Встроенные шаблоны пакетов (только для папок и пакетов)
             if (file.isDirectory()) {
-                // 获取完整的相对路径用于包匹配
+                // Полный относительный путь для сопоставления пакетов
                 String relativePath = getRelativePathForMatching(project, file);
                 String builtinPackageMatchMapping = mappingService.searchPatternMapping(relativePath != null ? relativePath : name);
                 if (builtinPackageMatchMapping != null) {
@@ -186,7 +186,7 @@ public class AnnotationDecorator implements ProjectViewNodeDecorator {
     }
     
     /**
-     * 获取用户自定义的文件匹配模式备注
+     * Возвращает заметку по пользовательскому шаблону файла
      */
     @Nullable
     private String getUserFilePatternAnnotation(@NotNull AnnotationService annotationService, @NotNull String fileName, @Nullable String relativePath) {
@@ -194,7 +194,7 @@ public class AnnotationDecorator implements ProjectViewNodeDecorator {
     }
     
     /**
-     * 获取用户自定义的包匹配模式备注
+     * Возвращает заметку по пользовательскому шаблону пакета
      */
     @Nullable
     private String getUserPackagePatternAnnotation(@NotNull AnnotationService annotationService, @NotNull String packageName) {
@@ -202,16 +202,16 @@ public class AnnotationDecorator implements ProjectViewNodeDecorator {
     }
     
     /**
-     * 获取文件对应的文本颜色
-     * 根据实际显示的备注类型获取对应的颜色
+     * Возвращает цвет текста для файла
+     * Цвет берётся по источнику заметки, которая реально показана
      */
     private String getTextColorForFile(@NotNull Project project, @NotNull VirtualFile file, @NotNull String annotation) {
         AnnotationService annotationService = AnnotationService.getInstance(project);
         
-        // 根据备注来源确定颜色
+        // Цвет зависит от источника заметки
         String name = file.getName();
         
-        // 1. 检查用户文件映射颜色
+        // 1. Цвет пользовательского сопоставления файла
         String userFileAnnotation = annotationService.getAnnotation(file);
         if (userFileAnnotation != null && userFileAnnotation.trim().equals(annotation.trim())) {
             String relativePath = getRelativePathForMatching(project, file);
@@ -223,7 +223,7 @@ public class AnnotationDecorator implements ProjectViewNodeDecorator {
             }
         }
         
-        // 2. 检查用户包映射颜色
+        // 2. Цвет пользовательского сопоставления пакета
         String userPackageAnnotation = annotationService.getPackageAnnotation(file);
         if (userPackageAnnotation != null && userPackageAnnotation.trim().equals(annotation.trim())) {
             String relativePath = getRelativePathForMatching(project, file);
@@ -235,7 +235,7 @@ public class AnnotationDecorator implements ProjectViewNodeDecorator {
             }
         }
         
-        // 3. 检查用户文件匹配映射颜色
+        // 3. Цвет пользовательского шаблона файла
         if (!file.isDirectory()) {
             String relativePath = getRelativePathForMatching(project, file);
             String userFileMatchAnnotation = getUserFilePatternAnnotation(annotationService, name, relativePath);
@@ -247,7 +247,7 @@ public class AnnotationDecorator implements ProjectViewNodeDecorator {
             }
         }
         
-        // 4. 检查用户包匹配映射颜色
+        // 4. Цвет пользовательского шаблона пакета
         if (file.isDirectory()) {
             String relativePath = getRelativePathForMatching(project, file);
             if (relativePath != null) {
@@ -265,20 +265,20 @@ public class AnnotationDecorator implements ProjectViewNodeDecorator {
     }
     
     /**
-     * 从实时服务获取备注数据
+     * Берёт заметку из сервиса живого обновления
      */
     @Nullable
     private String getRealTimeAnnotation(@NotNull Project project, @NotNull VirtualFile file) {
         try {
-            // 通过反射获取实时服务实例（避免循环依赖）
+            // Сервис получаем через рефлексию, чтобы не было циклической зависимости
             Class<?> realTimeServiceClass = Class.forName("com.github.annotations.services.RealTimeAnnotationService");
             Object realTimeService = project.getService(realTimeServiceClass);
             
             if (realTimeService != null) {
-                // 获取文件路径
+                // Путь файла
                 String relativePath = getRelativePathForMatching(project, file);
                 if (relativePath != null) {
-                    // 尝试获取文件备注
+                    // Пробуем получить заметку файла
                     if (!file.isDirectory()) {
                         try {
                             java.lang.reflect.Method getFileAnnotationMethod = 
@@ -288,10 +288,10 @@ public class AnnotationDecorator implements ProjectViewNodeDecorator {
                                 return annotation;
                             }
                         } catch (Exception e) {
-                            // 忽略反射错误，降级到普通服务
+                            // Ошибку рефлексии игнорируем, переходим к обычному сервису
                         }
                     } else {
-                        // 目录/包备注
+                        // Заметка папки или пакета
                         try {
                             java.lang.reflect.Method getPackageAnnotationMethod = 
                                 realTimeServiceClass.getMethod("getPackageAnnotation", String.class);
@@ -300,32 +300,32 @@ public class AnnotationDecorator implements ProjectViewNodeDecorator {
                                 return annotation;
                             }
                         } catch (Exception e) {
-                            // 忽略反射错误，降级到普通服务
+                            // Ошибку рефлексии игнорируем, переходим к обычному сервису
                         }
                     }
                 }
             }
         } catch (Exception e) {
-            // 如果实时服务不可用，忽略错误，降级到普通服务
+            // Сервис живого обновления недоступен — переходим к обычному сервису
         }
         
         return null;
     }
     
     /**
-     * 获取映射库服务实例（使用缓存提高性能）
-     * 注意：每次调用都获取最新实例，确保开关状态实时更新
+     * Возвращает сервис библиотеки сопоставлений
+     * Экземпляр берётся заново при каждом вызове, чтобы переключатель срабатывал сразу
      */
     private static MappingLibraryService getMappingService() {
-        // 每次都获取最新实例，确保开关状态实时更新
+        // Каждый раз берём свежий экземпляр, чтобы переключатель срабатывал сразу
         return MappingLibraryService.getInstance();
     }
     
     /**
-     * 获取文件相对于项目根目录的路径，用于模式匹配
-     * @param project 项目实例
-     * @param file 虚拟文件
-     * @return 相对路径，使用 / 作为分隔符（与配置文件格式一致）
+     * Путь файла относительно корня проекта, для сопоставления с шаблонами
+     * @param project проект
+     * @param file виртуальный файл
+     * @return относительный путь с разделителем / (как в файле настроек)
      */
     @Nullable
     private String getRelativePathForMatching(@NotNull Project project, @NotNull VirtualFile file) {
@@ -336,13 +336,13 @@ public class AnnotationDecorator implements ProjectViewNodeDecorator {
         String filePath = file.getPath();
         
         if (filePath.startsWith(projectPath)) {
-            // 确保有子路径才截取
+            // Обрезаем, только если есть вложенный путь
             if (filePath.length() > projectPath.length()) {
                 String relativePath = filePath.substring(projectPath.length());
 
                 return relativePath.startsWith("/") ? relativePath.substring(1) : relativePath;
             } else if (filePath.equals(projectPath)) {
-                // 如果是项目根目录本身
+                // Это сам корень проекта
                 return "";
             }
         }

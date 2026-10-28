@@ -21,8 +21,8 @@ public class SearchAnnotationsAction extends AnAction {
             project = openProjects[0];
         } else {
             com.intellij.openapi.ui.Messages.showInfoMessage(
-                I18nUtils.getText(project, "请先打开一个项目才能使用搜索功能", "Please open a project first to use the search function"), 
-                I18nUtils.getText(project, "搜索项目树备注", "Search Project Tree Annotations")
+                I18nUtils.getText(project, "Для поиска сначала откройте проект", "Please open a project first to use the search function"),
+                I18nUtils.getText(project, "Поиск по заметкам дерева проекта", "Search Project Tree Annotations")
             );
             return;
         }
@@ -37,7 +37,7 @@ public class SearchAnnotationsAction extends AnAction {
         e.getPresentation().setEnabled(true);
         e.getPresentation().setVisible(true);
         
-        // 根据当前语言动态显示菜单文本
+        // Текст пункта меню зависит от текущего языка
         Project project = e.getProject();
         if (project != null) {
             try {
@@ -48,20 +48,20 @@ public class SearchAnnotationsAction extends AnAction {
                         e.getPresentation().setText("Search Project Tree Annotations");
                         e.getPresentation().setDescription("Search all annotations in project");
                     } else {
-                        e.getPresentation().setText("搜索项目树备注");
-                        e.getPresentation().setDescription("搜索项目中的所有备注内容");
+                        e.getPresentation().setText("Поиск по заметкам");
+                        e.getPresentation().setDescription("Искать по всем заметкам проекта");
                     }
                 } else {
-                    e.getPresentation().setText("搜索项目树备注");
-                    e.getPresentation().setDescription("搜索项目中的所有备注内容");
+                    e.getPresentation().setText("Поиск по заметкам");
+                    e.getPresentation().setDescription("Искать по всем заметкам проекта");
                 }
             } catch (Exception ex) {
-                e.getPresentation().setText("搜索项目树备注");
-                e.getPresentation().setDescription("搜索项目中的所有备注内容");
+                e.getPresentation().setText("Поиск по заметкам");
+                e.getPresentation().setDescription("Искать по всем заметкам проекта");
             }
         } else {
-            e.getPresentation().setText("搜索项目树备注");
-            e.getPresentation().setDescription("搜索项目中的所有备注内容");
+            e.getPresentation().setText("Поиск по заметкам");
+            e.getPresentation().setDescription("Искать по всем заметкам проекта");
         }
     }
     

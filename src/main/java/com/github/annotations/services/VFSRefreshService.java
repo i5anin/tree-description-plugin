@@ -6,8 +6,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * VFS刷新服务
- * 负责强制刷新IDEA的虚拟文件系统状态
+ * Сервис обновления VFS
+ * Принудительно обновляет состояние виртуальной файловой системы IDE
  */
 public class VFSRefreshService {
     
@@ -18,25 +18,25 @@ public class VFSRefreshService {
     }
     
     /**
-     * 强制刷新指定的JSON文件
+     * Принудительно обновляет указанный JSON-файл
      */
     public void refreshJsonFile(@NotNull String jsonPath) {
         try {
-            // 强制刷新VFS中的文件状态
+            // Принудительно обновляем состояние файла в VFS
             VirtualFile jsonFile = LocalFileSystem.getInstance()
                 .refreshAndFindFileByPath(jsonPath);
             if (jsonFile != null) {
-                jsonFile.refresh(false, false); // 强制刷新
+                jsonFile.refresh(false, false); // принудительное обновление
             }
         } catch (Exception e) {
-            // 记录错误但不中断流程
+            // Записываем ошибку, но не прерываем работу
             com.intellij.openapi.diagnostic.Logger.getInstance(VFSRefreshService.class)
-                .warn("刷新VFS失败: " + e.getMessage());
+                .warn("Не удалось обновить VFS: " + e.getMessage());
         }
     }
     
     /**
-     * 刷新整个.td-maps目录
+     * Обновляет всю папку .td-maps
      */
     public void refreshMappingsDirectory() {
         try {
@@ -51,7 +51,7 @@ public class VFSRefreshService {
             }
         } catch (Exception e) {
             com.intellij.openapi.diagnostic.Logger.getInstance(VFSRefreshService.class)
-                .warn("刷新.td-maps目录失败: " + e.getMessage());
+                .warn("Не удалось обновить папку .td-maps: " + e.getMessage());
         }
     }
 }

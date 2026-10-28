@@ -6,17 +6,17 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Locale;
 
 /**
- * 语言管理工具类
- * 负责管理插件的语言设置
+ * Управление языком плагина
+ * Хранит текущий язык интерфейса
  */
 public class LanguageManager {
     
     private static final Logger LOG = Logger.getInstance(LanguageManager.class);
     
-    // 支持的语言
+    // Поддерживаемые языки
     public enum Language {
         ENGLISH("en", "English", Locale.ENGLISH),
-        CHINESE("zh", "中文", Locale.CHINESE);
+        CHINESE("ru", "Русский", Locale.forLanguageTag("ru"));
         
         private final String code;
         private final String displayName;
@@ -46,14 +46,14 @@ public class LanguageManager {
                     return lang;
                 }
             }
-            return ENGLISH; // 默认英文
+            return ENGLISH; // по умолчанию английский
         }
     }
     
-    private static Language currentLanguage = Language.ENGLISH; // 默认英文
+    private static Language currentLanguage = Language.ENGLISH; // по умолчанию английский
     
     /**
-     * 获取当前语言
+     * Возвращает текущий язык
      */
     @NotNull
     public static Language getCurrentLanguage() {
@@ -61,7 +61,7 @@ public class LanguageManager {
     }
     
     /**
-     * 设置当前语言
+     * Задаёт текущий язык
      */
     public static void setCurrentLanguage(@NotNull Language language) {
         currentLanguage = language;
@@ -69,7 +69,7 @@ public class LanguageManager {
     }
     
     /**
-     * 获取当前语言代码
+     * Возвращает код текущего языка
      */
     @NotNull
     public static String getCurrentLanguageCode() {
@@ -77,22 +77,22 @@ public class LanguageManager {
     }
     
     /**
-     * 检查是否为中文
+     * Включён ли русский
      */
     public static boolean isChinese() {
         return currentLanguage == Language.CHINESE;
     }
     
     /**
-     * 检查是否为英文
+     * Включён ли английский
      */
     public static boolean isEnglish() {
         return currentLanguage == Language.ENGLISH;
     }
     
     /**
-     * 根据当前语言获取文本
-     * 这是一个简单的实现，后续可以扩展为完整的国际化系统
+     * Возвращает текст на текущем языке
+     * Простая реализация; при необходимости заменяется полноценной локализацией
      */
     @NotNull
     public static String getText(String chineseText, String englishText) {
@@ -100,15 +100,15 @@ public class LanguageManager {
     }
     
     /**
-     * 根据当前语言获取文本（重载版本，只传入中文文本，英文自动生成）
+     * Возвращает текст на текущем языке (перегрузка: передаётся только русский текст, английский не генерируется)
      */
     @NotNull
     public static String getText(String chineseText) {
-        // 简单的中英文映射，后续可以完善
+        // Простое сопоставление русского и английского, можно доработать
         if (isChinese()) {
             return chineseText;
         } else {
-            // 这里可以添加简单的中英文转换逻辑
+            // Здесь можно добавить перевод с русского на английский
     
             return chineseText;
         }

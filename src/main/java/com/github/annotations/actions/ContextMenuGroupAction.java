@@ -7,14 +7,14 @@ import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * 项目备注操作右键菜单组Action
- * 支持动态语言切换
+ * Группа контекстного меню «Заметки проекта»
+ * Текст меняется вместе с языком
  */
 public class ContextMenuGroupAction extends AnAction {
     
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
-        // 这是一个组Action，不需要执行具体操作
+        // Это группа, своего действия у неё нет
     }
     
     @Override
@@ -27,7 +27,7 @@ public class ContextMenuGroupAction extends AnAction {
                 if ("en".equals(currentLanguage)) {
                     e.getPresentation().setText("Project Annotation Operations");
                 } else      e.getPresentation().setText("Project Annotation Operations"); {
-                    e.getPresentation().setText("项目备注操作");
+                    e.getPresentation().setText("Заметки проекта");
                 }
             }
         }

@@ -30,7 +30,7 @@ public class ViewMappingsAction extends AnAction {
         
         e.getPresentation().setEnabledAndVisible(true);
         
-        // 根据当前语言动态显示菜单文本
+        // Текст пункта меню зависит от текущего языка
         try {
             com.github.annotations.services.AnnotationService service = com.github.annotations.services.AnnotationService.getInstance(project);
             if (service != null) {
@@ -39,16 +39,16 @@ public class ViewMappingsAction extends AnAction {
                     e.getPresentation().setText("View Open Source Mapping Library");
                     e.getPresentation().setDescription("View currently loaded mapping library content");
                 } else {
-                    e.getPresentation().setText("查看开源映射库");
-                    e.getPresentation().setDescription("查看当前加载的映射库内容");
+                    e.getPresentation().setText("Открытая библиотека сопоставлений");
+                    e.getPresentation().setDescription("Посмотреть загруженную библиотеку сопоставлений");
                 }
             } else {
-                e.getPresentation().setText("查看开源映射库");
-                e.getPresentation().setDescription("查看当前加载的映射库内容");
+                e.getPresentation().setText("Открытая библиотека сопоставлений");
+                e.getPresentation().setDescription("Посмотреть загруженную библиотеку сопоставлений");
             }
         } catch (Exception ex) {
-            e.getPresentation().setText("查看开源映射库");
-            e.getPresentation().setDescription("查看当前加载的映射库内容");
+            e.getPresentation().setText("Открытая библиотека сопоставлений");
+            e.getPresentation().setDescription("Посмотреть загруженную библиотеку сопоставлений");
         }
     }
 }

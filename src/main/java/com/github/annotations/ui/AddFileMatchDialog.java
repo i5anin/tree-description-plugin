@@ -17,8 +17,8 @@ import java.util.Map;
 import java.awt.Font;
 
 /**
- * 添加文件匹配模式对话框
- * 允许用户添加文件匹配模式规则
+ * Диалог добавления шаблона файла
+ * Пользователь задаёт правило сопоставления по имени файла
  */
 public class AddFileMatchDialog extends DialogWrapper {
     
@@ -39,7 +39,7 @@ public class AddFileMatchDialog extends DialogWrapper {
         this.annotationService = AnnotationService.getInstance(project);
         this.defaultFileName = defaultFileName;
         
-        setTitle(I18nUtils.getText(project, "添加文件匹配映射", "Add File Match Mapping"));
+        setTitle(I18nUtils.getText(project, "Добавить сопоставление по файлу", "Add File Match Mapping"));
         setSize(540, 200);
         init();
     }
@@ -49,14 +49,14 @@ public class AddFileMatchDialog extends DialogWrapper {
         JPanel mainPanel = new JPanel(new BorderLayout());
         mainPanel.setBorder(JBUI.Borders.empty(10));
         
-        // 创建表单
+        // Форма
         JPanel formPanel = FormBuilder.createFormBuilder()
-                .addLabeledComponent(I18nUtils.getText(project, "匹配文件:", "Match File:"), createPatternField())
-                .addLabeledComponent(I18nUtils.getText(project, "备注描述:", "Annotation Description:"), createDescriptionField())
+                .addLabeledComponent(I18nUtils.getText(project, "Шаблон файла:", "Match File:"), createPatternField())
+                .addLabeledComponent(I18nUtils.getText(project, "Текст заметки:", "Annotation Description:"), createDescriptionField())
                 .addComponentFillVertically(new JPanel(), 0)
                 .getPanel();
         
-        // 添加使用说明
+        // Справка по использованию
         JPanel helpPanel = createHelpPanel();
         mainPanel.add(helpPanel, BorderLayout.SOUTH);
         
@@ -67,7 +67,7 @@ public class AddFileMatchDialog extends DialogWrapper {
     private JComponent createPatternField() {
         patternField = new JBTextField();
         
-        // 如果提供了默认文件名，设置到输入框中
+        // Если передано имя файла по умолчанию — подставляем в поле
         if (defaultFileName != null && !defaultFileName.trim().isEmpty()) {
             patternField.setText(defaultFileName);
         }
@@ -81,7 +81,7 @@ public class AddFileMatchDialog extends DialogWrapper {
             public void changedUpdate(javax.swing.event.DocumentEvent e) { validateInput(); }
         });
         
-        // 如果设置了默认值，需要触发验证
+        // Значение по умолчанию задано — запускаем проверку
         if (defaultFileName != null && !defaultFileName.trim().isEmpty()) {
             SwingUtilities.invokeLater(this::validateInput);
         }
@@ -106,14 +106,14 @@ public class AddFileMatchDialog extends DialogWrapper {
     
     private JPanel createHelpPanel() {
         JPanel helpPanel = new JPanel(new BorderLayout());
-        helpPanel.setBorder(BorderFactory.createTitledBorder(I18nUtils.getText(project, "使用说明", "Usage Instructions")));
+        helpPanel.setBorder(BorderFactory.createTitledBorder(I18nUtils.getText(project, "Как пользоваться", "Usage Instructions")));
         
         JTextArea helpText = new JTextArea();
         helpText.setText(I18nUtils.getText(project, 
-            "• 会匹配映射所对应的文件上\n" +
-            "• 映射保存位置：项目根目录/.td-maps/local-description.json\n" +
-            "• pom.xml 会匹配所有以 pom.xml 命名的文件\n" +
-            "• com/common/pom.xml 会匹配 com.common 包下的 pom.xml 文件",
+            "• заметка ставится на файлы, подходящие под шаблон\n" +
+            "• сопоставления хранятся в: корень проекта/.td-maps/local-description.json\n" +
+            "• pom.xml — все файлы с именем pom.xml\n" +
+            "• com/common/pom.xml — файл pom.xml в пакете com.common",
             "• Will match the corresponding files\n" +
             "• Mapping save location: project root/.td-maps/local-description.json\n" +
             "• pom.xml will match all files named pom.xml\n" +
@@ -143,7 +143,7 @@ public class AddFileMatchDialog extends DialogWrapper {
             return;
         }
         
-        // 处理通配符前缀，支持多种格式
+        // Разбираем префикс с подстановочными знаками, поддерживаем несколько форматов
         String savePattern = pattern;
         if (pattern.startsWith("*/")) {
             savePattern = pattern.substring(2);
@@ -153,18 +153,18 @@ public class AddFileMatchDialog extends DialogWrapper {
             savePattern = pattern.substring(1);
         }
         
-        // 直接覆盖已存在的模式，无需用户确认
+        // Существующий шаблон перезаписываем без подтверждения
         
-        // 保存到AnnotationService（使用去掉*.前缀的模式）
+        // Сохраняем в AnnotationService (шаблон без префикса *.)
         annotationService.setFileMatchAnnotation(savePattern, description);
         
-        // 调用刷新机制，确保JSON文件和UI同步更新
+        // Обновляем, чтобы JSON-файл и интерфейс совпадали
         try {
             java.lang.reflect.Method refreshMethod = annotationService.getClass().getDeclaredMethod("refreshAfterSave");
             refreshMethod.setAccessible(true);
             refreshMethod.invoke(annotationService);
         } catch (Exception ex) {
-            // 如果反射调用失败，回退到基本的项目视图刷新
+            // Если вызов через рефлексию не удался — простое обновление дерева проекта
             com.intellij.ide.projectView.ProjectView.getInstance(project).refresh();
         }
         
@@ -177,16 +177,16 @@ public class AddFileMatchDialog extends DialogWrapper {
         String description = descriptionField.getText().trim();
         
         if (pattern.isEmpty()) {
-            return new ValidationInfo(I18nUtils.getText(project, "请输入匹配模式", "Please enter match pattern"), patternField);
+            return new ValidationInfo(I18nUtils.getText(project, "Введите шаблон", "Please enter match pattern"), patternField);
         }
         
         if (description.isEmpty()) {
-            return new ValidationInfo(I18nUtils.getText(project, "请输入备注描述", "Please enter annotation description"), descriptionField);
+            return new ValidationInfo(I18nUtils.getText(project, "Введите текст заметки", "Please enter annotation description"), descriptionField);
         }
         
-        // 检查模式是否包含不允许的特殊字符（现在允许路径分隔符）
+        // Нет ли в шаблоне запрещённых символов (разделитель пути теперь разрешён)
         if (pattern.contains("\\") || pattern.contains(":")) {
-            return new ValidationInfo(I18nUtils.getText(project, "匹配模式不能包含反斜杠或冒号", "Match pattern cannot contain backslashes or colons"), patternField);
+            return new ValidationInfo(I18nUtils.getText(project, "Шаблон не может содержать обратную косую черту или двоеточие", "Match pattern cannot contain backslashes or colons"), patternField);
         }
         
         return null;

@@ -8,38 +8,38 @@ import com.intellij.openapi.ui.Messages;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * 切换到中文Action
+ * Переключение на русский язык
  */
 public class SwitchToChineseAction extends AnAction {
     
     public SwitchToChineseAction() {
-        super("中文");
-        getTemplatePresentation().setDescription("切换到中文");
+        super("Русский");
+        getTemplatePresentation().setDescription("Переключить на русский");
     }
     
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
         Project project = e.getProject();
         if (project == null) {
-            Messages.showErrorDialog("无法获取项目信息", "错误");
+            Messages.showErrorDialog("Не удалось получить проект", "Ошибка");
             return;
         }
         
         AnnotationService service = AnnotationService.getInstance(project);
         if (service == null) {
-            Messages.showErrorDialog("无法获取备注服务", "错误");
+            Messages.showErrorDialog("Не удалось получить сервис заметок", "Ошибка");
             return;
         }
         
         try {
-            // 设置语言为中文
+            // Включаем русский язык
             service.setLanguage("zh");
             
-            // 显示成功消息
-            Messages.showInfoMessage(project, "语言已切换到中文", "语言切换");
+            // Сообщение об успехе
+            Messages.showInfoMessage(project, "Язык переключён на русский", "Смена языка");
             
         } catch (Exception ex) {
-            Messages.showErrorDialog(project, "语言切换失败：" + ex.getMessage(), "错误");
+            Messages.showErrorDialog(project, "Не удалось сменить язык: " + ex.getMessage(), "Ошибка");
         }
     }
     
@@ -57,17 +57,17 @@ public class SwitchToChineseAction extends AnAction {
             return;
         }
         
-        // 检查当前语言，如果是中文则禁用
+        // Если русский уже включён — пункт неактивен
         String currentLanguage = service.getLanguage();
         boolean isCurrentLanguage = "zh".equals(currentLanguage);
         e.getPresentation().setEnabled(!isCurrentLanguage);
         
-        // 根据当前语言显示不同的文本
+        // Текст зависит от текущего языка
         if (isCurrentLanguage) {
-            // 当前是中文，显示选中状态
-            e.getPresentation().setText("✓ 中文");
+            // Сейчас русский — показываем отметку
+            e.getPresentation().setText("✓ Русский");
         } else {
-            // 当前是英文，显示中文选项
+            // Сейчас английский — показываем пункт русского
             e.getPresentation().setText("Chinese");
         }
     }

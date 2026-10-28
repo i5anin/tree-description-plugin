@@ -23,10 +23,10 @@ public class ToggleProjectTreeAnnotationsAction extends AnAction {
         if (isEnabled) {
             int result = Messages.showYesNoDialog(
                 project,
-                "确定要禁用项目树备注显示吗？\n\n禁用后，项目树中将不再显示备注信息。",
-                "禁用项目树备注",
-                "禁用",
-                "取消",
+                "Отключить показ заметок в дереве проекта?\n\nПосле отключения заметки в дереве проекта не отображаются.",
+                "Отключить заметки в дереве",
+                "Отключить",
+                "Отмена",
                 Messages.getWarningIcon()
             );
             
@@ -36,10 +36,10 @@ public class ToggleProjectTreeAnnotationsAction extends AnAction {
         } else {
             int result = Messages.showYesNoDialog(
                 project,
-                "确定要启用项目树备注显示吗？\n\n启用后，项目树中将显示备注信息。",
-                "启用项目树备注",
-                "启用",
-                "取消",
+                "Включить показ заметок в дереве проекта?\n\nПосле включения заметки отображаются в дереве проекта.",
+                "Включить заметки в дереве",
+                "Включить",
+                "Отмена",
                 Messages.getInformationIcon()
             );
             
@@ -60,7 +60,7 @@ public class ToggleProjectTreeAnnotationsAction extends AnAction {
         AnnotationService annotationService = AnnotationService.getInstance(project);
         boolean isEnabled = annotationService.isProjectTreeAnnotationsEnabled();
         
-        // 根据当前语言动态显示菜单文本
+        // Текст пункта меню зависит от текущего языка
         String currentLanguage = annotationService.getLanguage();
         if ("en".equals(currentLanguage)) {
             if (isEnabled) {
@@ -72,11 +72,11 @@ public class ToggleProjectTreeAnnotationsAction extends AnAction {
             }
         } else {
             if (isEnabled) {
-                e.getPresentation().setText("禁用项目树备注");
-                e.getPresentation().setDescription("禁用项目树中的备注显示");
+                e.getPresentation().setText("Отключить заметки в дереве");
+                e.getPresentation().setDescription("Не показывать заметки в дереве проекта");
             } else {
-                e.getPresentation().setText("启用项目树备注");
-                e.getPresentation().setDescription("启用项目树中的备注显示");
+                e.getPresentation().setText("Включить заметки в дереве");
+                e.getPresentation().setDescription("Показывать заметки в дереве проекта");
             }
         }
         

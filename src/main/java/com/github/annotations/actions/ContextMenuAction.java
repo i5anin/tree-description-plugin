@@ -19,18 +19,18 @@ import com.github.annotations.actions.AddPackageMatchAction;
 import com.github.annotations.actions.ClearAllMappingsAction;
 
 /**
- * 项目备注操作右键菜单组Action
- * 支持动态语言切换
+ * Группа контекстного меню «Заметки проекта»
+ * Текст меняется вместе с языком
  */
 public class ContextMenuAction extends DefaultActionGroup {
     
     private static final Logger LOG = Logger.getInstance(ContextMenuAction.class);
     
     public ContextMenuAction() {
-        super("项目备注操作", true);
+        super("Заметки проекта", true);
         getTemplatePresentation().setIcon(com.intellij.openapi.util.IconLoader.getIcon("icons/remark.svg", ContextMenuAction.class));
         
-        // 使用ActionManager获取已注册的Action实例，保持快捷键配置
+        // Действия берём из ActionManager, чтобы сохранились сочетания клавиш
         ActionManager actionManager = ActionManager.getInstance();
         
         AnAction addAction = actionManager.getAction("ChineseAnnotations.AddAnnotation");
@@ -71,7 +71,7 @@ public class ContextMenuAction extends DefaultActionGroup {
                 if ("en".equals(currentLanguage)) {
                     e.getPresentation().setText("Project Annotation Operations");
                 } else {
-                    e.getPresentation().setText("项目备注操作");
+                    e.getPresentation().setText("Заметки проекта");
                 }
             }
         }

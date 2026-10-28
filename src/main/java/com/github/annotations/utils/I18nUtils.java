@@ -4,26 +4,26 @@ import com.github.annotations.services.AnnotationService;
 import com.intellij.openapi.project.Project;
 
 /**
- * 国际化工具类
- * 提供获取多语言文本的方法
+ * Выбор текста интерфейса по языку
+ * Возвращает русский или английский вариант строки
  */
 public class I18nUtils {
     
     /**
-     * 获取多语言文本
-     * @param project 项目实例
-     * @param chinese 中文文本
-     * @param english 英文文本
-     * @return 根据当前语言返回对应的文本
+     * Возвращает текст на языке, выбранном в настройках проекта
+     * @param project проект
+     * @param chinese русский текст
+     * @param english английский текст
+     * @return текст на текущем языке
      */
     public static String getText(Project project, String chinese, String english) {
         if (project == null) {
-            return chinese; // 默认返回中文
+            return chinese; // по умолчанию русский
         }
         
         AnnotationService service = AnnotationService.getInstance(project);
         if (service == null) {
-            return chinese; // 默认返回中文
+            return chinese; // по умолчанию русский
         }
         
         String currentLanguage = service.getLanguage();
@@ -31,11 +31,11 @@ public class I18nUtils {
     }
     
     /**
-     * 获取多语言文本（无项目上下文）
-     * @param language 语言代码
-     * @param chinese 中文文本
-     * @param english 英文文本
-     * @return 根据语言返回对应的文本
+     * Возвращает текст на указанном языке (без проекта)
+     * @param language код языка
+     * @param chinese русский текст
+     * @param english английский текст
+     * @return текст на указанном языке
      */
     public static String getText(String language, String chinese, String english) {
         return "en".equals(language) ? english : chinese;

@@ -6,8 +6,8 @@ import com.intellij.openapi.startup.StartupActivity;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * 项目启动后初始化活动
- * 替代StartupManager.runAfterOpened内部API的使用
+ * Инициализация после открытия проекта
+ * Заменяет внутренний API StartupManager.runAfterOpened
  */
 public class ProjectInitActivity implements StartupActivity {
     
@@ -15,16 +15,16 @@ public class ProjectInitActivity implements StartupActivity {
     
     @Override
     public void runActivity(@NotNull Project project) {
-        // 项目打开后的初始化逻辑
-        // 这里可以调用AnnotationService中的语言设置初始化方法
+        // Логика после открытия проекта
+        // Здесь можно вызвать инициализацию языка из AnnotationService
         try {
-            // 获取AnnotationService实例并执行初始化
+            // Получаем AnnotationService и запускаем инициализацию
             AnnotationService annotationService = project.getService(AnnotationService.class);
             if (annotationService != null) {
                 annotationService.initializeLanguageSettings();
             }
         } catch (Exception e) {
-            // 记录错误日志
+            // Записываем ошибку в журнал
             LOG.warn("Failed to initialize project settings", e);
         }
     }

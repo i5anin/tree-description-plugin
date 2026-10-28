@@ -24,7 +24,7 @@ public class AboutPluginAction extends AnAction {
         e.getPresentation().setVisible(true);
         e.getPresentation().setEnabled(true);
         
-        // 根据当前语言动态显示菜单文本
+        // Текст пункта меню зависит от текущего языка
         Project project = e.getProject();
         if (project != null) {
             try {
@@ -35,8 +35,8 @@ public class AboutPluginAction extends AnAction {
                         e.getPresentation().setText("About");
                         e.getPresentation().setDescription("Support developer, About plugin");
                     } else {
-                        e.getPresentation().setText("关于");
-                        e.getPresentation().setDescription("支持开发者，关于插件");
+                        e.getPresentation().setText("О плагине");
+                        e.getPresentation().setDescription("Поддержать разработчика, о плагине");
                     }
                 } else {
                     e.getPresentation().setText("About");

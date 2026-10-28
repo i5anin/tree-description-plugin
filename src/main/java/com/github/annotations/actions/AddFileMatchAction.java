@@ -17,7 +17,7 @@ public class AddFileMatchAction extends AnAction {
             return;
         }
 
-        // 获取当前选中的文件名，并添加*.前缀用于界面显示
+        // Имя выбранного файла с префиксом *. для показа в интерфейсе
         String currentFileName = null;
         VirtualFile selectedFile = e.getData(CommonDataKeys.VIRTUAL_FILE);
         if (selectedFile != null && !selectedFile.isDirectory()) {
@@ -39,7 +39,7 @@ public class AddFileMatchAction extends AnAction {
 
         e.getPresentation().setEnabledAndVisible(true);
 
-        // 根据当前语言动态显示菜单文本
+        // Текст пункта меню зависит от текущего языка
         try {
             com.github.annotations.services.AnnotationService service = com.github.annotations.services.AnnotationService
                     .getInstance(project);
@@ -49,16 +49,16 @@ public class AddFileMatchAction extends AnAction {
                     e.getPresentation().setText("Add File Match");
                     e.getPresentation().setDescription("Add filename matching pattern for automatic annotations");
                 } else {
-                    e.getPresentation().setText("添加文件匹配映射");
-                    e.getPresentation().setDescription("添加文件名匹配模式，为匹配的文件自动添加备注");
+                    e.getPresentation().setText("Добавить сопоставление по файлу");
+                    e.getPresentation().setDescription("Добавить шаблон имени файла: подходящие файлы получат заметку автоматически");
                 }
             } else {
-                e.getPresentation().setText("添加文件匹配映射");
-                e.getPresentation().setDescription("添加文件名匹配模式，为匹配的文件自动添加备注");
+                e.getPresentation().setText("Добавить сопоставление по файлу");
+                e.getPresentation().setDescription("Добавить шаблон имени файла: подходящие файлы получат заметку автоматически");
             }
         } catch (Exception ex) {
-            e.getPresentation().setText("添加文件匹配映射");
-            e.getPresentation().setDescription("添加文件名匹配模式，为匹配的文件自动添加备注");
+            e.getPresentation().setText("Добавить сопоставление по файлу");
+            e.getPresentation().setDescription("Добавить шаблон имени файла: подходящие файлы получат заметку автоматически");
         }
     }
 }

@@ -16,19 +16,19 @@ dependencies {
     implementation("com.google.code.gson:gson:2.10.1")
 }
 
-// 配置 IntelliJ Platform Plugin
+// Настройка IntelliJ Platform Plugin
 intellij {
     version.set("2023.1.5")
     type.set("IC") // IC = IntelliJ IDEA Community, IU = IntelliJ IDEA Ultimate
     
     plugins.set(listOf(
-        // 可以根据需要添加依赖的插件
+        // Сюда можно добавить плагины-зависимости
         // "com.intellij.java"
     ))
 }
 
 tasks {
-    // JVM 兼容性配置
+    // Совместимость JVM
     withType<JavaCompile> {
         sourceCompatibility = "17"
         targetCompatibility = "17"
@@ -37,7 +37,7 @@ tasks {
         kotlinOptions.jvmTarget = "17"
     }
 
-    // 优化 runIde 任务性能
+    // Ускорение задачи runIde
     runIde {
         jvmArgs = listOf(
             "-Xmx3072m",
@@ -53,14 +53,14 @@ tasks {
         )
     }
 
-    // 优化构建性能
+    // Ускорение сборки
     buildSearchableOptions {
-        enabled = false  // 禁用搜索选项构建以加快速度
+        enabled = false  // сборка поисковых опций отключена ради скорости
     }
 
     patchPluginXml {
         sinceBuild.set("231")
-        untilBuild.set("253.*")  // 支持到2025.3版本
+        untilBuild.set("253.*")  // поддержка до версии 2025.3
     }
 
     signPlugin {

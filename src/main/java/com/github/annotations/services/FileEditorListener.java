@@ -8,8 +8,8 @@ import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * 文件编辑器监听器
- * 监听文件的打开和关闭事件，自动注册/移除Document监听器
+ * Слушатель редактора файлов
+ * Следит за открытием и закрытием файлов, подключает и снимает слушатель Document
  */
 public class FileEditorListener {
     
@@ -24,18 +24,18 @@ public class FileEditorListener {
         this.realTimeAnnotationService = realTimeAnnotationService;
         this.messageBusConnection = project.getMessageBus().connect();
         
-        // 注册文件编辑器监听器
+        // Регистрируем слушатель редактора файлов
         registerFileEditorListener();
     }
     
     /**
-     * 注册文件编辑器监听器
+     * Регистрирует слушатель редактора файлов
      */
     private void registerFileEditorListener() {
         messageBusConnection.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new FileEditorManagerListener() {
             @Override
             public void fileOpened(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
-                // 当文件打开时，检查是否是我们的JSON文件
+                // При открытии файла проверяем, наш ли это JSON
                 if (isOurJsonFile(file)) {
                     realTimeAnnotationService.registerDocumentListener(file);
                 }
@@ -43,7 +43,7 @@ public class FileEditorListener {
             
             @Override
             public void fileClosed(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
-                // 当文件关闭时，移除监听器
+                // При закрытии файла снимаем слушатель
                 if (isOurJsonFile(file)) {
                     realTimeAnnotationService.unregisterDocumentListener(file);
                 }
@@ -52,7 +52,7 @@ public class FileEditorListener {
     }
     
     /**
-     * 检查是否是.td-maps目录下的JSON文件
+     * JSON-файл ли это в папке .td-maps
      */
     private boolean isOurJsonFile(VirtualFile file) {
         if (file == null || !file.exists() || !file.getName().endsWith(".json")) {
@@ -69,7 +69,7 @@ public class FileEditorListener {
     }
     
     /**
-     * 释放资源
+     * Освобождает ресурсы
      */
     public void dispose() {
         if (messageBusConnection != null) {

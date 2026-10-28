@@ -29,51 +29,51 @@ public class ClearAllMappingsAction extends AnAction {
         if (totalCount == 0) {
             Messages.showInfoMessage(
                 project,
-                I18nUtils.getText(project, "当前项目没有任何路径匹配映射。", "Current project has no path matching mappings."),
-                I18nUtils.getText(project, "清空所有映射", "Clear All Mappings")
+                I18nUtils.getText(project, "В проекте нет сопоставлений по пути.", "Current project has no path matching mappings."),
+                I18nUtils.getText(project, "Очистить все сопоставления", "Clear All Mappings")
             );
             return;
         }
         
         StringBuilder details = new StringBuilder();
-        details.append(I18nUtils.getText(project, "当前共有 ", "Current total: ")).append(totalCount).append(I18nUtils.getText(project, " 个路径匹配映射：\n", " path matching mappings:\n"));
+        details.append(I18nUtils.getText(project, "Всего ", "Current total: ")).append(totalCount).append(I18nUtils.getText(project, " сопоставлений по пути:\n", " path matching mappings:\n"));
         if (!fileMatchAnnotations.isEmpty()) {
-            details.append("• ").append(I18nUtils.getText(project, "文件匹配模式：", "File match patterns: ")).append(fileMatchAnnotations.size()).append(I18nUtils.getText(project, " 个\n", " items\n"));
+            details.append("• ").append(I18nUtils.getText(project, "Шаблоны файлов: ", "File match patterns: ")).append(fileMatchAnnotations.size()).append(I18nUtils.getText(project, " шт.\n", " items\n"));
         }
         if (!packageMatchAnnotations.isEmpty()) {
-            details.append("• ").append(I18nUtils.getText(project, "包匹配模式：", "Package match patterns: ")).append(packageMatchAnnotations.size()).append(I18nUtils.getText(project, " 个\n", " items\n"));
+            details.append("• ").append(I18nUtils.getText(project, "Шаблоны пакетов: ", "Package match patterns: ")).append(packageMatchAnnotations.size()).append(I18nUtils.getText(project, " шт.\n", " items\n"));
         }
-        details.append("\n").append(I18nUtils.getText(project, "此操作不可撤销！", "This operation cannot be undone!"));
+        details.append("\n").append(I18nUtils.getText(project, "Действие нельзя отменить!", "This operation cannot be undone!"));
         
         int result = Messages.showYesNoDialog(
             project,
             I18nUtils.getText(project, 
-                "确定要清空当前项目的所有路径匹配映射吗？\n\n" + details.toString(),
+                "Удалить все сопоставления по пути в текущем проекте?\n\n" + details.toString(),
                 "Are you sure you want to clear all path matching mappings in the current project?\n\n" + details.toString()),
-            I18nUtils.getText(project, "确认清空所有映射", "Confirm Clear All Mappings"),
-            I18nUtils.getText(project, "清空", "Clear"),
-            I18nUtils.getText(project, "取消", "Cancel"),
+            I18nUtils.getText(project, "Подтверждение очистки сопоставлений", "Confirm Clear All Mappings"),
+            I18nUtils.getText(project, "Очистить", "Clear"),
+            I18nUtils.getText(project, "Отмена", "Cancel"),
             Messages.getWarningIcon()
         );
         
         if (result == Messages.YES) {
-            // 清空文件匹配映射
+            // Очищаем сопоставления по файлам
             for (String pattern : fileMatchAnnotations.keySet()) {
                 annotationService.setFileMatchAnnotation(pattern, "");
             }
             
-            // 清空包匹配映射
+            // Очищаем сопоставления по пакетам
             for (String pattern : packageMatchAnnotations.keySet()) {
                 annotationService.setPackageMatchAnnotation(pattern, "");
             }
             
-            // 调用刷新机制，确保JSON文件和UI同步更新
+            // Обновляем, чтобы JSON-файл и интерфейс совпадали
             try {
                 java.lang.reflect.Method refreshMethod = annotationService.getClass().getDeclaredMethod("refreshAfterSave");
                 refreshMethod.setAccessible(true);
                 refreshMethod.invoke(annotationService);
             } catch (Exception ex) {
-                // 如果反射调用失败，回退到基本的项目视图刷新
+                // Если вызов через рефлексию не удался — простое обновление дерева проекта
                 com.intellij.ide.projectView.ProjectView.getInstance(project).refresh();
             }
         }
@@ -96,7 +96,7 @@ public class ClearAllMappingsAction extends AnAction {
                 
                 e.getPresentation().setEnabledAndVisible(true);
                 
-                // 根据当前语言动态显示菜单文本
+                // Текст пункта меню зависит от текущего языка
                 String currentLanguage = annotationService.getLanguage();
                 if ("en".equals(currentLanguage)) {
                     e.getPresentation().setText("Clear All Mappings");
@@ -106,11 +106,11 @@ public class ClearAllMappingsAction extends AnAction {
                         e.getPresentation().setDescription("Clear all path matching mappings in current project");
                     }
                 } else {
-                    e.getPresentation().setText("清空所有映射");
+                    e.getPresentation().setText("Очистить все сопоставления");
                     if (!hasMappings) {
-                        e.getPresentation().setDescription("当前项目没有任何路径匹配映射可清空");
+                        e.getPresentation().setDescription("В проекте нет сопоставлений по пути для очистки");
                     } else {
-                        e.getPresentation().setDescription("清空当前项目的所有路径匹配映射");
+                        e.getPresentation().setDescription("Удалить все сопоставления по пути в текущем проекте");
                     }
                 }
             } else {

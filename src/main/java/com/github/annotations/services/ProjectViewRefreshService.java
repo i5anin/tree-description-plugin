@@ -6,8 +6,8 @@ import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * 项目树刷新服务
- * 负责强制刷新项目视图和节点装饰
+ * Сервис обновления дерева проекта
+ * Принудительно обновляет дерево проекта и оформление узлов
  */
 public class ProjectViewRefreshService {
     
@@ -18,35 +18,35 @@ public class ProjectViewRefreshService {
     }
     
     /**
-     * 强制刷新项目视图
+     * Принудительно обновляет дерево проекта
      */
     public void refreshProjectView() {
         try {
             ProjectView projectView = ProjectView.getInstance(project);
             if (projectView != null) {
-                // 使用正确的API强制刷新整个项目视图
+                // Принудительно обновляем всё дерево проекта штатным API
                 ApplicationManager.getApplication().invokeLater(() -> {
                     try {
                         projectView.refresh();
-                        // 避免使用 getCurrentProjectViewPane() 因为它在某些IDE版本中可能不可用
-                        projectView.refresh(); // 再次刷新确保更新
+                        // getCurrentProjectViewPane() не используем: в некоторых версиях IDE его нет
+                        projectView.refresh(); // повторное обновление для надёжности
                         
                         com.intellij.openapi.diagnostic.Logger.getInstance(ProjectViewRefreshService.class)
-                            .info("项目视图已强制刷新");
+                            .info("Дерево проекта принудительно обновлено");
                     } catch (Exception e) {
                         com.intellij.openapi.diagnostic.Logger.getInstance(ProjectViewRefreshService.class)
-                            .warn("强制刷新项目树失败: " + e.getMessage());
+                            .warn("Не удалось принудительно обновить дерево проекта: " + e.getMessage());
                     }
                 });
             }
         } catch (Exception e) {
             com.intellij.openapi.diagnostic.Logger.getInstance(ProjectViewRefreshService.class)
-                .warn("刷新项目视图失败: " + e.getMessage());
+                .warn("Не удалось обновить дерево проекта: " + e.getMessage());
         }
     }
     
     /**
-     * 强制重新装饰所有节点
+     * Принудительно перерисовывает оформление всех узлов
      */
     public void forceNodeRedecoration() {
         try {
@@ -54,17 +54,17 @@ public class ProjectViewRefreshService {
                 try {
                     ProjectView projectView = ProjectView.getInstance(project);
                     if (projectView != null) {
-                        // 强制刷新项目视图以重新装饰节点
+                        // Обновляем дерево проекта, чтобы узлы оформились заново
                         projectView.refresh();
                     }
                 } catch (Exception e) {
                     com.intellij.openapi.diagnostic.Logger.getInstance(ProjectViewRefreshService.class)
-                        .warn("强制重新装饰节点失败: " + e.getMessage());
+                        .warn("Не удалось перерисовать оформление узлов: " + e.getMessage());
                 }
             });
         } catch (Exception e) {
             com.intellij.openapi.diagnostic.Logger.getInstance(ProjectViewRefreshService.class)
-                .warn("强制重新装饰节点失败: " + e.getMessage());
+                .warn("Не удалось перерисовать оформление узлов: " + e.getMessage());
         }
     }
 }

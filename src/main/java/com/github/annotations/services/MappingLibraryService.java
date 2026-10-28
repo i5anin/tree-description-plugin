@@ -15,8 +15,8 @@ import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 /**
- * 应用级别的映射库管理服务
- * 负责管理预置的框架映射库
+ * Сервис библиотек сопоставлений уровня приложения
+ * Управляет встроенными библиотеками сопоставлений для фреймворков
  */
 @Service
 public final class MappingLibraryService {
@@ -28,11 +28,11 @@ public final class MappingLibraryService {
     private boolean initialized = false;
     
     /**
-     * 获取应用级别的服务实例
+     * Возвращает экземпляр сервиса уровня приложения
      */
     public static MappingLibraryService getInstance() {
         MappingLibraryService service = ApplicationManager.getApplication().getService(MappingLibraryService.class);
-        // 确保在第一次获取服务时就初始化
+        // Инициализируем при первом получении сервиса
         if (!service.initialized) {
             service.initializeDefaultLibraries();
         }
@@ -40,11 +40,11 @@ public final class MappingLibraryService {
     }
     
     /**
-     * 检查内置映射库是否启用
-     * 从项目级别的 AnnotationService 获取状态
+     * Включена ли встроенная библиотека сопоставлений
+     * Состояние берётся из AnnotationService проекта
      */
     public boolean isBuiltinMappingsEnabled() {
-        // 尝试从当前项目获取状态，如果没有项目则返回默认值 true
+        // Берём состояние из текущего проекта; если проекта нет — по умолчанию true
         try {
             com.intellij.openapi.project.Project[] openProjects = com.intellij.openapi.project.ProjectManager.getInstance().getOpenProjects();
             if (openProjects.length > 0) {
@@ -53,14 +53,14 @@ public final class MappingLibraryService {
                 return annotationService.isBuiltinMappingsEnabled();
             }
         } catch (Exception e) {
-            // 如果获取失败，返回默认值
+            // Не удалось получить — значение по умолчанию
         }
-        return true; // 默认启用
+        return true; // по умолчанию включена
     }
     
     /**
-     * 设置内置映射库开关状态
-     * 通过项目级别的 AnnotationService 设置状态
+     * Включает или выключает встроенную библиотеку сопоставлений
+     * Состояние задаётся через AnnotationService проекта
      */
     public void setBuiltinMappingsEnabled(boolean enabled) {
         try {
@@ -70,7 +70,7 @@ public final class MappingLibraryService {
                     com.github.annotations.services.AnnotationService.getInstance(openProjects[0]);
                 annotationService.setBuiltinMappingsEnabled(enabled);
                 
-                // 根据新状态更新内置映射库
+                // Обновляем встроенную библиотеку под новое состояние
                 if (!enabled) {
                     clearBuiltinLibraries();
                 } else if (initialized) {
@@ -78,13 +78,13 @@ public final class MappingLibraryService {
                 }
             }
         } catch (Exception e) {
-            // 如果设置失败，记录错误
-            LOG.error("设置内置映射库开关状态失败", e);
+            // Не удалось задать — записываем ошибку
+            LOG.error("Не удалось переключить встроенную библиотеку сопоставлений", e);
         }
     }
     
     /**
-     * 确保服务已初始化（性能优化：减少检查开销）
+     * Гарантирует, что сервис инициализирован (проверка дешёвая)
      */
     private void ensureInitialized() {
         if (!initialized) {
@@ -93,7 +93,7 @@ public final class MappingLibraryService {
     }
     
     /**
-     * 初始化预置映射库
+     * Инициализирует встроенные библиотеки сопоставлений
      */
     public void initializeDefaultLibraries() {
         if (initialized) {
@@ -111,12 +111,12 @@ public final class MappingLibraryService {
             loadBuiltinLibrary("mybatis", "/.td-maps/mybatis-common.json");
             initialized = true;
         } catch (Exception e) {
-            LOG.error("初始化预置映射库失败", e);
+            LOG.error("Не удалось инициализировать встроенные библиотеки сопоставлений", e);
         }
     }
     
     /**
-     * 清空内置映射库
+     * Очищает встроенную библиотеку сопоставлений
      */
     private void clearBuiltinLibraries() {
         libraries.remove("spring-boot");
@@ -125,7 +125,7 @@ public final class MappingLibraryService {
     }
     
     /**
-     * 重新加载内置映射库
+     * Перезагружает встроенную библиотеку сопоставлений
      */
     private void reloadBuiltinLibraries() {
         if (!isBuiltinMappingsEnabled()) {
@@ -137,12 +137,12 @@ public final class MappingLibraryService {
             loadBuiltinLibrary("apache", "/.td-maps/apache-commons.json");
             loadBuiltinLibrary("mybatis", "/.td-maps/mybatis-common.json");
         } catch (Exception e) {
-            LOG.error("重新加载内置映射库失败", e);
+            LOG.error("Не удалось перезагрузить встроенную библиотеку сопоставлений", e);
         }
     }
     
     /**
-     * 加载内置映射库
+     * Загружает встроенную библиотеку сопоставлений
      */
     private void loadBuiltinLibrary(@NotNull String name, @NotNull String resourcePath) {
         try (InputStream inputStream = getClass().getResourceAsStream(resourcePath)) {
@@ -158,12 +158,12 @@ public final class MappingLibraryService {
             }
             
         } catch (IOException | JsonSyntaxException e) {
-            LOG.error("加载映射库失败: " + resourcePath, e);
+            LOG.error("Не удалось загрузить библиотеку сопоставлений: " + resourcePath, e);
         }
     }
     
     /**
-     * 获取所有可用的映射库
+     * Возвращает все доступные библиотеки сопоставлений
      */
     @NotNull
     public Collection<MappingLibrary> getAllLibraries() {
@@ -174,7 +174,7 @@ public final class MappingLibraryService {
     }
     
     /**
-     * 根据名称获取映射库
+     * Возвращает библиотеку сопоставлений по имени
      */
     @Nullable
     public MappingLibrary getLibrary(@NotNull String name) {
@@ -185,8 +185,8 @@ public final class MappingLibraryService {
     }
     
     /**
-     * 搜索包名映射
-     * 性能优化：确保初始化 + 快速失败
+     * Ищет сопоставление по имени пакета
+     * Производительность: гарантированная инициализация и ранний выход
      */
     @Nullable
     public String searchPackageMapping(@NotNull String packageName) {
@@ -205,8 +205,8 @@ public final class MappingLibraryService {
     }
     
     /**
-     * 搜索文件名映射
-     * 性能优化：确保初始化 + 快速失败
+     * Ищет сопоставление по имени файла
+     * Производительность: гарантированная инициализация и ранний выход
      */
     @Nullable
     public String searchFileMapping(@NotNull String fileName) {
@@ -225,8 +225,8 @@ public final class MappingLibraryService {
     }
     
     /**
-     * 搜索通用模式映射
-     * 性能优化：减少字符串操作 + 快速失败
+     * Ищет сопоставление по общему шаблону
+     * Производительность: меньше операций со строками и ранний выход
      */
     @Nullable
     public String searchPatternMapping(@NotNull String pattern) {
@@ -235,7 +235,7 @@ public final class MappingLibraryService {
         for (MappingLibrary library : libraries.values()) {
             if (library.mappings != null && library.mappings.packageMatch != null) {
                 for (Map.Entry<String, String> entry : library.mappings.packageMatch.entrySet()) {
-                    // 使用精确匹配逻辑，与用户映射保持一致
+                    // Точное сопоставление, как у пользовательских сопоставлений
                     if (matchesPackagePattern(pattern, entry.getKey())) {
                         return entry.getValue();
                     }
@@ -247,8 +247,8 @@ public final class MappingLibraryService {
     }
     
     /**
-     * 搜索文件匹配模式映射
-     * 性能优化：减少字符串操作 + 快速失败
+     * Ищет сопоставление по шаблону файла
+     * Производительность: меньше операций со строками и ранний выход
      */
     @Nullable
     public String searchFileMatchMapping(@NotNull String fileName) {
@@ -257,7 +257,7 @@ public final class MappingLibraryService {
         for (MappingLibrary library : libraries.values()) {
             if (library.mappings != null && library.mappings.fileMatch != null) {
                 for (Map.Entry<String, String> entry : library.mappings.fileMatch.entrySet()) {
-                    // 使用精确匹配逻辑，与用户映射保持一致
+                    // Точное сопоставление, как у пользовательских сопоставлений
                     if (matchesFilePattern(fileName, entry.getKey())) {
                         return entry.getValue();
                     }
@@ -269,31 +269,31 @@ public final class MappingLibraryService {
     }
     
     /**
-     * 智能搜索映射
-     * 按优先级搜索：精确包名 -> 精确文件名 -> 模式匹配
+     * Умный поиск сопоставления
+     * Порядок: точное имя пакета -> точное имя файла -> шаблон
      */
     @Nullable
     public String smartSearch(@NotNull String name) {
-        // 1. 精确包名匹配
+        // 1. Точное имя пакета
         String packageMapping = searchPackageMapping(name);
         if (packageMapping != null) {
             return packageMapping;
         }
         
-        // 2. 精确文件名匹配
+        // 2. Точное имя файла
         String fileMapping = searchFileMapping(name);
         if (fileMapping != null) {
             return fileMapping;
         }
         
-        // 3. 模式匹配
+        // 3. Шаблон
         return searchPatternMapping(name);
     }
     
     /**
-     * 获取所有映射的合并结果 - 用于搜索功能
-     * 返回 文件路径 -> 中文说明 的映射
-     * 注意：不包含 packageMatch，因为它们只是包名匹配模式，不是实际文件
+     * Все сопоставления одним словарём — для поиска
+     * Возвращает словарь «путь файла -> описание»
+     * packageMatch не входит: это шаблоны имён пакетов, а не реальные файлы
      */
     @NotNull
     public Map<String, String> getAllMappings() {
@@ -305,18 +305,18 @@ public final class MappingLibraryService {
         
         for (MappingLibrary library : libraries.values()) {
             if (library.mappings != null) {
-                // 添加包映射
+                // Сопоставления пакетов
                 if (library.mappings.packages != null) {
                     allMappings.putAll(library.mappings.packages);
                 }
                 
-                // 添加文件映射
+                // Сопоставления файлов
                 if (library.mappings.files != null) {
                     allMappings.putAll(library.mappings.files);
                 }
                 
-                // 不添加 packageMatch，因为它们只是包名匹配模式
-                // 例如：controller -> "控制器层" 只用于包名显示，不用于搜索
+                // packageMatch не добавляем: это лишь шаблоны имён пакетов
+                // Например, controller -> "Слой контроллеров" нужен только для показа у пакета, не для поиска
             }
         }
         
@@ -324,8 +324,8 @@ public final class MappingLibraryService {
     }
     
     /**
-     * 获取所有包匹配模式映射 - 仅用于包名显示
-     * 返回 模式 -> 中文说明 的映射
+     * Все шаблоны пакетов — только для показа у имён пакетов
+     * Возвращает словарь «шаблон -> описание»
      */
     @NotNull
     public Map<String, String> getAllPackageMatchPatterns() {
@@ -345,8 +345,8 @@ public final class MappingLibraryService {
     }
     
     /**
-     * 获取所有文件匹配模式映射 - 仅用于文件名显示
-     * 返回 模式 -> 中文说明 的映射
+     * Все шаблоны файлов — только для показа у имён файлов
+     * Возвращает словарь «шаблон -> описание»
      */
     @NotNull
     public Map<String, String> getAllFileMatchPatterns() {
@@ -366,14 +366,14 @@ public final class MappingLibraryService {
     }
     
     /**
-     * 从JSON字符串加载自定义映射库
+     * Загружает пользовательскую библиотеку сопоставлений из JSON-строки
      */
     public boolean loadCustomLibrary(@NotNull String name, @NotNull String jsonContent) {
         try {
-            // 尝试解析为映射库格式
+            // Пробуем разобрать как библиотеку сопоставлений
             MappingLibrary library = gson.fromJson(jsonContent, MappingLibrary.class);
             if (library != null) {
-                // 检查映射库内容是否有效
+                // Есть ли в библиотеке полезное содержимое
                 boolean hasContent = false;
                 
                 if (library.mappings != null) {
@@ -383,37 +383,37 @@ public final class MappingLibraryService {
                     
                     hasContent = (packageCount + fileCount + patternCount) > 0;
                     
-                    LOG.info("导入映射库: " + (library.name != null ? library.name : name));
-                    LOG.info("- 包映射: " + packageCount + " 条");
-                    LOG.info("- 文件映射: " + fileCount + " 条");
-                    LOG.info("- 通用模式: " + patternCount + " 条");
+                    LOG.info("Импорт библиотеки сопоставлений: " + (library.name != null ? library.name : name));
+                    LOG.info("- сопоставлений пакетов: " + packageCount);
+                    LOG.info("- сопоставлений файлов: " + fileCount);
+                    LOG.info("- общих шаблонов: " + patternCount);
                 }
                 
                 if (!hasContent) {
-                    LOG.warn("警告: 导入的映射库没有有效内容");
+                    LOG.warn("Внимание: в импортированной библиотеке сопоставлений нет полезного содержимого");
                     return false;
                 }
                 
-                // 如果没有设置名称，使用提供的名称
+                // Если имя не задано — берём переданное
                 if (library.name == null || library.name.isEmpty()) {
                     library.name = name;
                 }
                 
-                // 保存到映射库集合
+                // Сохраняем в набор библиотек
                 libraries.put(name, library);
-                LOG.info("成功加载自定义映射库: " + library.name);
+                LOG.info("Пользовательская библиотека сопоставлений загружена: " + library.name);
                 return true;
             } else {
-                LOG.warn("错误: 解析的映射库对象为null");
+                LOG.warn("Ошибка: после разбора библиотека сопоставлений равна null");
             }
         } catch (JsonSyntaxException e) {
-            LOG.error("解析自定义映射库失败", e);
+            LOG.error("Не удалось разобрать пользовательскую библиотеку сопоставлений", e);
         }
         return false;
     }
     
     /**
-     * 映射库数据结构
+     * Структура библиотеки сопоставлений
      */
     public static class MappingLibrary {
         public String name;
@@ -425,73 +425,73 @@ public final class MappingLibraryService {
         public String lastUpdated;
         
         public static class Mappings {
-            public Map<String, String> packages;      // 包名映射：org.springframework.boot -> "Spring Boot框架"
-            public Map<String, String> files;         // 文件名映射：pom.xml -> "Maven项目配置文件"
-            public Map<String, String> packageMatch; // 包名模式映射：controller -> "控制器层"（仅用于包名显示，不用于搜索）
-            public Map<String, String> fileMatch;    // 文件名模式映射：Service -> "业务逻辑层"（仅用于文件名显示，不用于搜索）
+            public Map<String, String> packages;      // сопоставления пакетов: org.springframework.boot -> "Фреймворк Spring Boot"
+            public Map<String, String> files;         // сопоставления файлов: pom.xml -> "Файл настроек проекта Maven"
+            public Map<String, String> packageMatch; // шаблоны пакетов: controller -> "Слой контроллеров" (только для показа у пакетов, не для поиска)
+            public Map<String, String> fileMatch;    // шаблоны файлов: Service -> "Слой бизнес-логики" (только для показа у файлов, не для поиска)
         }
     }
     
     /**
-     * 检查文件名是否匹配给定的模式
-     * @param fileName 文件名
-     * @param pattern 匹配模式
-     * @return 是否匹配
+     * Подходит ли имя файла под шаблон
+     * @param fileName имя файла
+     * @param pattern шаблон
+     * @return true, если подходит
      */
     private boolean matchesFilePattern(@NotNull String fileName, @NotNull String pattern) {
         try {
-            // 1. 尝试正则表达式匹配
+            // 1. Пробуем как регулярное выражение
             if (pattern.contains(".*") || pattern.contains("\\") || pattern.contains("$") || pattern.contains("^")) {
                 return fileName.matches(pattern);
             }
             
-            // 2. 完全匹配 - 文件名必须完全相等
+            // 2. Полное совпадение — имя файла должно совпасть целиком
             return fileName.equalsIgnoreCase(pattern);
             
         } catch (Exception e) {
-            // 如果出错，降级为简单包含匹配
+            // При ошибке — упрощённая проверка на вхождение
             return fileName.toLowerCase().contains(pattern.toLowerCase());
         }
     }
     
     /**
-     * 检查包路径是否匹配给定的模式
-     * @param packagePath 包路径（可能使用 / 或 . 作为分隔符）
-     * @param pattern 匹配模式
-     * @return 是否匹配
+     * Подходит ли путь пакета под шаблон
+     * @param packagePath путь пакета (разделитель / или .)
+     * @param pattern шаблон
+     * @return true, если подходит
      */
     private boolean matchesPackagePattern(@NotNull String packagePath, @NotNull String pattern) {
         try {
-            // 1. 尝试正则表达式匹配
+            // 1. Пробуем как регулярное выражение
             if (pattern.contains(".*") || pattern.contains("\\") || pattern.contains("$") || pattern.contains("^")) {
-                // 将包路径标准化（支持 / 和 . 分隔符）
+                // Приводим путь пакета к одному виду (разделители / и .)
                 String normalizedPath = packagePath.replace("/", ".");
                 return normalizedPath.matches(pattern);
             }
             
-            // 2. 完整路径段匹配 - 确保pattern作为完整的路径段出现
+            // 2. Совпадение целыми сегментами пути: шаблон должен встречаться как полные сегменты
             String normalizedPath = packagePath.replace("/", ".").toLowerCase();
             String lowerPattern = pattern.toLowerCase();
             
-            // 将路径分割为段
+            // Делим путь на сегменты
             String[] pathSegments = normalizedPath.split("\\.");
             String[] patternSegments = lowerPattern.split("\\.");
             
-            // 检查是否有连续的路径段匹配pattern的所有段
+            // Ищем подряд идущие сегменты пути, совпадающие со всеми сегментами шаблона
             if (patternSegments.length == 1) {
-                // 单段匹配：只匹配路径的最后一段（目录名）
+                // Шаблон из одного сегмента: сравниваем только с последним сегментом пути (имя папки)
                 if (pathSegments.length > 0) {
                     String lastSegment = pathSegments[pathSegments.length - 1];
                     return lastSegment.equals(lowerPattern);
                 }
                 return false;
             } else {
-                // 多段匹配：后缀精准匹配（支持前缀路径，但后缀必须完全匹配）
+                // Шаблон из нескольких сегментов: точное совпадение окончания (впереди путь может быть любым)
                 if (patternSegments.length > pathSegments.length) {
-                    return false; // 模式段数不能超过路径段数
+                    return false; // в шаблоне не может быть больше сегментов, чем в пути
                 }
                 
-                // 检查后缀是否完全匹配
+                // Совпадает ли окончание целиком
                 int pathStart = pathSegments.length - patternSegments.length;
                 for (int i = 0; i < patternSegments.length; i++) {
                     if (!pathSegments[pathStart + i].equals(patternSegments[i])) {
@@ -502,7 +502,7 @@ public final class MappingLibraryService {
             }
             
         } catch (Exception e) {
-            // 如果出错，降级为简单匹配
+            // При ошибке — упрощённая проверка
             String normalizedPath = packagePath.replace("/", ".").toLowerCase();
             return normalizedPath.contains(pattern.toLowerCase());
         }

@@ -14,8 +14,8 @@ import javax.swing.*;
 import java.awt.*;
 
 /**
- * 添加备注对话框 - 支持颜色选择
- * 类似 macOS 访达风格的标签颜色
+ * Диалог добавления заметки с выбором цвета
+ * Цвета меток как в Finder на macOS
  */
 public class AddAnnotationDialog extends DialogWrapper {
     
@@ -26,18 +26,18 @@ public class AddAnnotationDialog extends DialogWrapper {
     
     private JBTextField annotationField;
     private ButtonGroup colorButtonGroup;
-    private String selectedColor = "#BBBBBB"; // 默认灰色
+    private String selectedColor = "#BBBBBB"; // по умолчанию серый
     
-    // macOS 访达风格的颜色
+    // Цвета в стиле Finder на macOS
     private static final ColorOption[] COLOR_OPTIONS = {
-        new ColorOption("灰色", "#BBBBBB", true),   // 默认
-        new ColorOption("蓝色", "#265DE8", false),
-        new ColorOption("绿色", "#51B433", false),
-        new ColorOption("红色", "#E93225", false),
-        new ColorOption("橙色", "#DE6F36", false),
-        new ColorOption("黄色", "#E6B33C", false),
-        new ColorOption("紫色", "#AD8EF8", false),
-        new ColorOption("粉色", "#E95573", false)
+        new ColorOption("Серый", "#BBBBBB", true),   // по умолчанию
+        new ColorOption("Синий", "#265DE8", false),
+        new ColorOption("Зелёный", "#51B433", false),
+        new ColorOption("Красный", "#E93225", false),
+        new ColorOption("Оранжевый", "#DE6F36", false),
+        new ColorOption("Жёлтый", "#E6B33C", false),
+        new ColorOption("Фиолетовый", "#AD8EF8", false),
+        new ColorOption("Розовый", "#E95573", false)
     };
     
     public AddAnnotationDialog(@NotNull Project project, @NotNull String fileName, @Nullable String initialAnnotation, @Nullable String initialColor) {
@@ -47,7 +47,7 @@ public class AddAnnotationDialog extends DialogWrapper {
         this.initialAnnotation = initialAnnotation != null ? initialAnnotation : "";
         this.initialColor = initialColor != null && isValidColor(initialColor) ? initialColor : "#BBBBBB";
         
-        setTitle(I18nUtils.getText(project, "添加备注", "Add Annotation"));
+        setTitle(I18nUtils.getText(project, "Добавить заметку", "Add Annotation"));
         setSize(480, 180);
         init();
     }
@@ -57,11 +57,11 @@ public class AddAnnotationDialog extends DialogWrapper {
         JPanel mainPanel = new JPanel(new BorderLayout());
         mainPanel.setBorder(JBUI.Borders.empty(15));
         
-        // 创建表单
+        // Форма
         JPanel formPanel = FormBuilder.createFormBuilder()
-                .addLabeledComponent(I18nUtils.getText(project, "为 \"" + fileName + "\" 添加备注:", "Add annotation for \"" + fileName + "\":"), createAnnotationField())
+                .addLabeledComponent(I18nUtils.getText(project, "Заметка для \"" + fileName + "\":", "Add annotation for \"" + fileName + "\":"), createAnnotationField())
                 .addVerticalGap(15)
-                .addLabeledComponent(I18nUtils.getText(project, "备注颜色:", "Annotation Color:"), createColorPanel())
+                .addLabeledComponent(I18nUtils.getText(project, "Цвет заметки:", "Annotation Color:"), createColorPanel())
                 .addComponentFillVertically(new JPanel(), 0)
                 .getPanel();
         
@@ -72,9 +72,9 @@ public class AddAnnotationDialog extends DialogWrapper {
     private JComponent createAnnotationField() {
         annotationField = new JBTextField(initialAnnotation);
         annotationField.setPreferredSize(new Dimension(350, 30));
-        annotationField.setToolTipText(I18nUtils.getText(project, "输入备注内容", "Enter annotation content"));
+        annotationField.setToolTipText(I18nUtils.getText(project, "Введите текст заметки", "Enter annotation content"));
         
-        // 添加文档监听器用于验证
+        // Слушатель документа для проверки ввода
         annotationField.getDocument().addDocumentListener(new javax.swing.event.DocumentListener() {
             @Override
             public void insertUpdate(javax.swing.event.DocumentEvent e) { validateInput(); }
@@ -90,7 +90,7 @@ public class AddAnnotationDialog extends DialogWrapper {
     private JComponent createColorPanel() {
         JPanel colorPanel = new JPanel();
         
-        // 使用GridLayout精确控制间距，1行8列
+        // GridLayout для точных отступов: 1 строка, 8 столбцов
         colorPanel.setLayout(new GridLayout(1, 8, 6, 0));
         colorPanel.setBorder(JBUI.Borders.empty(5));
         
@@ -101,7 +101,7 @@ public class AddAnnotationDialog extends DialogWrapper {
             colorButtonGroup.add(colorButton);
             colorPanel.add(colorButton);
             
-            // 根据初始颜色或默认颜色设置选中状态
+            // Отмечаем начальный цвет или цвет по умолчанию
             if ((initialColor != null && colorOption.colorCode.equals(initialColor)) || 
                 (initialColor == null && colorOption.isDefault)) {
                 colorButton.setSelected(true);
@@ -117,31 +117,31 @@ public class AddAnnotationDialog extends DialogWrapper {
         button.setPreferredSize(new Dimension(40, 28));
         button.setToolTipText(getColorName(colorOption.name) + " " + colorOption.colorCode);
         
-        // 自定义渲染颜色圆点
+        // Сами рисуем цветной кружок
         button.setUI(new javax.swing.plaf.basic.BasicRadioButtonUI() {
             @Override
             public void paint(Graphics g, JComponent c) {
                 Graphics2D g2 = (Graphics2D) g.create();
                 g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
                 
-                // 计算圆点位置
+                // Положение кружка
                 int centerX = c.getWidth() / 2;
                 int centerY = c.getHeight() / 2;
                 int radius = 8;
                 
-                // 绘制外圈（选中状态）
+                // Внешнее кольцо (выбранное состояние)
                 if (button.isSelected()) {
-                    g2.setColor(new Color(37, 93, 232)); // 蓝色外圈
+                    g2.setColor(new Color(37, 93, 232)); // синее внешнее кольцо
                     g2.setStroke(new BasicStroke(2));
                     g2.drawOval(centerX - radius - 2, centerY - radius - 2, (radius + 2) * 2, (radius + 2) * 2);
                 }
                 
-                // 绘制颜色圆点
+                // Цветной кружок
                 Color color = Color.decode(colorOption.colorCode);
                 g2.setColor(color);
                 g2.fillOval(centerX - radius, centerY - radius, radius * 2, radius * 2);
                 
-                // 绘制边框
+                // Обводка
                 g2.setColor(new Color(200, 200, 200));
                 g2.setStroke(new BasicStroke(1));
                 g2.drawOval(centerX - radius, centerY - radius, radius * 2, radius * 2);
@@ -150,7 +150,7 @@ public class AddAnnotationDialog extends DialogWrapper {
             }
         });
         
-        // 添加选择监听器
+        // Слушатель выбора
         button.addActionListener(new java.awt.event.ActionListener() {
             @Override
             public void actionPerformed(java.awt.event.ActionEvent e) {
@@ -175,35 +175,35 @@ public class AddAnnotationDialog extends DialogWrapper {
         String annotation = annotationField.getText().trim();
         
         if (annotation.isEmpty()) {
-            return new ValidationInfo(I18nUtils.getText(project, "请输入备注内容", "Please enter annotation content"), annotationField);
+            return new ValidationInfo(I18nUtils.getText(project, "Введите текст заметки", "Please enter annotation content"), annotationField);
         }
         
         return null;
     }
     
     /**
-     * 获取输入的备注
+     * Возвращает введённую заметку
      */
     public String getAnnotation() {
         return annotationField.getText().trim();
     }
     
     /**
-     * 获取选择的颜色
+     * Возвращает выбранный цвет
      */
     public String getSelectedColor() {
         return selectedColor;
     }
     
     /**
-     * 是否使用默认颜色（灰色）
+     * Выбран ли цвет по умолчанию (серый)
      */
     public boolean isDefaultColor() {
         return "#BBBBBB".equals(selectedColor);
     }
     
     /**
-     * 验证颜色是否在预定义颜色列表中
+     * Есть ли цвет в списке предопределённых
      */
     private boolean isValidColor(String colorCode) {
         if (colorCode == null) return false;
@@ -216,24 +216,24 @@ public class AddAnnotationDialog extends DialogWrapper {
     }
     
     /**
-     * 获取颜色的国际化名称
+     * Название цвета на текущем языке
      */
     private String getColorName(String chineseName) {
         switch (chineseName) {
-            case "灰色": return I18nUtils.getText(project, "灰色", "Gray");
-            case "蓝色": return I18nUtils.getText(project, "蓝色", "Blue");
-            case "绿色": return I18nUtils.getText(project, "绿色", "Green");
-            case "红色": return I18nUtils.getText(project, "红色", "Red");
-            case "橙色": return I18nUtils.getText(project, "橙色", "Orange");
-            case "黄色": return I18nUtils.getText(project, "黄色", "Yellow");
-            case "紫色": return I18nUtils.getText(project, "紫色", "Purple");
-            case "粉色": return I18nUtils.getText(project, "粉色", "Pink");
+            case "Серый": return I18nUtils.getText(project, "Серый", "Gray");
+            case "Синий": return I18nUtils.getText(project, "Синий", "Blue");
+            case "Зелёный": return I18nUtils.getText(project, "Зелёный", "Green");
+            case "Красный": return I18nUtils.getText(project, "Красный", "Red");
+            case "Оранжевый": return I18nUtils.getText(project, "Оранжевый", "Orange");
+            case "Жёлтый": return I18nUtils.getText(project, "Жёлтый", "Yellow");
+            case "Фиолетовый": return I18nUtils.getText(project, "Фиолетовый", "Purple");
+            case "Розовый": return I18nUtils.getText(project, "Розовый", "Pink");
             default: return chineseName;
         }
     }
     
     /**
-     * 颜色选项类
+     * Вариант цвета
      */
     private static class ColorOption {
         final String name;

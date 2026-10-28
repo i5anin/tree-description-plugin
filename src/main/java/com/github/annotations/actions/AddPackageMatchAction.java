@@ -18,7 +18,7 @@ public class AddPackageMatchAction extends AnAction {
             return;
         }
         
-        // 获取当前选中的文件夹名称，并添加*.前缀用于界面显示
+        // Имя выбранной папки с префиксом *. для показа в интерфейсе
         String currentFolderName = null;
         VirtualFile selectedFile = e.getData(CommonDataKeys.VIRTUAL_FILE);
         if (selectedFile != null && selectedFile.isDirectory()) {
@@ -40,7 +40,7 @@ public class AddPackageMatchAction extends AnAction {
         
         e.getPresentation().setEnabledAndVisible(true);
         
-        // 根据当前语言动态显示菜单文本
+        // Текст пункта меню зависит от текущего языка
         try {
             com.github.annotations.services.AnnotationService service = com.github.annotations.services.AnnotationService.getInstance(project);
             if (service != null) {
@@ -49,16 +49,16 @@ public class AddPackageMatchAction extends AnAction {
                     e.getPresentation().setText("Add Package Match");
                     e.getPresentation().setDescription("Add package path matching pattern for automatic annotations");
                 } else {
-                    e.getPresentation().setText("添加路径匹配映射");
-                    e.getPresentation().setDescription("添加路径匹配模式，为匹配的路径自动添加备注");
+                    e.getPresentation().setText("Добавить сопоставление по пути");
+                    e.getPresentation().setDescription("Добавить шаблон пути: подходящие пути получат заметку автоматически");
                 }
             } else {
-                e.getPresentation().setText("添加路径匹配映射");
-                e.getPresentation().setDescription("添加路径匹配模式，为匹配的路径自动添加备注");
+                e.getPresentation().setText("Добавить сопоставление по пути");
+                e.getPresentation().setDescription("Добавить шаблон пути: подходящие пути получат заметку автоматически");
             }
         } catch (Exception ex) {
-            e.getPresentation().setText("添加路径匹配映射");
-            e.getPresentation().setDescription("添加路径匹配模式，为匹配的路径自动添加备注");
+            e.getPresentation().setText("Добавить сопоставление по пути");
+            e.getPresentation().setDescription("Добавить шаблон пути: подходящие пути получат заметку автоматически");
         }
     }
 }

@@ -9,8 +9,8 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 /**
- * 本地映射文件的数据结构
- * 与内置映射库格式完全统一
+ * Структура локального файла сопоставлений
+ * Формат полностью совпадает со встроенной библиотекой сопоставлений
  */
 public class LocalMappingFile {
     
@@ -111,7 +111,7 @@ public class LocalMappingFile {
     }
     
     /**
-     * 映射内容结构，与内置映射库完全一致
+     * Содержимое сопоставлений, как во встроенной библиотеке
      */
     public static class Mappings {
         @SerializedName("files")

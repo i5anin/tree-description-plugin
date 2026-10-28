@@ -12,7 +12,7 @@ import javax.swing.*;
 import java.awt.*;
 
 /**
- * 插件设置页面配置
+ * Страница настроек плагина
  */
 public class AnnotationConfigurable implements Configurable {
     
@@ -28,13 +28,13 @@ public class AnnotationConfigurable implements Configurable {
     @Nls
     @Override
     public String getDisplayName() {
-        return "路径备注";
+        return "Заметки путей";
     }
     
     @Nullable
     @Override
     public JComponent createComponent() {
-        // 创建语言选择下拉框
+        // Выпадающий список языка
         languageComboBox = new JComboBox<>(LanguageManager.Language.values());
         languageComboBox.setRenderer(new DefaultListCellRenderer() {
             @Override
@@ -47,15 +47,15 @@ public class AnnotationConfigurable implements Configurable {
             }
         });
         
-        // 创建项目树备注开关
-        projectTreeAnnotationsCheckBox = new JCheckBox("启用项目树备注");
+        // Переключатель заметок в дереве проекта
+        projectTreeAnnotationsCheckBox = new JCheckBox("Показывать заметки в дереве проекта");
         
-        // 创建内置映射库开关
-        builtinMappingsCheckBox = new JCheckBox("启用内置映射库");
+        // Переключатель встроенной библиотеки сопоставлений
+        builtinMappingsCheckBox = new JCheckBox("Включить встроенную библиотеку сопоставлений");
         
-        // 使用FormBuilder创建布局
+        // Разметка через FormBuilder
         JPanel panel = FormBuilder.createFormBuilder()
-            .addLabeledComponent("语言:", languageComboBox)
+            .addLabeledComponent("Язык:", languageComboBox)
             .addComponent(projectTreeAnnotationsCheckBox)
             .addComponent(builtinMappingsCheckBox)
             .addComponentFillVertically(new JPanel(), 0)
@@ -63,7 +63,7 @@ public class AnnotationConfigurable implements Configurable {
         
         panel.setPreferredSize(new Dimension(500, 200));
         
-        // 设置当前值
+        // Текущие значения
         reset();
         
         return panel;
@@ -74,7 +74,7 @@ public class AnnotationConfigurable implements Configurable {
         AnnotationService service = AnnotationService.getInstance(project);
         if (service == null) return;
         
-        // 设置语言选择
+        // Выбор языка
         String currentLanguage = service.getLanguage();
         for (LanguageManager.Language lang : LanguageManager.Language.values()) {
             if (lang.getCode().equals(currentLanguage)) {
@@ -83,10 +83,10 @@ public class AnnotationConfigurable implements Configurable {
             }
         }
         
-        // 设置项目树备注开关
+        // Переключатель заметок в дереве проекта
         projectTreeAnnotationsCheckBox.setSelected(service.isProjectTreeAnnotationsEnabled());
         
-        // 设置内置映射库开关
+        // Переключатель встроенной библиотеки сопоставлений
         builtinMappingsCheckBox.setSelected(service.isBuiltinMappingsEnabled());
     }
     
@@ -95,18 +95,18 @@ public class AnnotationConfigurable implements Configurable {
         AnnotationService service = AnnotationService.getInstance(project);
         if (service == null) return false;
         
-        // 检查语言设置是否改变
+        // Изменился ли язык
         LanguageManager.Language selectedLanguage = (LanguageManager.Language) languageComboBox.getSelectedItem();
         if (selectedLanguage != null && !selectedLanguage.getCode().equals(service.getLanguage())) {
             return true;
         }
         
-        // 检查项目树备注开关是否改变
+        // Изменился ли переключатель заметок в дереве
         if (projectTreeAnnotationsCheckBox.isSelected() != service.isProjectTreeAnnotationsEnabled()) {
             return true;
         }
         
-        // 检查内置映射库开关是否改变
+        // Изменился ли переключатель встроенной библиотеки
         if (builtinMappingsCheckBox.isSelected() != service.isBuiltinMappingsEnabled()) {
             return true;
         }
@@ -119,16 +119,16 @@ public class AnnotationConfigurable implements Configurable {
         AnnotationService service = AnnotationService.getInstance(project);
         if (service == null) return;
         
-        // 应用语言设置
+        // Применяем язык
         LanguageManager.Language selectedLanguage = (LanguageManager.Language) languageComboBox.getSelectedItem();
         if (selectedLanguage != null) {
             service.setLanguage(selectedLanguage.getCode());
         }
         
-        // 应用项目树备注开关
+        // Применяем переключатель заметок в дереве
         service.setProjectTreeAnnotationsEnabled(projectTreeAnnotationsCheckBox.isSelected());
         
-        // 应用内置映射库开关
+        // Применяем переключатель встроенной библиотеки
         service.setBuiltinMappingsEnabled(builtinMappingsCheckBox.isSelected());
     }
 }

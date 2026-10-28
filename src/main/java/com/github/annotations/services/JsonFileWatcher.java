@@ -12,8 +12,8 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 
 /**
- * JSON文件监听器
- * 监听IDEA内部对.td-maps目录下所有JSON文件的修改，实时更新备注显示
+ * Слушатель JSON-файлов
+ * Следит за правками всех JSON-файлов в папке .td-maps внутри IDE и сразу обновляет заметки
  */
 public class JsonFileWatcher implements BulkFileListener {
     
@@ -26,22 +26,22 @@ public class JsonFileWatcher implements BulkFileListener {
     
     public JsonFileWatcher(Project project, AnnotationService annotationService) {
         this.project = project;
-        this.annotationService = annotationService; // 直接使用传入的引用，避免循环依赖
+        this.annotationService = annotationService; // берём переданную ссылку, чтобы не было циклической зависимости
         this.refreshService = new ProjectViewRefreshService(project);
         
-        // 注册到消息总线
+        // Подключаемся к шине сообщений
         this.messageBusConnection = project.getMessageBus().connect();
         this.messageBusConnection.subscribe(VirtualFileManager.VFS_CHANGES, this);
         
 
         
-        // 记录初始化成功
+        // Записываем успешную инициализацию
         com.intellij.openapi.diagnostic.Logger.getInstance(JsonFileWatcher.class)
-            .info("JsonFileWatcher初始化成功，已注册到VFS系统");
+            .info("JsonFileWatcher инициализирован и подключён к VFS");
     }
     
     /**
-     * 清理资源
+     * Освобождает ресурсы
      */
     public void dispose() {
         if (messageBusConnection != null) {
@@ -52,7 +52,7 @@ public class JsonFileWatcher implements BulkFileListener {
     }
     
     /**
-     * 检查是否是.td-maps目录下的JSON文件
+     * JSON-файл ли это в папке .td-maps
      */
     private boolean isOurJsonFile(@NotNull VirtualFile file) {
         if (file == null || !file.exists() || !file.getName().endsWith(".json")) {
@@ -69,18 +69,18 @@ public class JsonFileWatcher implements BulkFileListener {
     }
     
     /**
-     * 处理文件变化事件（包括创建、修改、删除）
+     * Обрабатывает изменения файлов: создание, правку, удаление
      */
     @Override
     public void after(@NotNull List<? extends VFileEvent> events) {
         for (VFileEvent event : events) {
             VirtualFile file = event.getFile();
             if (isOurJsonFile(file)) {
-                // 记录文件变化类型
+                // Записываем тип изменения
                 com.intellij.openapi.diagnostic.Logger.getInstance(JsonFileWatcher.class)
-                    .info("BulkFileListener检测到文件变化: " + event.getClass().getSimpleName() + " - " + file.getPath());
+                    .info("BulkFileListener: файл изменён: " + event.getClass().getSimpleName() + " - " + file.getPath());
                 
-                // 延迟处理，避免频繁刷新
+                // Обработка с задержкой, чтобы не обновлять слишком часто
                 com.intellij.openapi.application.ApplicationManager.getApplication()
                     .invokeLater(() -> handleJsonFileChanged(file));
             }
@@ -88,18 +88,18 @@ public class JsonFileWatcher implements BulkFileListener {
     }
     
     /**
-     * 处理JSON文件变化
+     * Обрабатывает изменение JSON-файла
      */
     private void handleJsonFileChanged(@NotNull VirtualFile file) {
         try {
-            // 重新加载备注数据
+            // Перечитываем заметки
             annotationService.reloadAnnotations();
             
-            // 刷新项目视图
+            // Обновляем дерево проекта
             refreshService.refreshProjectView();
         } catch (Exception e) {
             com.intellij.openapi.diagnostic.Logger.getInstance(JsonFileWatcher.class)
-                .warn("处理JSON文件变化失败: " + e.getMessage());
+                .warn("Не удалось обработать изменение JSON-файла: " + e.getMessage());
         }
     }
     

@@ -31,18 +31,18 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * 提取注释为备注Action
- * 从Java文件的Javadoc注释中提取第一行作为备注
+ * Действие «Извлечь комментарий в заметку»
+ * Берёт первую строку Javadoc-комментария Java-файла и делает её заметкой
  */
 public class ExtractCommentAnnotationAction extends AnAction {
     
-    // 预编译的正则表达式，用于匹配Javadoc注释的第一行
+    // Заранее скомпилированное выражение для первой строки Javadoc
     private static final Pattern JAVADOC_PATTERN = Pattern.compile(
         "/\\*\\*\\s*\\n\\s*\\*\\s*(.+?)\\s*(?:\\n|\\*/)", 
         Pattern.DOTALL | Pattern.MULTILINE
     );
     
-    // 通知组ID - 延迟获取NotificationGroup实例
+    // ID группы уведомлений; сам NotificationGroup получаем лениво
     private static final String NOTIFICATION_GROUP_ID = "Extract.Comment.Notification";
     
     public ExtractCommentAnnotationAction() {
@@ -57,12 +57,12 @@ public class ExtractCommentAnnotationAction extends AnAction {
             return;
         }
         
-        // 始终显示菜单项，不进行任何可见性控制
+        // Пункт меню показывается всегда
         e.getPresentation().setVisible(true);
         e.getPresentation().setEnabled(true);
         
-        // 更新Action的显示文本
-        String text = I18nUtils.getText(project, "提取注释为备注", "Extract Comment as Remark");
+        // Обновляем текст действия
+        String text = I18nUtils.getText(project, "Извлечь комментарий в заметку", "Extract Comment as Remark");
         e.getPresentation().setText(text);
     }
     
@@ -75,12 +75,12 @@ public class ExtractCommentAnnotationAction extends AnAction {
             return;
         }
         
-        // 在后台线程中提取注释内容
+        // Извлекаем комментарии в фоновом потоке
         ApplicationManager.getApplication().executeOnPooledThread(() -> {
             List<VirtualFile> javaFiles = collectJavaFiles(files);
             Map<VirtualFile, String> extractedComments = new HashMap<>();
             
-            // 提取所有文件的注释
+            // Комментарии всех файлов
             for (VirtualFile file : javaFiles) {
                 String comment = extractCommentFromFile(project, file);
                 if (comment != null && !comment.trim().isEmpty()) {
@@ -88,21 +88,21 @@ public class ExtractCommentAnnotationAction extends AnAction {
                 }
             }
             
-            // 在EDT线程中显示对话框
+            // Диалог показываем в потоке EDT
             ApplicationManager.getApplication().invokeLater(() -> {
                 if (extractedComments.isEmpty()) {
                     showNotification(project, 0, javaFiles.size());
                     return;
                 }
                 
-                // 显示提取注释对话框
+                // Диалог извлечения комментариев
                 List<String> commentList = new ArrayList<>(extractedComments.values());
                 ExtractCommentDialog dialog = new ExtractCommentDialog(project, commentList, extractedComments.size());
                 
                 if (dialog.showAndGet()) {
                     String selectedColor = dialog.getSelectedColor();
                     
-                    // 保存所有提取的注释
+                    // Сохраняем все извлечённые комментарии
                     AnnotationService service = AnnotationService.getInstance(project);
                     if (service != null) {
                         int successCount = 0;
@@ -117,7 +117,7 @@ public class ExtractCommentAnnotationAction extends AnAction {
                             }
                         }
                         
-                        // 显示成功通知
+                        // Уведомление об успехе
                         showNotification(project, successCount, javaFiles.size());
                     }
                 }
@@ -126,7 +126,7 @@ public class ExtractCommentAnnotationAction extends AnAction {
     }
     
     /**
-     * 检查文件数组中是否包含Java文件
+     * Есть ли среди файлов Java-файлы
      */
     private boolean hasJavaFiles(VirtualFile[] files) {
         for (VirtualFile file : files) {
@@ -138,7 +138,7 @@ public class ExtractCommentAnnotationAction extends AnAction {
     }
     
     /**
-     * 收集所有Java文件（包括目录中的Java文件）
+     * Собирает все Java-файлы, включая файлы внутри папок
      */
     private List<VirtualFile> collectJavaFiles(VirtualFile[] files) {
         List<VirtualFile> javaFiles = new ArrayList<>();
@@ -149,7 +149,7 @@ public class ExtractCommentAnnotationAction extends AnAction {
     }
     
     /**
-     * 递归收集Java文件
+     * Рекурсивно собирает Java-файлы
      */
     private void collectJavaFilesRecursively(VirtualFile file, List<VirtualFile> javaFiles) {
         if (file.isDirectory()) {
@@ -165,24 +165,24 @@ public class ExtractCommentAnnotationAction extends AnAction {
     }
     
     /**
-     * 检查是否为Java文件或包含Java文件的目录
+     * Java-файл или папка, где они могут быть
      */
     private boolean isJavaFileOrDirectory(VirtualFile file) {
         if (file.isDirectory()) {
-            return true; // 目录可能包含Java文件
+            return true; // в папке могут быть Java-файлы
         }
         return "java".equalsIgnoreCase(file.getExtension());
     }
     
     /**
-     * 从单个文件中提取注释
+     * Извлекает комментарий из одного файла
      */
     private String extractCommentFromFile(Project project, VirtualFile file) {
         try {
-            // 获取文件编码
+            // Кодировка файла
             Charset charset = file.getCharset();
             
-            // 读取文件前100行
+            // Читаем первые 100 строк файла
             StringBuilder content = new StringBuilder();
             try (BufferedReader reader = new BufferedReader(
                 new InputStreamReader(file.getInputStream(), charset))) {
@@ -195,23 +195,23 @@ public class ExtractCommentAnnotationAction extends AnAction {
                 }
             }
             
-            // 提取Javadoc注释的第一行
+            // Первая строка Javadoc-комментария
             return extractFirstJavadocLine(content.toString());
         } catch (IOException e) {
-            // 忽略IO异常，继续处理其他文件
+            // Ошибку ввода-вывода пропускаем, идём к следующему файлу
         }
         return null;
     }
     
     /**
-     * 提取Javadoc注释的第一行
+     * Извлекает первую строку Javadoc-комментария
      */
     private String extractFirstJavadocLine(String content) {
         Matcher matcher = JAVADOC_PATTERN.matcher(content);
         if (matcher.find()) {
             String firstLine = matcher.group(1);
             if (firstLine != null) {
-                // 清理注释内容，移除多余的空格和特殊字符
+                // Чистим текст: лишние пробелы и служебные символы
                 return firstLine.replaceAll("\s+", " ").trim();
             }
         }
@@ -219,7 +219,7 @@ public class ExtractCommentAnnotationAction extends AnAction {
     }
     
     /**
-     * 显示处理结果通知
+     * Показывает уведомление с итогом
      */
     private void showNotification(Project project, int successCount, int totalCount) {
         String message;
@@ -227,27 +227,27 @@ public class ExtractCommentAnnotationAction extends AnAction {
         
         if (successCount == 0) {
             message = I18nUtils.getText(project, 
-                "未找到可提取的注释", 
+                "Комментарии для извлечения не найдены",
                 "No extractable comments found");
             type = NotificationType.WARNING;
         } else if (successCount == totalCount) {
             message = I18nUtils.getText(project, 
-                String.format("成功提取 %d 个文件的注释为备注", successCount),
+                String.format("Комментарии %d файлов извлечены в заметки", successCount),
                 String.format("Successfully extracted comments from %d files as remarks", successCount));
             type = NotificationType.INFORMATION;
         } else {
             message = I18nUtils.getText(project, 
-                String.format("成功提取 %d/%d 个文件的注释为备注", successCount, totalCount),
+                String.format("Комментарии %d из %d файлов извлечены в заметки", successCount, totalCount),
                 String.format("Successfully extracted comments from %d/%d files as remarks", successCount, totalCount));
             type = NotificationType.INFORMATION;
         }
         
-        // 按需获取NotificationGroup实例，避免在类初始化时依赖服务
+        // NotificationGroup получаем по требованию, чтобы не зависеть от сервисов при загрузке класса
         NotificationGroup notificationGroup = NotificationGroupManager.getInstance()
             .getNotificationGroup(NOTIFICATION_GROUP_ID);
         
         Notification notification = notificationGroup.createNotification(
-            I18nUtils.getText(project, "提取注释为备注", "Extract Comment as Remark"),
+            I18nUtils.getText(project, "Извлечь комментарий в заметку", "Extract Comment as Remark"),
             message,
             type
         );
@@ -255,7 +255,7 @@ public class ExtractCommentAnnotationAction extends AnAction {
     }
     
     /**
-     * 获取相对于项目根目录的路径
+     * Путь относительно корня проекта
      */
     @Nullable
     private String getRelativePath(@NotNull Project project, @NotNull VirtualFile file) {

@@ -23,7 +23,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * 监听JSON编辑器的变化，实现实时备注更新
+ * Следит за изменениями в редакторе JSON и сразу обновляет заметки
  */
 public class JsonEditorListener {
     private static final Logger LOG = Logger.getInstance(JsonEditorListener.class);
@@ -45,20 +45,20 @@ public class JsonEditorListener {
         this.documentListeners = new HashMap<>();
         this.gson = new Gson();
         
-        // 防抖定时器，50ms后执行更新（从200ms调整为50ms实现更实时响应）
+        // Таймер против дребезга: обновление через 50 мс (было 200 мс, уменьшено ради отзывчивости)
         this.debounceTimer = new Timer(50, e -> {
             performUpdate();
         });
         this.debounceTimer.setRepeats(false);
         
-        // 检查当前已打开的JSON文件
+        // Проверяем уже открытые JSON-файлы
         checkAndRegisterOpenFiles();
         
-        LOG.info("JsonEditorListener初始化成功");
+        LOG.info("JsonEditorListener инициализирован");
     }
     
     /**
-     * 检查并注册当前已打开的JSON文件
+     * Находит и регистрирует уже открытые JSON-файлы
      */
     private void checkAndRegisterOpenFiles() {
         FileEditor[] editors = FileEditorManager.getInstance(project).getAllEditors();
@@ -73,7 +73,7 @@ public class JsonEditorListener {
     }
     
     /**
-     * 公共方法：注册新打开的文件（供外部调用）
+     * Регистрирует новый открытый файл (вызывается извне)
      */
     public void registerFileIfNeeded(VirtualFile file) {
         if (isOurJsonFile(file) && !documentListeners.containsKey(file)) {
@@ -82,7 +82,7 @@ public class JsonEditorListener {
     }
     
     /**
-     * 公共方法：移除已关闭的文件（供外部调用）
+     * Снимает закрытый файл (вызывается извне)
      */
     public void unregisterFileIfNeeded(VirtualFile file) {
         if (isOurJsonFile(file) && documentListeners.containsKey(file)) {
@@ -91,11 +91,11 @@ public class JsonEditorListener {
     }
     
     /**
-     * 为指定的JSON文件注册文档监听器
+     * Регистрирует слушатель документа для JSON-файла
      */
     private void registerDocumentListener(VirtualFile file) {
         if (documentListeners.containsKey(file)) {
-            return; // 已经注册过了
+            return; // уже зарегистрирован
         }
         
         FileEditor[] editors = FileEditorManager.getInstance(project).getEditors(file);
@@ -115,14 +115,14 @@ public class JsonEditorListener {
                 document.addDocumentListener(listener);
                 documentListeners.put(file, listener);
                 
-                LOG.info("为文件 " + file.getName() + " 注册了文档监听器");
+                LOG.info("Слушатель документа зарегистрирован для файла " + file.getName());
                 break;
             }
         }
     }
     
     /**
-     * 移除指定文件的文档监听器
+     * Снимает слушатель документа с файла
      */
     private void removeDocumentListener(VirtualFile file) {
         DocumentListener listener = documentListeners.remove(file);
@@ -136,12 +136,12 @@ public class JsonEditorListener {
                     break;
                 }
             }
-            LOG.info("为文件 " + file.getName() + " 移除了文档监听器");
+            LOG.info("Слушатель документа снят с файла " + file.getName());
         }
     }
     
     /**
-     * 检查是否是.td-maps目录下的JSON文件
+     * JSON-файл ли это в папке .td-maps
      */
     private boolean isOurJsonFile(VirtualFile file) {
         if (file == null || !file.getName().endsWith(".json")) {
@@ -158,47 +158,47 @@ public class JsonEditorListener {
     }
     
     /**
-     * 安排更新（防抖机制）
+     * Планирует обновление (с защитой от дребезга)
      */
     private void scheduleUpdate() {
         debounceTimer.restart();
     }
     
     /**
-     * 执行实际的更新操作
+     * Выполняет само обновление
      */
     private void performUpdate() {
         try {
-            // 获取当前打开的JSON文件
+            // Текущий открытый JSON-файл
             VirtualFile jsonFile = findOpenJsonFile();
             if (jsonFile == null) {
                 return;
             }
             
-            // 获取文件内容
+            // Содержимое файла
             String jsonContent = getFileContent(jsonFile);
             if (jsonContent == null || jsonContent.trim().isEmpty()) {
                 return;
             }
             
-            // 解析JSON内容
+            // Разбираем JSON
             LocalMappingFile mapping = parseJsonContent(jsonContent);
             if (mapping != null) {
-                // 更新内存中的备注数据
+                // Обновляем заметки в памяти
                 updateAnnotationsFromMapping(mapping);
                 
-                // 刷新项目树显示
+                // Обновляем дерево проекта
                 refreshService.refreshProjectView();
                 
-                LOG.info("实时更新备注完成");
+                LOG.info("Заметки обновлены на лету");
             }
         } catch (Exception e) {
-            LOG.warn("实时更新备注时发生错误: " + e.getMessage());
+            LOG.warn("Ошибка при обновлении заметок на лету: " + e.getMessage());
         }
     }
     
     /**
-     * 查找当前打开的JSON文件
+     * Ищет открытый JSON-файл
      */
     private VirtualFile findOpenJsonFile() {
         FileEditor[] editors = FileEditorManager.getInstance(project).getAllEditors();
@@ -214,7 +214,7 @@ public class JsonEditorListener {
     }
     
     /**
-     * 获取文件内容
+     * Читает содержимое файла
      */
     private String getFileContent(VirtualFile file) {
         try {
@@ -223,26 +223,26 @@ public class JsonEditorListener {
                 return document.getText();
             }
         } catch (Exception e) {
-            LOG.warn("获取文件内容失败: " + e.getMessage());
+            LOG.warn("Не удалось прочитать файл: " + e.getMessage());
         }
         return null;
     }
     
     /**
-     * 解析JSON内容
+     * Разбирает JSON
      */
     private LocalMappingFile parseJsonContent(String jsonContent) {
         try {
             return gson.fromJson(jsonContent, LocalMappingFile.class);
         } catch (JsonSyntaxException e) {
-            // JSON格式错误时不更新，保持原有备注
-            // JSON格式错误，跳过实时更新
+            // При ошибке формата JSON ничего не обновляем, старые заметки остаются
+            // Ошибка формата JSON — обновление на лету пропускаем
             return null;
         }
     }
     
     /**
-     * 从映射文件更新备注数据
+     * Обновляет заметки из файла сопоставлений
      */
     private void updateAnnotationsFromMapping(LocalMappingFile mapping) {
         if (mapping == null || mapping.getMappings() == null) {
@@ -251,17 +251,17 @@ public class JsonEditorListener {
         
         LocalMappingFile.Mappings mappings = mapping.getMappings();
         
-        // 更新文件备注
+        // Заметки файлов
         if (mappings.getFiles() != null) {
             annotationService.setAnnotations(mappings.getFiles());
         }
         
-        // 更新包备注
+        // Заметки пакетов
         if (mappings.getPackages() != null) {
             annotationService.setPackageAnnotations(mappings.getPackages());
         }
         
-        // 更新文件文本颜色和包文本颜色需要逐个设置
+        // Цвета текста файлов и пакетов задаются по одному
         if (mappings.getFilesTextColor() != null) {
             for (Map.Entry<String, String> entry : mappings.getFilesTextColor().entrySet()) {
                 annotationService.setFileTextColor(entry.getKey(), entry.getValue());
@@ -276,10 +276,10 @@ public class JsonEditorListener {
     }
     
     /**
-     * 释放资源
+     * Освобождает ресурсы
      */
     public void dispose() {
-        // 移除所有文档监听器
+        // Снимаем все слушатели документов
         for (Map.Entry<VirtualFile, DocumentListener> entry : documentListeners.entrySet()) {
             VirtualFile file = entry.getKey();
             DocumentListener listener = entry.getValue();
@@ -287,16 +287,16 @@ public class JsonEditorListener {
         }
         documentListeners.clear();
         
-        // 停止定时器
+        // Останавливаем таймер
         if (debounceTimer != null) {
             debounceTimer.stop();
         }
         
-        // 断开消息总线连接
+        // Отключаемся от шины сообщений
         if (messageBusConnection != null) {
             messageBusConnection.disconnect();
         }
         
-        LOG.info("JsonEditorListener已释放资源");
+        LOG.info("JsonEditorListener освободил ресурсы");
     }
 }

@@ -19,15 +19,15 @@ import java.util.List;
 
 
 /**
- * GitHub开源映射库服务
- * 负责从GitHub获取开源映射库信息
+ * Сервис открытой библиотеки сопоставлений на GitHub
+ * Загружает сведения об открытой библиотеке сопоставлений с GitHub
  */
 public class GitHubMappingService {
     
     private static final Logger LOG = Logger.getInstance(GitHubMappingService.class);
     private static final String GITHUB_API_BASE = "https://api.github.com";
     
-    // 多镜像源配置
+    // Список зеркал
     private static final String[] MIRROR_URLS = {
         "https://raw.githubusercontent.com",
         "https://hub.gitmirror.com/raw.githubusercontent.com",
@@ -41,10 +41,10 @@ public class GitHubMappingService {
     private final Gson gson = new Gson();
     
     /**
-     * 创建带代理的HTTP连接
+     * Создаёт HTTP-соединение с учётом прокси
      */
     private HttpURLConnection createProxyConnection(URL url) throws IOException {
-        // 根据URL协议选择合适的代理设置
+        // Прокси выбираем по протоколу URL
         String protocol = url.getProtocol().toLowerCase();
         String proxyHost = null;
         String proxyPort = null;
@@ -61,21 +61,21 @@ public class GitHubMappingService {
             try {
                 Proxy proxy = new Proxy(Proxy.Type.HTTP, 
                     new InetSocketAddress(proxyHost, Integer.parseInt(proxyPort)));
-                LOG.info("使用" + protocol.toUpperCase() + "代理连接: " + proxyHost + ":" + proxyPort + " for " + url);
+                LOG.info("Подключение через прокси " + protocol.toUpperCase() + ": " + proxyHost + ":" + proxyPort + " for " + url);
                 return (HttpURLConnection) url.openConnection(proxy);
             } catch (NumberFormatException e) {
-                LOG.warn("代理端口配置错误，使用直连: " + e.getMessage());
+                LOG.warn("Неверный порт прокси, подключаемся напрямую: " + e.getMessage());
             }
         } else {
-            LOG.info("未找到" + protocol.toUpperCase() + "代理配置，使用直连: " + url);
+            LOG.info("Прокси " + protocol.toUpperCase() + " не настроен, подключаемся напрямую: " + url);
         }
         
-        // 如果没有代理配置或配置错误，使用直连
+        // Прокси не настроен или настроен неверно — подключаемся напрямую
         return (HttpURLConnection) url.openConnection();
     }
     
     /**
-     * 获取仓库内容列表
+     * Возвращает список содержимого репозитория
      */
     @NotNull
     public List<GitHubMappingFile> getRepositoryContents() {
@@ -83,7 +83,7 @@ public class GitHubMappingService {
         
         try {
             String apiUrl = String.format("%s/repos/%s/%s/contents", GITHUB_API_BASE, REPO_OWNER, REPO_NAME);
-            LOG.info("正在请求GitHub API: " + apiUrl);
+            LOG.info("Запрос к GitHub API: " + apiUrl);
             
     
             testSimpleConnection(apiUrl);
@@ -91,43 +91,43 @@ public class GitHubMappingService {
             String response = makeGitHubApiRequest(apiUrl);
             
             if (response != null) {
-                LOG.info("GitHub API响应长度: " + response.length());
+                LOG.info("Длина ответа GitHub API: " + response.length());
                 JsonArray contents = gson.fromJson(response, JsonArray.class);
-                LOG.info("解析到 " + contents.size() + " 个项目");
+                LOG.info("Разобрано элементов: " + contents.size());
                 
                 for (JsonElement element : contents) {
                     JsonObject item = element.getAsJsonObject();
                     String path = item.get("path").getAsString();
                     String type = item.get("type").getAsString();
-                    LOG.info("处理项目: " + path + ", 类型: " + type);
+                    LOG.info("Элемент: " + path + ", тип: " + type);
                     
                     if ("file".equals(type) && path.endsWith(".json")) {
                         String displayName = getFileNameFromPath(path);
                         files.add(new GitHubMappingFile(path, displayName, false));
-                        LOG.info("添加JSON文件: " + path + " -> " + displayName);
+                        LOG.info("Добавлен JSON-файл: " + path + " -> " + displayName);
                     } else if ("dir".equals(type)) {
                         List<GitHubMappingFile> subFiles = getDirectoryContents(path);
                         files.addAll(subFiles);
-                        LOG.info("添加目录 " + path + " 中的 " + subFiles.size() + " 个文件");
+                        LOG.info("Из папки " + path + " добавлено файлов: " + subFiles.size());
                     }
                 }
-                LOG.info("最终找到 " + files.size() + " 个映射文件");
+                LOG.info("Найдено файлов сопоставлений: " + files.size());
             } else {
-                LOG.warn("GitHub API响应为空");
+                LOG.warn("Пустой ответ GitHub API");
             }
         } catch (IOException | JsonSyntaxException e) {
-            LOG.error("获取GitHub仓库内容失败", e);
+            LOG.error("Не удалось получить содержимое репозитория GitHub", e);
         }
         
         return files;
     }
     
     /**
-     * 简单的HTTP连接
+     * Простое HTTP-соединение
      */
     private void testSimpleConnection(String urlString) {
         try {
-            LOG.info("开始简单连接测试: " + urlString);
+            LOG.info("Проверка соединения: " + urlString);
             URL url = URI.create(urlString).toURL();
             
             HttpURLConnection directConnection = (HttpURLConnection) url.openConnection();
@@ -137,7 +137,7 @@ public class GitHubMappingService {
             directConnection.setRequestProperty("User-Agent", "Mozilla/5.0");
             
             int responseCode = directConnection.getResponseCode();
-            LOG.info("直连测试 - 响应码: " + responseCode);
+            LOG.info("Проверка прямого соединения — код ответа: " + responseCode);
             directConnection.disconnect();
             
             HttpURLConnection proxyConnection = createProxyConnection(url);
@@ -147,16 +147,16 @@ public class GitHubMappingService {
             proxyConnection.setRequestProperty("User-Agent", "Mozilla/5.0");
             
             int proxyResponseCode = proxyConnection.getResponseCode();
-            LOG.info("代理连接测试 - 响应码: " + proxyResponseCode);
+            LOG.info("Проверка соединения через прокси — код ответа: " + proxyResponseCode);
             proxyConnection.disconnect();
             
         } catch (Exception e) {
-            LOG.warn("连接测试失败: " + e.getMessage(), e);
+            LOG.warn("Проверка соединения не удалась: " + e.getMessage(), e);
         }
     }
     
     /**
-     * 获取目录内容
+     * Возвращает содержимое папки
      */
     @NotNull
     private List<GitHubMappingFile> getDirectoryContents(String dirPath) {
@@ -181,99 +181,99 @@ public class GitHubMappingService {
                 }
             }
         } catch (IOException | JsonSyntaxException e) {
-            LOG.error("获取GitHub目录内容失败: " + dirPath, e);
+            LOG.error("Не удалось получить содержимое папки на GitHub: " + dirPath, e);
         }
         
         return files;
     }
     
     /**
-     * 下载映射库文件内容 - 使用多镜像源轮询重试
+     * Скачивает файл библиотеки сопоставлений, перебирая зеркала
      */
     @Nullable
     public String downloadMappingFile(String filePath) {
         try {
             return downloadWithMultipleMirrors(filePath);
         } catch (IOException e) {
-            LOG.error("下载GitHub映射库文件失败: " + filePath, e);
+            LOG.error("Не удалось скачать файл библиотеки сопоставлений с GitHub: " + filePath, e);
             return null;
         }
     }
     
     /**
-     * 使用串行请求多镜像源下载文件
+     * Скачивает файл, обращаясь к зеркалам по очереди
      */
     @Nullable
     private String downloadWithMultipleMirrors(String filePath) throws IOException {
-        LOG.info("开始串行请求镜像源下载文件: " + filePath);
+        LOG.info("Скачивание файла через зеркала по очереди: " + filePath);
         
-        // 依次尝试每个镜像源
+        // Пробуем зеркала по очереди
         for (String mirrorUrl : MIRROR_URLS) {
             try {
                 String fullUrl = buildMirrorUrl(mirrorUrl, filePath);
-                LOG.info("尝试镜像源: " + mirrorUrl + ", URL: " + fullUrl);
+                LOG.info("Пробуем зеркало: " + mirrorUrl + ", URL: " + fullUrl);
                 
                 String content = makeRawContentRequest(fullUrl);
                 if (content != null) {
-                    LOG.info("镜像源" + mirrorUrl + "成功下载文件: " + filePath);
+                    LOG.info("Зеркало " + mirrorUrl + " отдало файл: " + filePath);
                     return content;
                 }
                 
             } catch (Exception e) {
-                LOG.warn("镜像源" + mirrorUrl + "请求失败: " + e.getMessage());
-                // 继续尝试下一个镜像源
+                LOG.warn("Зеркало " + mirrorUrl + " не ответило: " + e.getMessage());
+                // Переходим к следующему зеркалу
             }
         }
         
-        LOG.error("所有镜像源串行请求都失败，无法下载文件: " + filePath);
+        LOG.error("Ни одно зеркало не отдало файл: " + filePath);
         return null;
     }
     
     /**
-     * 解析映射库文件内容
+     * Разбирает содержимое файла библиотеки сопоставлений
      */
     @Nullable
     public GitHubMappingLibrary parseMappingFile(String jsonContent) {
         try {
             return gson.fromJson(jsonContent, GitHubMappingLibrary.class);
         } catch (Exception e) {
-            LOG.error("解析GitHub映射库文件失败", e);
+            LOG.error("Не удалось разобрать файл библиотеки сопоставлений с GitHub", e);
             return null;
         }
     }
     
     /**
-     * 发送GitHub API请求 - 优化版本
+     * Отправляет запрос к GitHub API
      */
     @Nullable
     private String makeGitHubApiRequest(String urlString) throws IOException {
-        LOG.info("发送GitHub API请求: " + urlString);
+        LOG.info("Запрос к GitHub API: " + urlString);
         
         URL url = URI.create(urlString).toURL();
         HttpURLConnection connection = createProxyConnection(url);
         
         try {
-            // 基本请求配置
+            // Основные параметры запроса
             connection.setRequestMethod("GET");
             
-            // 使用标准浏览器 User-Agent
+            // Обычный браузерный User-Agent
             connection.setRequestProperty("User-Agent", 
                 "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36");
             
-            // GitHub API 需要 JSON 格式响应
+            // GitHub API должен вернуть JSON
             connection.setRequestProperty("Accept", "application/json");
             
-            // 优化的超时时间
-            connection.setConnectTimeout(5000);  // 5秒连接超时
-            connection.setReadTimeout(15000);     // 15秒读取超时
+            // Тайм-ауты
+            connection.setConnectTimeout(5000);  // 5 с на подключение
+            connection.setReadTimeout(15000);     // 15 с на чтение
             
-            // 禁用缓存以获取最新内容
+            // Кэш отключён, чтобы получить свежие данные
             connection.setUseCaches(false);
             
-            LOG.info("尝试连接GitHub API...");
+            LOG.info("Подключение к GitHub API...");
             
             int responseCode = connection.getResponseCode();
-            LOG.info("GitHub API响应码: " + responseCode);
+            LOG.info("Код ответа GitHub API: " + responseCode);
             
             if (responseCode == HttpURLConnection.HTTP_OK) {
                 try (BufferedReader reader = new BufferedReader(
@@ -283,11 +283,11 @@ public class GitHubMappingService {
                     while ((line = reader.readLine()) != null) {
                         response.append(line);
                     }
-                    LOG.info("GitHub API请求成功，响应长度: " + response.length());
+                    LOG.info("Запрос к GitHub API выполнен, длина ответа: " + response.length());
                     return response.toString();
                 }
             } else if (responseCode == 403) {
-                // 处理GitHub API速率限制
+                // Ограничение частоты запросов GitHub API
                 try (BufferedReader reader = new BufferedReader(
                     new InputStreamReader(connection.getErrorStream(), StandardCharsets.UTF_8))) {
                     StringBuilder errorResponse = new StringBuilder();
@@ -297,23 +297,23 @@ public class GitHubMappingService {
                     }
                     String errorMsg = errorResponse.toString();
                     if (errorMsg.contains("rate limit exceeded")) {
-                        LOG.warn("GitHub API速率限制: " + errorMsg);
-                        throw new IOException("GitHub API速率限制已达到，请稍后再试或使用GitHub Token进行认证");
+                        LOG.warn("Превышен лимит запросов GitHub API: " + errorMsg);
+                        throw new IOException("Превышен лимит запросов GitHub API: повторите позже или авторизуйтесь токеном GitHub");
                     } else {
-                        LOG.warn("GitHub API访问被拒绝: " + errorMsg);
-                        throw new IOException("GitHub API访问被拒绝: " + responseCode);
+                        LOG.warn("GitHub API отказал в доступе: " + errorMsg);
+                        throw new IOException("GitHub API отказал в доступе: " + responseCode);
                     }
                 }
             } else {
-                LOG.warn("GitHub API请求失败，响应码: " + responseCode + ", URL: " + urlString);
-                throw new IOException("GitHub API请求失败，响应码: " + responseCode);
+                LOG.warn("Запрос к GitHub API завершён ошибкой, код ответа: " + responseCode + ", URL: " + urlString);
+                throw new IOException("Запрос к GitHub API завершён ошибкой, код ответа: " + responseCode);
             }
             
         } catch (java.net.SocketTimeoutException e) {
-            LOG.warn("GitHub API连接超时: " + e.getMessage());
+            LOG.warn("Тайм-аут подключения к GitHub API: " + e.getMessage());
             throw e;
         } catch (IOException e) {
-            LOG.warn("GitHub API网络错误: " + e.getMessage());
+            LOG.warn("Сетевая ошибка GitHub API: " + e.getMessage());
             throw e;
         } finally {
             connection.disconnect();
@@ -321,37 +321,37 @@ public class GitHubMappingService {
     }
     
     /**
-     * 发送Raw Content请求 - 优化版本
+     * Отправляет запрос за сырым содержимым файла (Raw Content)
      */
     @Nullable
     private String makeRawContentRequest(String urlString) throws IOException {
-        LOG.info("发送Raw Content请求: " + urlString);
+        LOG.info("Запрос Raw Content: " + urlString);
         
         URL url = URI.create(urlString).toURL();
         HttpURLConnection connection = createProxyConnection(url);
         
         try {
-            // 基本请求配置
+            // Основные параметры запроса
             connection.setRequestMethod("GET");
             
-            // 使用标准浏览器 User-Agent
+            // Обычный браузерный User-Agent
             connection.setRequestProperty("User-Agent", 
                 "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36");
             
-            // 简化的请求头，只保留必要的
+            // Только необходимые заголовки
             connection.setRequestProperty("Accept", "*/*");
             
-            // 调整超时时间以适应网络延迟
-            connection.setConnectTimeout(5000);   // 5秒连接超时
-            connection.setReadTimeout(15000);     // 15秒读取超时
+            // Тайм-ауты с запасом на сетевые задержки
+            connection.setConnectTimeout(5000);   // 5 с на подключение
+            connection.setReadTimeout(15000);     // 15 с на чтение
             
-            // 禁用缓存以获取最新内容
+            // Кэш отключён, чтобы получить свежие данные
             connection.setUseCaches(false);
             
-            LOG.info("尝试连接Raw Content...");
+            LOG.info("Подключение к Raw Content...");
             
             int responseCode = connection.getResponseCode();
-            LOG.info("Raw Content响应码: " + responseCode);
+            LOG.info("Код ответа Raw Content: " + responseCode);
             
             if (responseCode == HttpURLConnection.HTTP_OK) {
                 try (BufferedReader reader = new BufferedReader(
@@ -361,18 +361,18 @@ public class GitHubMappingService {
                     while ((line = reader.readLine()) != null) {
                         response.append(line);
                     }
-                    LOG.info("Raw Content请求成功，响应长度: " + response.length());
+                    LOG.info("Запрос Raw Content выполнен, длина ответа: " + response.length());
                     return response.toString();
                 }
             } else {
-                LOG.warn("Raw Content请求失败，响应码: " + responseCode + ", URL: " + urlString);
+                LOG.warn("Запрос Raw Content завершён ошибкой, код ответа: " + responseCode + ", URL: " + urlString);
             }
             
         } catch (java.net.SocketTimeoutException e) {
-            LOG.warn("Raw Content连接超时: " + e.getMessage());
+            LOG.warn("Тайм-аут подключения к Raw Content: " + e.getMessage());
             throw e;
         } catch (IOException e) {
-            LOG.warn("Raw Content网络错误: " + e.getMessage());
+            LOG.warn("Сетевая ошибка Raw Content: " + e.getMessage());
             throw e;
         } finally {
             connection.disconnect();
@@ -382,22 +382,22 @@ public class GitHubMappingService {
     }
     
     /**
-     * 构建镜像源URL
+     * Собирает URL зеркала
      */
     private String buildMirrorUrl(String mirrorUrl, String filePath) {
         if (mirrorUrl.contains("cdn.statically.io")) {
-            // cdn.statically.io 需要使用 /gh/ 前缀
+            // cdn.statically.io требует префикс /gh/
             return String.format("%s/gh/%s/%s/%s/%s", 
                 mirrorUrl, REPO_OWNER, REPO_NAME, BRANCH, filePath);
         } else {
-            // raw.githubusercontent.com 和 raw.githack.com 使用标准格式
+            // raw.githubusercontent.com и raw.githack.com — стандартный формат
             return String.format("%s/%s/%s/%s/%s", 
                 mirrorUrl, REPO_OWNER, REPO_NAME, BRANCH, filePath);
         }
     }
     
     /**
-     * 从完整路径中提取文件名
+     * Извлекает имя файла из полного пути
      */
     private String getFileNameFromPath(String path) {
         int lastSlashIndex = path.lastIndexOf('/');
@@ -408,7 +408,7 @@ public class GitHubMappingService {
     }
     
     /**
-     * GitHub映射库文件信息
+     * Сведения о файле библиотеки сопоставлений на GitHub
      */
     public static class GitHubMappingFile {
         public final String path;
@@ -428,7 +428,7 @@ public class GitHubMappingService {
     }
     
     /**
-     * GitHub映射库数据结构
+     * Структура данных библиотеки сопоставлений на GitHub
      */
     public static class GitHubMappingLibrary {
         public String name;
