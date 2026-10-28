@@ -3,6 +3,10 @@ package com.github.annotations.utils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.regex.Pattern;
+
 /**
  * Единые правила сопоставления шаблонов заметок с файлами и пакетами.
  *
@@ -13,6 +17,17 @@ import org.jetbrains.annotations.Nullable;
  * Шаблон считается регулярным выражением, если содержит ".*", "\", "$" или "^".
  */
 public final class PathPatterns {
+
+    /**
+     * Сколько обращений к символам допускается на одну проверку регулярным выражением.
+     * Обычному выражению на имени файла хватает тысяч; выражению с экспоненциальным
+     * перебором (например "^(.*a){12}$" из чужой библиотеки сопоставлений) — нет.
+     * Проверка идёт при отрисовке каждого узла дерева, зависание = зависание IDE.
+     */
+    private static final int REGEX_CHAR_ACCESS_BUDGET = 1_000_000;
+
+    /** Скомпилированные выражения: шаблонов немного, а вызовов — на каждый узел дерева. */
+    private static final Map<String, Pattern> COMPILED = new ConcurrentHashMap<>();
 
     private PathPatterns() {
     }
@@ -35,7 +50,7 @@ public final class PathPatterns {
     public static boolean matchesFile(@NotNull String fileName, @NotNull String pattern, @Nullable String relativePath) {
         try {
             if (isRegex(pattern)) {
-                return fileName.matches(pattern);
+                return regexMatches(fileName, pattern);
             }
             if (pattern.contains("/")) {
                 return matchesFileInPackage(fileName, pattern, relativePath);
@@ -60,7 +75,7 @@ public final class PathPatterns {
         String dottedPath = packagePath.replace("/", ".");
         try {
             if (isRegex(pattern)) {
-                return dottedPath.matches(pattern);
+                return regexMatches(dottedPath, pattern);
             }
             String[] pathSegments = dottedPath.toLowerCase().split("\\.");
             String[] patternSegments = pattern.toLowerCase().split("\\.");
@@ -96,5 +111,64 @@ public final class PathPatterns {
         int fileLastSlash = relativePath.lastIndexOf('/');
         String fileDir = fileLastSlash == -1 ? "" : relativePath.substring(0, fileLastSlash);
         return fileDir.endsWith(expectedPackagePath);
+    }
+
+    /**
+     * Проверяет текст регулярным выражением с ограничением работы.
+     *
+     * Некорректное выражение бросает PatternSyntaxException — его обрабатывает
+     * вызывающий метод (запасная проверка вхождения). Превышение бюджета
+     * означает «не подходит»: лучше не показать заметку, чем повесить IDE.
+     */
+    private static boolean regexMatches(@NotNull String text, @NotNull String regex) {
+        Pattern compiled = COMPILED.computeIfAbsent(regex, Pattern::compile);
+        try {
+            return compiled.matcher(new BudgetedText(text, new int[]{REGEX_CHAR_ACCESS_BUDGET})).matches();
+        } catch (BudgetExceeded e) {
+            return false;
+        }
+    }
+
+    /** Текст для Matcher, который считает обращения к символам и останавливает перебор по бюджету. */
+    private static final class BudgetedText implements CharSequence {
+        private final String text;
+        private final int[] remaining; // общий счётчик для text и всех subSequence
+
+        BudgetedText(String text, int[] remaining) {
+            this.text = text;
+            this.remaining = remaining;
+        }
+
+        @Override
+        public char charAt(int index) {
+            if (--remaining[0] < 0) {
+                throw BudgetExceeded.INSTANCE;
+            }
+            return text.charAt(index);
+        }
+
+        @Override
+        public int length() {
+            return text.length();
+        }
+
+        @Override
+        public CharSequence subSequence(int start, int end) {
+            return new BudgetedText(text.substring(start, end), remaining);
+        }
+
+        @Override
+        public String toString() {
+            return text;
+        }
+    }
+
+    /** Сигнал «бюджет исчерпан»; без стека — он не нужен и дорог. */
+    private static final class BudgetExceeded extends RuntimeException {
+        static final BudgetExceeded INSTANCE = new BudgetExceeded();
+
+        private BudgetExceeded() {
+            super(null, null, false, false);
+        }
     }
 }

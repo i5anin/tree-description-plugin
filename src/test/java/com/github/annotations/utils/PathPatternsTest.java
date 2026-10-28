@@ -39,6 +39,15 @@ public class PathPatternsTest {
         assertFalse(PathPatterns.matchesFile("abc", "a[b$", null));
     }
 
+    @Test(timeout = 2000)
+    public void catastrophicRegexFromSharedLibraryGivesUpInsteadOfFreezing() {
+        String evilPattern = "^(.*a){12}$";
+        String name = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa!";
+
+        assertFalse(PathPatterns.matchesFile(name, evilPattern, null));
+        assertFalse(PathPatterns.matchesPackage(name, evilPattern));
+    }
+
     // --- пакеты ---
 
     @Test
