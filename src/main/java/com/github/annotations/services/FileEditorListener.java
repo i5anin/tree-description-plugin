@@ -16,12 +16,12 @@ public class FileEditorListener {
     
     
     private final Project project;
-    private final RealTimeAnnotationService realTimeAnnotationService;
+    private final MappingsAutoSaver mappingsAutoSaver;
     private final MessageBusConnection messageBusConnection;
     
-    public FileEditorListener(Project project, RealTimeAnnotationService realTimeAnnotationService) {
+    public FileEditorListener(Project project, MappingsAutoSaver mappingsAutoSaver) {
         this.project = project;
-        this.realTimeAnnotationService = realTimeAnnotationService;
+        this.mappingsAutoSaver = mappingsAutoSaver;
         this.messageBusConnection = project.getMessageBus().connect();
         
         // Регистрируем слушатель редактора файлов
@@ -37,7 +37,7 @@ public class FileEditorListener {
             public void fileOpened(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
                 // При открытии файла проверяем, наш ли это JSON
                 if (isOurJsonFile(file)) {
-                    realTimeAnnotationService.registerDocumentListener(file);
+                    mappingsAutoSaver.registerDocumentListener(file);
                 }
             }
             
@@ -45,7 +45,7 @@ public class FileEditorListener {
             public void fileClosed(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
                 // При закрытии файла снимаем слушатель
                 if (isOurJsonFile(file)) {
-                    realTimeAnnotationService.unregisterDocumentListener(file);
+                    mappingsAutoSaver.unregisterDocumentListener(file);
                 }
             }
         });

@@ -7,6 +7,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.FieldNamingPolicy;
 import com.google.gson.JsonSyntaxException;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 
 import com.intellij.openapi.project.Project;
@@ -41,7 +42,7 @@ import java.util.stream.Stream;
  * Данные лежат в JSON-файлах папки .idea/tree-description (см. MappingsPaths)
  * Поддерживает несколько файлов сопоставлений, основной — local-description.json
  */
-public class AnnotationService {
+public class AnnotationService implements Disposable {
     
     private static final Logger LOG = Logger.getInstance(AnnotationService.class);
     private static final Gson gson = new GsonBuilder()
@@ -71,7 +72,7 @@ public class AnnotationService {
     private JsonFileWatcher jsonFileWatcher;
     
     // Сервис живого обновления заметок (на основе DocumentListener)
-    private RealTimeAnnotationService realTimeAnnotationService;
+    private MappingsAutoSaver mappingsAutoSaver;
     
     // Слушатель редактора файлов
     private FileEditorListener fileEditorListener;
@@ -85,21 +86,22 @@ public class AnnotationService {
         // setupJsonFileWatcher(); // сразу не инициализируем
         
         // Сервис живого обновления: следит за изменениями в обе стороны
-        setupRealTimeAnnotationService();
+        setupMappingsAutoSaver();
         
         // Слушатель запуска проекта (новый API)
         registerProjectListener();
     }
     
     /**
-     * Освобождает ресурсы
+     * Освобождает ресурсы; платформа вызывает при закрытии проекта (Disposable)
      */
+    @Override
     public void dispose() {
         if (jsonFileWatcher != null) {
             jsonFileWatcher.dispose();
         }
-        if (realTimeAnnotationService != null) {
-            realTimeAnnotationService.dispose();
+        if (mappingsAutoSaver != null) {
+            mappingsAutoSaver.dispose();
         }
         if (fileEditorListener != null) {
             fileEditorListener.dispose();
@@ -121,19 +123,18 @@ public class AnnotationService {
     }
     
     /**
-     * Создаёт сервис живого обновления заметок
+     * Создаёт автосохранение открытых рабочих JSON (см. MappingsAutoSaver)
      */
-    private void setupRealTimeAnnotationService() {
+    private void setupMappingsAutoSaver() {
         try {
-            if (realTimeAnnotationService == null) {
-                realTimeAnnotationService = new RealTimeAnnotationService(project);
-                LOG.info("Сервис живого обновления заметок инициализирован");
+            if (mappingsAutoSaver == null) {
+                mappingsAutoSaver = new MappingsAutoSaver(project);
                 
                 // Слушатель редактора файлов
                 setupFileEditorListener();
             }
         } catch (Exception e) {
-            LOG.warn("Не удалось инициализировать сервис живого обновления заметок: " + e.getMessage());
+            LOG.warn("Не удалось включить автосохранение рабочих JSON: " + e.getMessage());
         }
     }
     
@@ -143,7 +144,7 @@ public class AnnotationService {
     private void setupFileEditorListener() {
         try {
             if (fileEditorListener == null) {
-                fileEditorListener = new FileEditorListener(project, realTimeAnnotationService);
+                fileEditorListener = new FileEditorListener(project, mappingsAutoSaver);
                 LOG.info("Слушатель редактора файлов инициализирован");
             }
         } catch (Exception e) {
@@ -161,11 +162,11 @@ public class AnnotationService {
     }
     
     /**
-     * Гарантирует, что сервис живого обновления создан
+     * Гарантирует, что автосохранение рабочих JSON включено
      */
-    private void ensureRealTimeAnnotationService() {
-        if (realTimeAnnotationService == null) {
-            setupRealTimeAnnotationService();
+    private void ensureMappingsAutoSaver() {
+        if (mappingsAutoSaver == null) {
+            setupMappingsAutoSaver();
         }
     }
     
@@ -806,7 +807,7 @@ public class AnnotationService {
                 ensureJsonFileWatcher();
                 
                 // После загрузки создаём сервис живого обновления
-                ensureRealTimeAnnotationService();
+                ensureMappingsAutoSaver();
             }
         } catch (IOException e) {
             LOG.error("Не удалось загрузить папку сопоставлений: " + e.getMessage(), e);
@@ -1194,9 +1195,9 @@ public class AnnotationService {
      * Двусторонняя связь: после правки JSON-файла дерево проекта обновляется само
      */
     private void setupFileWatcher() {
-        // Отдельный слушатель VFS не нужен: он уже есть в RealTimeAnnotationService
+        // Отдельный слушатель VFS не нужен: изменения файлов ловит JsonFileWatcher
         // Тело оставлено пустым, чтобы события не обрабатывались дважды
-        LOG.info("Слушатель VFS здесь отключён, работает слушатель RealTimeAnnotationService");
+        LOG.info("Слушатель VFS здесь отключён, работает JsonFileWatcher");
     }
     
     /**

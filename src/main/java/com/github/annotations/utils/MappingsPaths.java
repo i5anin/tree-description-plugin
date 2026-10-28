@@ -20,8 +20,8 @@ import java.util.stream.Stream;
  * им место рядом с остальными файлами .idea.
  *
  * Используется сервисами загрузки и сохранения (AnnotationService), слушателями
- * изменений JSON (JsonEditorListener, JsonFileWatcher, FileEditorListener,
- * RealTimeAnnotationService), обновлением VFS (VFSRefreshService) и диалогами,
+ * изменений JSON (JsonFileWatcher, FileEditorListener, MappingsAutoSaver),
+ * обновлением VFS (VFSRefreshService) и диалогами,
  * которые показывают путь пользователю.
  */
 public final class MappingsPaths {

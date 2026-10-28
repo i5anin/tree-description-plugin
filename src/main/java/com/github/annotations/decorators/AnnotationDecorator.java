@@ -110,12 +110,6 @@ public class AnnotationDecorator implements ProjectViewNodeDecorator {
         
         AnnotationService annotationService = AnnotationService.getInstance(project);
         
-        // Сначала берём данные из сервиса живого обновления (если он доступен)
-        String realTimeAnnotation = getRealTimeAnnotation(project, file);
-        if (realTimeAnnotation != null && !realTimeAnnotation.isEmpty()) {
-            return realTimeAnnotation.trim();
-        }
-        
         // 1. Пользовательские сопоставления файлов
         String userFileAnnotation = annotationService.getAnnotation(file);
         if (userFileAnnotation != null && !userFileAnnotation.isEmpty()) {
@@ -259,54 +253,6 @@ public class AnnotationDecorator implements ProjectViewNodeDecorator {
                     }
                 }
             }
-        }
-        
-        return null;
-    }
-    
-    /**
-     * Берёт заметку из сервиса живого обновления
-     */
-    @Nullable
-    private String getRealTimeAnnotation(@NotNull Project project, @NotNull VirtualFile file) {
-        try {
-            // Сервис получаем через рефлексию, чтобы не было циклической зависимости
-            Class<?> realTimeServiceClass = Class.forName("com.github.annotations.services.RealTimeAnnotationService");
-            Object realTimeService = project.getService(realTimeServiceClass);
-            
-            if (realTimeService != null) {
-                // Путь файла
-                String relativePath = getRelativePathForMatching(project, file);
-                if (relativePath != null) {
-                    // Пробуем получить заметку файла
-                    if (!file.isDirectory()) {
-                        try {
-                            java.lang.reflect.Method getFileAnnotationMethod = 
-                                realTimeServiceClass.getMethod("getFileAnnotation", String.class);
-                            String annotation = (String) getFileAnnotationMethod.invoke(realTimeService, relativePath);
-                            if (annotation != null && !annotation.isEmpty()) {
-                                return annotation;
-                            }
-                        } catch (Exception e) {
-                            // Ошибку рефлексии игнорируем, переходим к обычному сервису
-                        }
-                    } else {
-                        // Заметка папки или пакета
-                        try {
-                            java.lang.reflect.Method getPackageAnnotationMethod = 
-                                realTimeServiceClass.getMethod("getPackageAnnotation", String.class);
-                            String annotation = (String) getPackageAnnotationMethod.invoke(realTimeService, relativePath);
-                            if (annotation != null && !annotation.isEmpty()) {
-                                return annotation;
-                            }
-                        } catch (Exception e) {
-                            // Ошибку рефлексии игнорируем, переходим к обычному сервису
-                        }
-                    }
-                }
-            }
-        } catch (Exception e) {
-            // Сервис живого обновления недоступен — переходим к обычному сервису
         }
         
         return null;
