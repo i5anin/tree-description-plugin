@@ -128,17 +128,6 @@ public class ExtractCommentAnnotationAction extends AnAction {
         });
     }
     
-    /**
-     * Есть ли среди файлов Java-файлы
-     */
-    private boolean hasJavaFiles(VirtualFile[] files) {
-        for (VirtualFile file : files) {
-            if (isJavaFileOrDirectory(file)) {
-                return true;
-            }
-        }
-        return false;
-    }
     
     /**
      * Собирает все Java-файлы, включая файлы внутри папок
@@ -167,15 +156,6 @@ public class ExtractCommentAnnotationAction extends AnAction {
         }
     }
     
-    /**
-     * Java-файл или папка, где они могут быть
-     */
-    private boolean isJavaFileOrDirectory(VirtualFile file) {
-        if (file.isDirectory()) {
-            return true; // в папке могут быть Java-файлы
-        }
-        return "java".equalsIgnoreCase(file.getExtension());
-    }
     
     /**
      * Извлекает комментарий из одного файла

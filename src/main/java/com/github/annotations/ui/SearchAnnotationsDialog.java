@@ -537,12 +537,6 @@ public class SearchAnnotationsDialog extends DialogWrapper {
         }
     }
     
-    /**
-     * Переводит Color в шестнадцатеричную строку
-     */
-    private static String colorToHex(Color color) {
-        return String.format("#%02x%02x%02x", color.getRed(), color.getGreen(), color.getBlue());
-    }
     
         /**
      * Цвет пути файла в невыделенной строке (фиксированная схема)

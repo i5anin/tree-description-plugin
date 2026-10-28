@@ -143,34 +143,6 @@ public class DonationDialog extends DialogWrapper {
         return mainPanel;
     }
     
-    /**
-     * Открывает страницу пожертвований
-     */
-    private void openDonationPage() {
-        try {
-            // Сюда можно подставить свою ссылку для пожертвований
-            String donationUrl = "https://jaysonx-tech.github.io/TreeDescriptionPage/TreeDescription.html";
-            
-            if (Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(Desktop.Action.BROWSE)) {
-                Desktop.getDesktop().browse(URI.create(donationUrl));
-            } else {
-                JOptionPane.showMessageDialog(
-                    getContentPane(),
-                    I18nUtils.getText(project, "Откройте ссылку вручную:\n\n", "Please manually visit the following link:\n\n") + donationUrl,
-                    I18nUtils.getText(project, "Ссылка для пожертвований", "Donation Link"),
-                    JOptionPane.INFORMATION_MESSAGE
-                );
-            }
-        } catch (IOException | UnsupportedOperationException e) {
-            JOptionPane.showMessageDialog(
-                getContentPane(),
-                I18nUtils.getText(project, "Не удалось открыть страницу пожертвований, откройте вручную:\n\n", "Unable to open donation page, please visit manually:\n\n") +
-                "https://jaysonx-tech.github.io/TreeDescriptionPage/TreeDescription.html",
-                I18nUtils.getText(project, "Не удалось открыть", "Open Failed"),
-                JOptionPane.ERROR_MESSAGE
-            );
-        }
-    }
     
     /**
      * Открывает страницу на GitHub
