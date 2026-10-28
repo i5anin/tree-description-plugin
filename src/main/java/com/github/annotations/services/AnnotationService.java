@@ -1,5 +1,6 @@
 package com.github.annotations.services;
 
+import com.github.annotations.utils.PathPatterns;
 import com.github.annotations.model.LocalMappingFile;
 import com.github.annotations.model.MappingFileParser;
 import com.github.annotations.utils.MappingsPaths;
@@ -401,7 +402,7 @@ public class AnnotationService implements Disposable {
                 }
                 
                 // Точное сопоставление
-                return matchesFilePattern(fileName, pattern, relativePath);
+                return PathPatterns.matchesFile(fileName, pattern, relativePath);
             })
             .map(Map.Entry::getValue)
             .findFirst()
@@ -439,7 +440,7 @@ public class AnnotationService implements Disposable {
                 }
                 
                 // Точное сопоставление
-                return matchesPackagePattern(packageName, pattern);
+                return PathPatterns.matchesPackage(packageName, pattern);
             })
             .map(Map.Entry::getValue)
             .findFirst()
@@ -1045,136 +1046,9 @@ public class AnnotationService implements Disposable {
         }
     }
     
-    /**
-     * Подходит ли имя файла под шаблон
-     * @param fileName имя файла
-     * @param pattern шаблон
-     * @return true, если подходит
-     */
-    private boolean matchesFilePattern(@NotNull String fileName, @NotNull String pattern) {
-        return matchesFilePattern(fileName, pattern, null);
-    }
     
-    /**
-     * Подходит ли имя файла под шаблон (поддерживает смешанные шаблоны)
-     * @param fileName имя файла
-     * @param pattern шаблон
-     * @param relativePath относительный путь файла (может быть null)
-     * @return true, если подходит
-     */
-    private boolean matchesFilePattern(@NotNull String fileName, @NotNull String pattern, @Nullable String relativePath) {
-        try {
-            // 1. Пробуем как регулярное выражение
-            if (pattern.contains(".*") || pattern.contains("\\") || pattern.contains("$") || pattern.contains("^")) {
-                return fileName.matches(pattern);
-            }
-            
-            // 2. Смешанный шаблон (есть разделитель пути)
-            if (pattern.contains("/")) {
-                return matchesMixedPattern(fileName, pattern, relativePath);
-            }
-            
-            // 3. Полное совпадение — имя файла должно совпасть целиком
-            return fileName.equalsIgnoreCase(pattern);
-            
-        } catch (Exception e) {
-            // При ошибке — упрощённая проверка на вхождение
-            return fileName.toLowerCase().contains(pattern.toLowerCase());
-        }
-    }
     
-    /**
-     * Подходит ли файл под смешанный шаблон (путь пакета + имя файла)
-     * @param fileName имя текущего файла
-     * @param pattern смешанный шаблон, например "com/common/pom.xml"
-     * @param relativePath относительный путь файла (может быть null)
-     * @return true, если подходит
-     */
-    private boolean matchesMixedPattern(@NotNull String fileName, @NotNull String pattern, @Nullable String relativePath) {
-        // Делим шаблон на путь пакета и имя файла
-        int lastSlashIndex = pattern.lastIndexOf('/');
-        if (lastSlashIndex == -1) {
-            return false; // не должно случаться: наличие '/' проверено до вызова
-        }
-        
-        String expectedFileName = pattern.substring(lastSlashIndex + 1);
-        String expectedPackagePath = pattern.substring(0, lastSlashIndex);
-        
-        // Сначала сверяем имя файла
-        if (!fileName.equalsIgnoreCase(expectedFileName)) {
-            return false;
-        }
-        
-        // Пути нет — сверяем только по имени файла
-        if (relativePath == null || relativePath.isEmpty()) {
-            return true;
-        }
-        
-        // Лежит ли файл в ожидаемом пакете (совпадение окончания пути)
-        // Берём путь папки из relativePath
-        String fileDir = "";
-        int fileLastSlashIndex = relativePath.lastIndexOf('/');
-        if (fileLastSlashIndex != -1) {
-            fileDir = relativePath.substring(0, fileLastSlashIndex);
-        }
-        
-        // Оканчивается ли путь папки ожидаемым путём пакета
-        return fileDir.endsWith(expectedPackagePath);
-    }
     
-    /**
-     * Подходит ли путь пакета под шаблон
-     * @param packagePath путь пакета (разделитель / или .)
-     * @param pattern шаблон
-     * @return true, если подходит
-     */
-    private boolean matchesPackagePattern(@NotNull String packagePath, @NotNull String pattern) {
-        try {
-            // 1. Пробуем как регулярное выражение
-            if (pattern.contains(".*") || pattern.contains("\\") || pattern.contains("$") || pattern.contains("^")) {
-                // Приводим путь пакета к одному виду (разделители / и .)
-                String normalizedPath = packagePath.replace("/", ".");
-                return normalizedPath.matches(pattern);
-            }
-            
-            // 2. Совпадение целыми сегментами пути: шаблон должен встречаться как полные сегменты
-            String normalizedPath = packagePath.replace("/", ".").toLowerCase();
-            String lowerPattern = pattern.toLowerCase();
-            
-            // Делим путь на сегменты
-            String[] pathSegments = normalizedPath.split("\\.");
-            String[] patternSegments = lowerPattern.split("\\.");
-            
-            // Ищем подряд идущие сегменты пути, совпадающие со всеми сегментами шаблона
-            if (patternSegments.length == 1) {
-                // Шаблон из одного сегмента: сравниваем только с последним сегментом пути (имя папки)
-                if (pathSegments.length > 0) {
-                    String lastSegment = pathSegments[pathSegments.length - 1];
-                    return lastSegment.equals(lowerPattern);
-                }
-                return false;
-            } else {
-                // Шаблон из нескольких сегментов: точное совпадение окончания (впереди путь может быть любым)
-                if (patternSegments.length > pathSegments.length) {
-                    return false; // в шаблоне не может быть больше сегментов, чем в пути
-                }
-                
-                // Совпадает ли окончание целиком
-                int pathStart = pathSegments.length - patternSegments.length;
-                for (int i = 0; i < patternSegments.length; i++) {
-                    if (!pathSegments[pathStart + i].equals(patternSegments[i])) {
-                        return false;
-                    }
-                }
-                return true;
-            }
-            
-        } catch (Exception e) {
-            // При ошибке — упрощённая проверка
-            String normalizedPath = packagePath.replace("/", ".").toLowerCase();
-            return normalizedPath.contains(pattern.toLowerCase());
-        }
-    }
     
 
     
