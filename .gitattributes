@@ -1,0 +1,11 @@
+# Все текстовые файлы хранятся и выгружаются с LF, независимо от core.autocrlf
+* text=auto eol=lf
+
+# Скрипты Windows требуют CRLF
+*.bat text eol=crlf
+*.cmd text eol=crlf
+
+# Бинарные файлы не трогаем
+*.jar binary
+*.png binary
+*.svg text eol=lf
