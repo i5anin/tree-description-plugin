@@ -14,6 +14,9 @@ repositories {
 dependencies {
     // Gson for JSON parsing
     implementation("com.google.code.gson:gson:2.10.1")
+
+    // Модульные тесты чистой логики (без запуска IDE)
+    testImplementation("junit:junit:4.13.2")
 }
 
 // Настройка IntelliJ Platform Plugin

@@ -1,6 +1,7 @@
 package com.github.annotations.services;
 
 import com.github.annotations.model.LocalMappingFile;
+import com.github.annotations.model.MappingFileParser;
 import com.github.annotations.utils.MappingsPaths;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -770,7 +771,7 @@ public class AnnotationService {
                 }
             }
         } catch (JsonSyntaxException e) {
-            LOG.error("Не удалось импортировать заметки: " + e.getMessage(), e);
+            LOG.warn("Не удалось импортировать заметки: " + e.getMessage());
         }
         return false;
     }
@@ -816,33 +817,38 @@ public class AnnotationService {
     }
     
     /**
-     * Читает все JSON-файлы папки рабочих JSON
+     * Читает все JSON-файлы папки рабочих JSON и обновляет allMappingFiles.
+     *
+     * Разбор — в MappingFileParser: файл, который сейчас не разбирается
+     * (пользователь на середине правки), остаётся в последней удачной версии,
+     * поэтому заметки не пропадают и не затираются следующим сохранением.
+     * Нечитаемый файл обрабатывается так же, как неразобранный.
+     *
+     * Невалидный JSON — ввод пользователя, а не сбой плагина, поэтому warn:
+     * LOG.error в IntelliJ показывает окно внутренней ошибки IDE.
      */
     private void scanAndLoadMappingFiles(Path mappingsDir) throws IOException {
-        allMappingFiles.clear();
-        
+        Map<String, String> contentsByFileName = new LinkedHashMap<>();
         try (Stream<Path> files = Files.walk(mappingsDir, 1)) {
             files.filter(Files::isRegularFile)
                  .filter(path -> path.toString().toLowerCase().endsWith(".json"))
-                 .forEach(this::loadSingleMappingFile);
+                 .forEach(path -> contentsByFileName.put(path.getFileName().toString(), readOrEmpty(path)));
+        }
+
+        MappingFileParser.Result result = MappingFileParser.parseAll(contentsByFileName, allMappingFiles);
+        allMappingFiles = new HashMap<>(result.files());
+        for (String fileName : result.failedFileNames()) {
+            LOG.warn("Файл сопоставлений не разобран, оставлена прошлая версия: " + fileName);
         }
     }
-    
-    /**
-     * Загружает один файл сопоставлений
-     */
-    private void loadSingleMappingFile(Path filePath) {
+
+    /** Текст файла; пустая строка, если файл не читается (тогда остаётся прошлая версия). */
+    private String readOrEmpty(Path filePath) {
         try {
-            String content = Files.readString(filePath);
-            LocalMappingFile mappingFile = gson.fromJson(content, LocalMappingFile.class);
-            
-            if (mappingFile != null) {
-                String fileName = filePath.getFileName().toString();
-                allMappingFiles.put(fileName, mappingFile);
-                LOG.info("Загружен файл сопоставлений: " + fileName);
-            }
-        } catch (IOException | JsonSyntaxException e) {
-            LOG.error("Не удалось загрузить файл сопоставлений: " + filePath + ", ошибка: " + e.getMessage(), e);
+            return Files.readString(filePath);
+        } catch (IOException e) {
+            LOG.warn("Не удалось прочитать файл сопоставлений: " + filePath + ", ошибка: " + e.getMessage());
+            return "";
         }
     }
     
