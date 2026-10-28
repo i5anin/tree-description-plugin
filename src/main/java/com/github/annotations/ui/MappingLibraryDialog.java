@@ -1,5 +1,6 @@
 package com.github.annotations.ui;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.github.annotations.utils.MappingsPaths;
 import com.github.annotations.services.GitHubMappingService;
@@ -173,7 +174,7 @@ public class MappingLibraryDialog extends DialogWrapper {
             libraryComboBox.removeAllItems();
             libraryComboBox.addItem(new GitHubMappingFile("", I18nUtils.getText(project, "Загрузка...", "Loading..."), false));
             
-            new Thread(() -> {
+            ApplicationManager.getApplication().executeOnPooledThread(() -> {
                 try {
                     List<GitHubMappingFile> files = gitHubService.getRepositoryContents();
                     
@@ -210,7 +211,7 @@ public class MappingLibraryDialog extends DialogWrapper {
                         clearMappingTable();
                     });
                 }
-            }).start();
+            });
         });
     }
     
@@ -230,7 +231,7 @@ public class MappingLibraryDialog extends DialogWrapper {
         DefaultTableModel model = (DefaultTableModel) mappingTable.getModel();
         model.addRow(new Object[]{"Загрузка", selectedFile.path, "Скачивание..."});
         
-        new Thread(() -> {
+        ApplicationManager.getApplication().executeOnPooledThread(() -> {
             try {
                 String jsonContent = gitHubService.downloadMappingFile(selectedFile.path);
                 if (jsonContent != null) {
@@ -256,7 +257,7 @@ public class MappingLibraryDialog extends DialogWrapper {
                     model.addRow(new Object[]{"Ошибка", selectedFile.path, "Не удалось загрузить"});
                 });
             }
-        }).start();
+        });
     }
     
     /**
@@ -363,7 +364,7 @@ public class MappingLibraryDialog extends DialogWrapper {
             downloadButton.setText(I18nUtils.getText(project, "Скачивание...", "Downloading..."));
         }
         
-        new Thread(() -> {
+        ApplicationManager.getApplication().executeOnPooledThread(() -> {
             try {
                 String jsonContent = gitHubService.downloadMappingFile(selectedFile.path);
                 if (jsonContent != null) {
@@ -427,7 +428,7 @@ public class MappingLibraryDialog extends DialogWrapper {
                             I18nUtils.getText(project, "Не удалось скачать", "Download Failed"), JOptionPane.PLAIN_MESSAGE);
                 });
             }
-        }).start();
+        });
     }
     
     /**
