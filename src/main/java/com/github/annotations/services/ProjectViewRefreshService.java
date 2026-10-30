@@ -29,7 +29,7 @@ public class ProjectViewRefreshService {
                     try {
                         projectView.refresh();
                         // getCurrentProjectViewPane() не используем: в некоторых версиях IDE его нет
-                        projectView.refresh(); // повторное обновление для надёжности
+
                         
                         com.intellij.openapi.diagnostic.Logger.getInstance(ProjectViewRefreshService.class)
                             .info("Дерево проекта принудительно обновлено");
@@ -37,7 +37,7 @@ public class ProjectViewRefreshService {
                         com.intellij.openapi.diagnostic.Logger.getInstance(ProjectViewRefreshService.class)
                             .warn("Не удалось принудительно обновить дерево проекта: " + e.getMessage());
                     }
-                });
+                }, project.getDisposed());
             }
         } catch (Exception e) {
             com.intellij.openapi.diagnostic.Logger.getInstance(ProjectViewRefreshService.class)
@@ -61,7 +61,7 @@ public class ProjectViewRefreshService {
                     com.intellij.openapi.diagnostic.Logger.getInstance(ProjectViewRefreshService.class)
                         .warn("Не удалось перерисовать оформление узлов: " + e.getMessage());
                 }
-            });
+            }, project.getDisposed());
         } catch (Exception e) {
             com.intellij.openapi.diagnostic.Logger.getInstance(ProjectViewRefreshService.class)
                 .warn("Не удалось перерисовать оформление узлов: " + e.getMessage());

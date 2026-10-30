@@ -2,6 +2,8 @@ package com.github.annotations.services;
 
 import com.github.annotations.utils.MappingsPaths;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.event.DocumentEvent;
@@ -49,9 +51,11 @@ public class MappingsAutoSaver {
     private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
     private final Map<VirtualFile, ListenerOnDocument> listeners = new HashMap<>();
     private ScheduledFuture<?> pendingSave;
+    private final java.util.Set<Document> dirtyDocuments = new java.util.LinkedHashSet<>();
+    private volatile boolean disposed;
 
     /** Слушатель вместе с документом, на который он повешен, — чтобы снять его без поиска редактора. */
-    private record ListenerOnDocument(@NotNull Document document, @NotNull DocumentListener listener) {
+    private record ListenerOnDocument(@NotNull Disposable lifetime) {
     }
 
     public MappingsAutoSaver(@NotNull Project project) {
@@ -66,7 +70,7 @@ public class MappingsAutoSaver {
 
     /** Начинает следить за документом открытого файла; повторный вызов ничего не делает. */
     public void registerDocumentListener(@NotNull VirtualFile file) {
-        if (listeners.containsKey(file)) {
+        if (disposed || listeners.containsKey(file)) {
             return;
         }
         Document document = findDocument(file);
@@ -79,15 +83,16 @@ public class MappingsAutoSaver {
                 scheduleSave(event.getDocument());
             }
         };
-        document.addDocumentListener(listener);
-        listeners.put(file, new ListenerOnDocument(document, listener));
+        Disposable lifetime = Disposer.newDisposable("TreeDescription.document");
+        document.addDocumentListener(listener, lifetime);
+        listeners.put(file, new ListenerOnDocument(lifetime));
     }
 
     /** Перестаёт следить за документом файла (файл закрыт). */
     public void unregisterDocumentListener(@NotNull VirtualFile file) {
         ListenerOnDocument registered = listeners.remove(file);
         if (registered != null) {
-            registered.document().removeDocumentListener(registered.listener());
+            Disposer.dispose(registered.lifetime());
         }
     }
 
@@ -103,17 +108,27 @@ public class MappingsAutoSaver {
 
     /** Откладывает сохранение; новая правка до срабатывания переносит его (защита от дребезга). */
     private synchronized void scheduleSave(@NotNull Document document) {
-        if (pendingSave != null) {
-            pendingSave.cancel(false);
-        }
+        if (disposed) return;
+        dirtyDocuments.add(document);
+        if (pendingSave != null) pendingSave.cancel(false);
         pendingSave = scheduler.schedule(
-            () -> ApplicationManager.getApplication().invokeLater(() -> saveDocument(document)),
+            () -> ApplicationManager.getApplication().invokeLater(this::savePendingDocuments, project.getDisposed()),
             AUTO_SAVE_DELAY_MS, TimeUnit.MILLISECONDS);
+    }
+
+    private void savePendingDocuments() {
+        java.util.List<Document> batch;
+        synchronized (this) {
+            if (disposed) return;
+            batch = new ArrayList<>(dirtyDocuments);
+            dirtyDocuments.clear();
+        }
+        batch.forEach(this::saveDocument);
     }
 
     /** Сохраняет документ на диск; вызывается в потоке интерфейса. */
     private void saveDocument(@NotNull Document document) {
-        if (project.isDisposed()) {
+        if (disposed || project.isDisposed()) {
             return;
         }
         try {
@@ -124,7 +139,10 @@ public class MappingsAutoSaver {
     }
 
     /** Снимает все слушатели и останавливает планировщик. */
-    public void dispose() {
+    public synchronized void dispose() {
+        disposed = true;
+        if (pendingSave != null) pendingSave.cancel(false);
+        dirtyDocuments.clear();
         for (VirtualFile file : new ArrayList<>(listeners.keySet())) {
             unregisterDocumentListener(file);
         }

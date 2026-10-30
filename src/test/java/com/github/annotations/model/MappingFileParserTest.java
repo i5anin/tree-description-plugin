@@ -64,6 +64,26 @@ public class MappingFileParserTest {
         assertEquals("Точка входа", noteOf(result, library, "src/App.java"));
     }
 
+    @Test
+    public void keepsLastGoodNotesForInvalidSchemaAndNullValues() {
+        Map<String, LocalMappingFile> before = MappingFileParser.parseAll(Map.of(LOCAL, VALID_JSON), Map.of()).files();
+        for (String bad : List.of("{}", "{\"mappings\":null}", "{\"mappings\":{\"files\":null}}",
+                "{\"mappings\":{\"files\":{\"App.java\":null}}}",
+                "{\"mappings\":{\"files\":{\"App.java\":42}}}")) {
+            MappingFileParser.Result result = MappingFileParser.parseAll(Map.of(LOCAL, bad), before);
+            assertEquals(bad, "Точка входа", noteOf(result, LOCAL, "src/App.java"));
+            assertEquals(List.of(LOCAL), result.failedFileNames());
+        }
+    }
+
+    @Test
+    public void explicitEmptyMappingsCanClearNotes() {
+        Map<String, LocalMappingFile> before = MappingFileParser.parseAll(Map.of(LOCAL, VALID_JSON), Map.of()).files();
+        MappingFileParser.Result result = MappingFileParser.parseAll(Map.of(LOCAL, "{\"mappings\":{}}"), before);
+        assertTrue(result.files().get(LOCAL).getMappings().getFiles().isEmpty());
+        assertTrue(result.failedFileNames().isEmpty());
+    }
+
     private static String noteOf(MappingFileParser.Result result, String fileName, String path) {
         LocalMappingFile file = result.files().get(fileName);
         return file == null ? null : file.getMappings().getFiles().get(path);

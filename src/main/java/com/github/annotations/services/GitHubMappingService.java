@@ -86,7 +86,7 @@ public class GitHubMappingService {
             LOG.info("Запрос к GitHub API: " + apiUrl);
             
     
-            testSimpleConnection(apiUrl);
+
             
             String response = makeGitHubApiRequest(apiUrl);
             
@@ -116,43 +116,10 @@ public class GitHubMappingService {
                 LOG.warn("Пустой ответ GitHub API");
             }
         } catch (IOException | JsonSyntaxException e) {
-            LOG.error("Не удалось получить содержимое репозитория GitHub", e);
+            LOG.warn("Не удалось получить содержимое репозитория GitHub", e);
         }
         
         return files;
-    }
-    
-    /**
-     * Простое HTTP-соединение
-     */
-    private void testSimpleConnection(String urlString) {
-        try {
-            LOG.info("Проверка соединения: " + urlString);
-            URL url = URI.create(urlString).toURL();
-            
-            HttpURLConnection directConnection = (HttpURLConnection) url.openConnection();
-            directConnection.setRequestMethod("HEAD");
-            directConnection.setConnectTimeout(5000);
-            directConnection.setReadTimeout(5000);
-            directConnection.setRequestProperty("User-Agent", "Mozilla/5.0");
-            
-            int responseCode = directConnection.getResponseCode();
-            LOG.info("Проверка прямого соединения — код ответа: " + responseCode);
-            directConnection.disconnect();
-            
-            HttpURLConnection proxyConnection = createProxyConnection(url);
-            proxyConnection.setRequestMethod("HEAD");
-            proxyConnection.setConnectTimeout(5000);
-            proxyConnection.setReadTimeout(5000);
-            proxyConnection.setRequestProperty("User-Agent", "Mozilla/5.0");
-            
-            int proxyResponseCode = proxyConnection.getResponseCode();
-            LOG.info("Проверка соединения через прокси — код ответа: " + proxyResponseCode);
-            proxyConnection.disconnect();
-            
-        } catch (Exception e) {
-            LOG.warn("Проверка соединения не удалась: " + e.getMessage(), e);
-        }
     }
     
     /**
@@ -181,7 +148,7 @@ public class GitHubMappingService {
                 }
             }
         } catch (IOException | JsonSyntaxException e) {
-            LOG.error("Не удалось получить содержимое папки на GitHub: " + dirPath, e);
+            LOG.warn("Не удалось получить содержимое папки на GitHub: " + dirPath, e);
         }
         
         return files;
@@ -195,7 +162,7 @@ public class GitHubMappingService {
         try {
             return downloadWithMultipleMirrors(filePath);
         } catch (IOException e) {
-            LOG.error("Не удалось скачать файл библиотеки сопоставлений с GitHub: " + filePath, e);
+            LOG.warn("Не удалось скачать файл библиотеки сопоставлений с GitHub: " + filePath, e);
             return null;
         }
     }
@@ -225,7 +192,7 @@ public class GitHubMappingService {
             }
         }
         
-        LOG.error("Ни одно зеркало не отдало файл: " + filePath);
+        LOG.warn("Ни одно зеркало не отдало файл: " + filePath);
         return null;
     }
     
@@ -237,7 +204,7 @@ public class GitHubMappingService {
         try {
             return gson.fromJson(jsonContent, GitHubMappingLibrary.class);
         } catch (Exception e) {
-            LOG.error("Не удалось разобрать файл библиотеки сопоставлений с GitHub", e);
+            LOG.warn("Не удалось разобрать файл библиотеки сопоставлений с GitHub", e);
             return null;
         }
     }
