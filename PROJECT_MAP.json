@@ -1,0 +1,53 @@
+{
+  "schemaVersion": 1,
+  "snapshot": "2026-10-30T14:47:11.360Z",
+  "project": "tree-description-plugin",
+  "root": ".",
+  "method": "static-local-index",
+  "limitations": [
+    "Нет динамических вызовов и сетевых интеграций",
+    "Сверять sha256 и evidence.line с текущими исходниками",
+    "Наличие зависимости не доказывает работоспособность"
+  ],
+  "nodes": [
+    {
+      "id": "project:tree-description-plugin",
+      "type": "project",
+      "name": "tree-description-plugin"
+    },
+    {
+      "id": "project:tree-description-plugin/file:README.md",
+      "type": "file",
+      "path": "README.md",
+      "sha256": "7fd0ed7fce7771bbcf088baf3f07a19e67dbb415406653d62f31d6f92034b7d0",
+      "bytes": 7494
+    },
+    {
+      "id": "project:tree-description-plugin/file:scripts/find_non_english.py",
+      "type": "file",
+      "path": "scripts/find_non_english.py",
+      "sha256": "9c295900580f63c399c995fe93a459bb4483f53d2e7486d6c5711bed53a90dfa",
+      "bytes": 4692
+    }
+  ],
+  "edges": [
+    {
+      "source": "project:tree-description-plugin",
+      "target": "project:tree-description-plugin/file:README.md",
+      "relation": "contains",
+      "evidence": {
+        "path": "README.md"
+      },
+      "method": "filesystem"
+    },
+    {
+      "source": "project:tree-description-plugin",
+      "target": "project:tree-description-plugin/file:scripts/find_non_english.py",
+      "relation": "contains",
+      "evidence": {
+        "path": "scripts/find_non_english.py"
+      },
+      "method": "filesystem"
+    }
+  ]
+}
