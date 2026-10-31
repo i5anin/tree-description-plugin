@@ -21,7 +21,10 @@ dependencies {
 
 // Настройка IntelliJ Platform Plugin
 intellij {
-    version.set("2023.1.5")
+    intellijRepository.set("https://www.jetbrains.com/intellij-repository")
+    val sdkPath = providers.gradleProperty("localIdePath").orNull
+    if (sdkPath != null) localPath.set(sdkPath)
+    else version.set(providers.gradleProperty("platformVersion"))
     type.set("IC") // IC = IntelliJ IDEA Community, IU = IntelliJ IDEA Ultimate
     
     plugins.set(listOf(
@@ -31,6 +34,17 @@ intellij {
 }
 
 tasks {
+    withType<org.jetbrains.intellij.tasks.InstrumentCodeTask>().configureEach {
+        providers.gradleProperty("localIdePath").orNull?.let { sdk ->
+            val compiler = file("$sdk/plugins/java/lib/javac2.jar")
+            if (compiler.isFile) {
+                compilerClassPathFromMaven.set(files(
+                    fileTree("$sdk/lib") { include("*.jar") },
+                    fileTree("$sdk/plugins/java/lib") { include("*.jar") }
+                ).files.toList())
+            }
+        }
+    }
     // Совместимость JVM
     withType<JavaCompile> {
         sourceCompatibility = "17"
@@ -63,7 +77,7 @@ tasks {
 
     patchPluginXml {
         sinceBuild.set("231")
-        untilBuild.set("999.*")  // без верхней границы: как в опубликованной 2.7.0, ставится в IDE 2026.x
+        untilBuild.set("262.*")  // верхняя граница — WebStorm 2026.2, проверяемая перед релизом
     }
 
     signPlugin {

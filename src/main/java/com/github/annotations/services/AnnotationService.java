@@ -794,7 +794,6 @@ public class AnnotationService implements Disposable {
                 if (!Files.exists(mappingsDir)) {
                     Files.createDirectories(mappingsDir);
                     LOG.info("Создана папка рабочих JSON: " + mappingsDir);
-                    return;
                 }
                 
                 // Читаем все JSON-файлы папки
@@ -839,7 +838,7 @@ public class AnnotationService implements Disposable {
         }
 
         MappingFileParser.Result result = MappingFileParser.parseAll(contentsByFileName, allMappingFiles);
-        allMappingFiles = new HashMap<>(result.files());
+        allMappingFiles = new LinkedHashMap<>(result.files());
         for (String fileName : result.failedFileNames()) {
             LOG.warn("Файл сопоставлений не разобран, оставлена прошлая версия: " + fileName);
         }
@@ -867,20 +866,15 @@ public class AnnotationService implements Disposable {
         packagesTextColor.clear();
         filesTextColor.clear();
         
-        // Сначала основной файл
-        LocalMappingFile localDescription = allMappingFiles.get(MappingsPaths.LOCAL_DESCRIPTION_FILE);
-        if (localDescription != null) {
-            mergeSingleMappingFile(localDescription);
-            
-            // Общие настройки берём из основного файла
-        }
-        
-        // Затем остальные файлы
+        // Библиотеки по имени файла, пользовательские заметки имеют последний приоритет.
         for (Map.Entry<String, LocalMappingFile> entry : allMappingFiles.entrySet()) {
             if (!MappingsPaths.LOCAL_DESCRIPTION_FILE.equals(entry.getKey())) {
                 mergeSingleMappingFile(entry.getValue());
             }
         }
+        LocalMappingFile local = allMappingFiles.get(MappingsPaths.LOCAL_DESCRIPTION_FILE);
+        if (local != null) mergeSingleMappingFile(local);
+
     }
     
     /**
@@ -1064,6 +1058,9 @@ public class AnnotationService implements Disposable {
                     mergeMappingData();
                     
                     LOG.info("Сопоставления перечитаны из папки рабочих JSON");
+                } else {
+                    allMappingFiles.clear();
+                    mergeMappingData();
                 }
             }
         } catch (IOException e) {

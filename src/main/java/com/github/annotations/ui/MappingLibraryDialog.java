@@ -394,7 +394,7 @@ public class MappingLibraryDialog extends DialogWrapper {
                                 I18nUtils.getText(project, "Скачано!", "Download Successful!"), JOptionPane.PLAIN_MESSAGE);
                         } else {
                             JOptionPane.showMessageDialog(getContentPane(), 
-                                I18nUtils.getText(project, "Не удалось скачать!\n\n", "Download failed!\n\n"),
+                                I18nUtils.getText(project, "Не удалось сохранить библиотеку: файл уже существует, защищён или содержит неверные данные.", "Cannot save library: the file exists, is protected or contains invalid mappings."),
                                 I18nUtils.getText(project, "Не удалось скачать", "Download Failed"), JOptionPane.PLAIN_MESSAGE);
                         }
                     });
@@ -441,19 +441,8 @@ public class MappingLibraryDialog extends DialogWrapper {
                 return false;
             }
 
-            java.io.File mappingsDir = mappingsPath.toFile();
-            if (!mappingsDir.exists()) {
-                if (!mappingsDir.mkdirs()) {
-                    return false;
-                }
-            }
-            
-            java.io.File targetFile = new java.io.File(mappingsDir, fileName);
-            try (java.io.OutputStreamWriter writer = new java.io.OutputStreamWriter(
-                    new java.io.FileOutputStream(targetFile), java.nio.charset.StandardCharsets.UTF_8)) {
-                writer.write(jsonContent);
-            }
-            
+            com.github.annotations.model.MappingLibraryStore.saveNew(mappingsPath, fileName, jsonContent);
+
             return true;
         } catch (java.io.IOException | RuntimeException e) {
             LOG.warn("Не удалось сохранить библиотеку " + fileName + ": " + e.getMessage());

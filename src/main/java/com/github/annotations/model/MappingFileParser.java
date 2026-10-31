@@ -2,6 +2,8 @@ package com.github.annotations.model;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonParseException;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonParser;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -76,10 +78,24 @@ public final class MappingFileParser {
 
     /** Разбирает один текст; null — если это не JSON файла сопоставлений. */
     @Nullable
-    private static LocalMappingFile parseOrNull(@NotNull String content) {
+    public static LocalMappingFile parseOrNull(@NotNull String content) {
         try {
-            return GSON.fromJson(content, LocalMappingFile.class);
-        } catch (JsonParseException e) {
+            JsonElement root = JsonParser.parseString(content);
+            if (!root.isJsonObject()) return null;
+            JsonElement mappings = root.getAsJsonObject().get("mappings");
+            if (mappings == null || !mappings.isJsonObject()) return null;
+            for (String section : List.of("files", "packages", "fileMatch", "packageMatch",
+                    "filesTextColor", "packagesTextColor")) {
+                JsonElement values = mappings.getAsJsonObject().get(section);
+                if (values == null) continue;
+                if (!values.isJsonObject()) return null;
+                for (Map.Entry<String, JsonElement> entry : values.getAsJsonObject().entrySet()) {
+                    if (entry.getKey().isBlank() || !entry.getValue().isJsonPrimitive()
+                            || !entry.getValue().getAsJsonPrimitive().isString()) return null;
+                }
+            }
+            return GSON.fromJson(root, LocalMappingFile.class);
+        } catch (JsonParseException | IllegalStateException e) {
             return null;
         }
     }
